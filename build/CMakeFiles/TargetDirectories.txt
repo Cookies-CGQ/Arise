@@ -1,0 +1,5 @@
+/home/ayanami/myfile/learn/Arise/Arise/build/CMakeFiles/arise_server.dir
+/home/ayanami/myfile/learn/Arise/Arise/build/CMakeFiles/login.dir
+/home/ayanami/myfile/learn/Arise/Arise/build/CMakeFiles/robots.dir
+/home/ayanami/myfile/learn/Arise/Arise/build/CMakeFiles/edit_cache.dir
+/home/ayanami/myfile/learn/Arise/Arise/build/CMakeFiles/rebuild_cache.dir
