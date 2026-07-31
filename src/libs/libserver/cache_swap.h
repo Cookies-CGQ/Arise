@@ -1,50 +1,49 @@
-#pragma once 
-#include <iostream>
+#pragma once
+
 #include <list>
 #include <mutex>
-#include "disposable.h"
 
-template <class T>
-class CacheSwap : public IDisposable
+template<class T>
+class CacheSwap
 {
 public:
     CacheSwap()
     {
-        _readerCache = &_caches1;
-        _writerCache = &_caches2;
+        _writerCache = &_caches1;
+        _readerCache = &_caches2;
     }
 
-    // 获取写入缓存指针
+    // 获取写缓冲区指针
     std::list<T*>* GetWriterCache();
-    // 获取读取缓存指针
+    // 获取读缓冲区指针
     std::list<T*>* GetReaderCache();
-    // 指针交互
+    // 交换
     void Swap();
-    // 是否指针可以交互 -- 写入缓存是否有数据
+    // 是否能交换
     bool CanSwap();
-    // 释放自身资源
-    void Dispose() override;
+    // 内存回收处理
+    void BackToPool();
 
 private:
-    std::list<T*> _caches1; // 缓存1
-    std::list<T*> _caches2; // 缓存2
-    std::list<T*>* _readerCache; // 读取缓存
-    std::list<T*>* _writerCache; // 写入缓存
+    std::list<T*> _caches1;       // 缓冲区1
+    std::list<T*> _caches2;       // 缓冲区2
+    std::list<T*>* _readerCache;  // 读缓冲区指针
+    std::list<T*>* _writerCache;  // 写缓冲区指针
 };
 
-template <class T>
+template<class T>
 inline std::list<T*>* CacheSwap<T>::GetWriterCache()
 {
     return _writerCache;
 }
 
-template <class T>
+template<class T>
 inline std::list<T*>* CacheSwap<T>::GetReaderCache()
 {
     return _readerCache;
 }
 
-template <class T>
+template<class T>
 inline void CacheSwap<T>::Swap()
 {
     auto tmp = _readerCache;
@@ -52,16 +51,24 @@ inline void CacheSwap<T>::Swap()
     _writerCache = tmp;
 }
 
-template <class T>
+template<class T>
 inline bool CacheSwap<T>::CanSwap()
 {
     return _writerCache->size() > 0;
 }
 
-template <class T>
-inline void CacheSwap<T>::Dispose()
+template<class T>
+inline void CacheSwap<T>::BackToPool()
 {
+    for(auto iter = _caches1.begin(); iter != _caches1.end(); ++iter)
+    {
+        (*iter)->BackToPool();
+    }
     _caches1.clear();
+
+    for(auto iter = _caches2.begin(); iter != _caches2.end(); ++iter)
+    {
+        (*iter)->BackToPool();
+    }
     _caches2.clear();
-    _readerCache = _writerCache = nullptr;
 }

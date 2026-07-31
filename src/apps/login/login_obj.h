@@ -1,18 +1,16 @@
-#pragma once 
-
+#pragma once
 #include <string>
 #include "libserver/socket_object.h"
 #include "libserver/common.h"
 
-class LoginObj : public ISocketObject
+class LoginObj :public NetworkIdentify
 {
 public:
-    LoginObj(SOCKET socketInfo, std::string account, std::string password);
+    LoginObj(NetworkIdentify* pIdentify, std::string account, std::string password);
     std::string GetAccount() const;
-    SOCKET GetSocket() override;
+    std::string GetPassword() const;
 
 private:
-    std::string _account;  // 用户账号
-    std::string _password; // 用户密码
-    SOCKET _socket;        
+    std::string _password;
+    std::string _account;
 };

@@ -1,170 +1,140 @@
 #pragma once
+
 #include <iostream>
 #include <sstream>
 #include <queue>
-#include <list>
+#include <iomanip>
 #include "sn_object.h"
-#include "object_block.h"
-#include "packet.h"
 #include "object_pool_interface.h"
-#include "thread_obj.h"
 #include "cache_refresh.h"
-#include "object_pool_mgr.h"
+#include "log4_help.h"
+#include "system_manager.h"
 
-// 对象池 -- 每种类型的对象池全局只会实例化一份
-template <typename T>
+template<typename T>
 class DynamicObjectPool :public IDynamicObjectPool
 {
 public:
-    // 获取对象池实例
-    static DynamicObjectPool<T>* GetInstance()
-    {
-        std::lock_guard<std::mutex> guard(_instanceLock);
-        if(_pInstance == nullptr)
-        {
-            // 如果该类型的对象池不存在，则创建并加入到对象池管理器中
-            _pInstance = new DynamicObjectPool<T>();
-            DynamicObjectPoolMgr::GetInstance()->AddPool(_pInstance);
-        }
-        // 返回对象池
-        return _pInstance;
-    }
+    // 释放资源
+    void Dispose() override;
 
-    // 销毁对象池
-    void DestroyInstance() override
-    {
-        std::lock_guard<std::mutex> guard(_instanceLock);
-        if(_pInstance == nullptr)
-            return;
-        delete _pInstance;
-        _pInstance = nullptr;
-    }
-
-    DynamicObjectPool();
-    ~DynamicObjectPool();
-
-    // 构造初始化对象
-    template<typename ...Targs>
-    T* MallocObject(Targs... args);
-    // 帧函数 -- 更新对象池中的对象
-    void Update() override;
-    // 回收对象
-    void FreeObject(ObjectBlock* pObj) override;
-    // 测试
-    void Show();
-
-private:
-    // 创建一个对象
-    void CreateOne();    
-
-private:
-    std::queue<T*> _free; // 暂未使用的对象队列
-    std::mutex _freeLock;
+    // 取出一个对象初始化并返回
+    template<typename ... Targs>
+    T* MallocObject(SystemManager* pSys, Targs... args);
     
-    CacheRefresh<T> _objInUse; // 对象池中对象被使用时的刷新器
-    std::mutex _inUseLock;
+    // 更新对象池内部状态
+    virtual void Update() override;
+    // 回收对象
+    virtual void FreeObject(IComponent* pObj) override;
+    // 显示对象池状态信息
+    virtual void Show() override;
 
-    static DynamicObjectPool<T>* _pInstance; // 对象池实例
-    static std::mutex _instanceLock;
+protected:
+    std::queue<T*> _free;       // 空闲队列
+    CacheRefresh<T> _objInUse;  // 正在使用
+
+#if _DEBUG
+    int _totalCall = 0;
+#endif
 };
 
-template <typename T>
-DynamicObjectPool<T>* DynamicObjectPool<T>::_pInstance = nullptr;
-
-template <typename T>
-std::mutex DynamicObjectPool<T>::_instanceLock;
-
-template <typename T>
-DynamicObjectPool<T>::DynamicObjectPool()
+template<typename T>
+void DynamicObjectPool<T>::Dispose()
 {
+    std::cout << "delete pool. " << typeid(T).name() << std::endl;
 
-}
-
-template <typename T>
-void DynamicObjectPool<T>::CreateOne()
-{
-    T* pObj = new T(this);
-    _free.push(pObj);
-}
-
-template <typename T>
-DynamicObjectPool<T>::~DynamicObjectPool()
-{
-    Update();
-    // 销毁未使用的
-    while (_free.size() > 0)
+    if (_objInUse.Count() > 0)
     {
-        auto iter = _free.front();
-        delete iter;
+        std::cout << " type:" << typeid(T).name() << " count:" << _objInUse.Count() << std::endl;
+    }
+
+    while (!_free.empty())
+    {
+        auto obj = _free.front();
+        delete obj;
         _free.pop();
-    }
-    // 销毁刷新器中的对象
-    _objInUse.Dispose();
-}
-
-template <typename T>
-template <typename ... Targs>
-T* DynamicObjectPool<T>::MallocObject(Targs... args)
-{
-    _freeLock.lock();
-    if (_free.size() == 0)
-    {
-        CreateOne();
-    }
-
-    auto pObj = _free.front();
-    _free.pop();
-    _freeLock.unlock();
-
-    // 重置SN
-    pObj->ResetSN();
-    // 对象初始化
-    pObj->TakeoutFromPool(std::forward<Targs>(args)...);
-
-    _inUseLock.lock();
-    _objInUse.GetAddCache()->push_back(pObj);
-    _inUseLock.unlock();
-
-    return pObj;
-}
-
-template <typename T>
-void DynamicObjectPool<T>::Update()
-{
-    std::list<T*> freeObjs;
-    _inUseLock.lock();
-    if (_objInUse.CanSwap())
-    {
-        freeObjs = _objInUse.Swap();
-    }
-    _inUseLock.unlock();
-
-    std::lock_guard<std::mutex> guard(_freeLock);
-    for (auto one : freeObjs)
-    {
-        _free.push(one);
     }
 }
 
 template<typename T>
-inline void DynamicObjectPool<T>::FreeObject(ObjectBlock* pObj)
+template<typename ... Targs>
+T* DynamicObjectPool<T>::MallocObject(SystemManager* pSys, Targs... args)
 {
-    std::lock_guard<std::mutex> guard(_inUseLock);
-    _objInUse.GetRemoveCache()->emplace_back(dynamic_cast<T*>(pObj));
+    // 如果没有空闲对象，则申请空间
+    if(_free.empty())
+    {
+        // 如果在线程中是单例，那么该线程中该类型的对象池只创建一个即可
+        if(T::IsSingle())
+        {
+            T* pObj = new T();
+            pObj->SetPool(this);
+            _free.push(pObj);
+        }
+        else
+        {
+            for(int index = 0; index < 50; index++)
+            {
+                T* pObj = new T();
+                pObj->SetPool(this);
+                _free.push(pObj);
+            }
+        }
+    }
+#if _DEBUG
+    ++_totalCall;
+#endif
+    // 取出一个对象
+    auto pObj = _free.front();
+    _free.pop();
+    pObj->ResetSN();
+    pObj->SetPool(this);
+    pObj->SetSystemManager(pSys);
+    pObj->Awake(std::forward<Targs>(args)...); // 初始化对象
+#if LOG_SYSOBJ_OPEN
+    LOG_SYSOBJ("*[pool] awake obj. obj sn:" << pObj->GetSN() << " type:" << pObj->GetTypeName() << " thead id:" << std::this_thread::get_id());
+#endif
+    _objInUse.AddObj(pObj);
+    return pObj;
+}
+
+template<typename T>
+void DynamicObjectPool<T>::Update()
+{
+    if (_objInUse.CanSwap())
+    {
+        // 回收的放回_free
+        _objInUse.Swap(&_free);
+    }
+}
+
+template<typename T>
+inline void DynamicObjectPool<T>::FreeObject(IComponent* pObj)
+{
+    if(pObj->GetSN() == 0)
+    {
+        LOG_ERROR("free obj sn == 0. type:" << typeid(T).name());
+        return;
+    }
+
+#if LOG_SYSOBJ_OPEN
+    LOG_SYSOBJ("*[pool] free obj. obj sn:" << pObj->GetSN() << " type:" << pObj->GetTypeName() << " thead id:" << std::this_thread::get_id());
+#endif
+
+    _objInUse.RemoveObj(pObj->GetSN());
 }
 
 template <typename T>
 void DynamicObjectPool<T>::Show()
 {
-    std::lock_guard<std::mutex> guard(_freeLock);
-    std::lock_guard<std::mutex> guardInUse(_inUseLock);
-    auto count = _objInUse.GetReaderCache()->size() + _objInUse.GetAddCache()->size() + _objInUse.GetRemoveCache()->size();
-
     std::stringstream log;
-    log << "*************************** " << "\n";
-    log << "pool total count:\t" << _free.size() + count << "\n";
-    log << "free count:\t\t" << _free.size() << "\n";
-    log << "in use count:\t" << count << "\n";
+    log << " total:" << std::setw(5) << std::setfill(' ') << _free.size() + _objInUse.Count()
+        << "    free:" << std::setw(5) << std::setfill(' ') << _free.size()
+        << "    use:" << std::setw(5) << std::setfill(' ') << _objInUse.Count()
 
-    std::cout << log.str() << std::endl;
+#if _DEBUG
+        << "    call:" << std::setw(5) << std::setfill(' ') << _totalCall
+#endif
+
+        << "    " << typeid(T).name();
+
+    LOG_DEBUG(log.str().c_str());
 }

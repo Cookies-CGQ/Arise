@@ -50,25 +50,46 @@ namespace Proto {
 enum MsgId : int {
   None = 0,
   MI_NetworkConnect = 1,
-  MI_NetworkListen = 2,
-  MI_NetworkDisconnect = 3,
-  MI_NetworkDisconnectEx = 4,
-  MI_NetworkDisconnectToNet = 5,
+  MI_NetworkConnected = 2,
+  MI_NetworkListen = 3,
+  MI_NetworkListenKey = 4,
+  MI_NetworkDisconnect = 10,
+  MI_NetworkDisconnectEx = 11,
+  MI_NetworkRequestDisconnect = 20,
+  MI_RemoveComponent = 50,
+  MI_CreateComponent = 51,
   MI_Ping = 101,
+  MI_AppInfoSync = 103,
   C2L_AccountCheck = 1001,
   C2L_AccountCheckRs = 1002,
   MI_AccountQueryOnlineToRedis = 1003,
   MI_AccountQueryOnlineToRedisRs = 1004,
-  MI_AccountCheckToHttpRs = 1005,
+  L2DB_QueryPlayerList = 1010,
+  L2DB_QueryPlayerListRs = 1011,
+  G2DB_QueryPlayer = 1101,
+  G2DB_QueryPlayerRs = 1102,
+  L2C_PlayerList = 1103,
+  C2L_CreatePlayer = 1105,
+  C2L_CreatePlayerRs = 1106,
+  L2DB_CreatePlayer = 1107,
+  L2DB_CreatePlayerRs = 1108,
+  G2DB_SavePlayer = 1800,
   MI_RobotSyncState = 5001,
-  MI_RobotTestBegin = 5100,
-  MI_RobotTestEnd = 5101,
+  MI_HttpBegin = 10000,
+  MI_HttpInnerResponse = 10001,
+  MI_HttpRequestBad = 10002,
+  MI_HttpRequestLogin = 10003,
+  MI_HttpEnd = 10499,
+  MI_HttpOuterRequest = 10500,
+  MI_HttpOuterResponse = 10501,
+  MI_CmdThread = 20001,
+  MI_CmdApp = 20002,
   MsgId_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   MsgId_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool MsgId_IsValid(int value);
 constexpr MsgId MsgId_MIN = None;
-constexpr MsgId MsgId_MAX = MI_RobotTestEnd;
+constexpr MsgId MsgId_MAX = MI_CmdApp;
 constexpr int MsgId_ARRAYSIZE = MsgId_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MsgId_descriptor();

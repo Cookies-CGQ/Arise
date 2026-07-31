@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+// 该文件的所有结构都会存储于DB中
+package Proto;
+
+// 玩家位置
+message Vector3{
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+// 性别枚举
+enum Gender{
+    none = 0;
+    male = 1;
+    female = 2;
+}
+
+// 玩家基本信息
+message PlayerBase{
+    Gender gender = 1; // 性别
+    int32 level = 2;   // 等级
+}
+
+// 表示玩家上次离线时所在的地图及坐标，有两种情况：
+// 1、上次离开时，是公共地图，那么直接回到公告地图
+// 2、上次离开时，是从一个副本离开的，如果副本SN还能找到，就再次进入副本
+message LastWorld{
+    int32 world_id = 1;    // 地图配置id
+    int64 world_sn = 2;    // 地图运行实例的唯一编号
+    Vector3 position = 3;  // 玩家所在位置
+}
+
+// 表示玩家的杂项数据、登录恢复数据及并发控制信息
+message PlayerMisc {
+	LastWorld last_world = 1;	// 公共地图
+	LastWorld last_dungeon = 2;	// 副本地图
+	int32 online_version = 3;	// 在线版本（乐观锁）
+}
+
+// 完整的玩家持久化对象
+message Player {
+	uint64 sn = 1;          // 角色唯一ID
+	string name = 2;        // 角色名称
+	PlayerBase base = 3;    // 玩家基础信息
+	PlayerMisc misc = 4;    // 玩家杂项信息
+}

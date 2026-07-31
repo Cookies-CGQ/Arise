@@ -1,42 +1,206 @@
 syntax = "proto3";
 
+import "db.proto";
 package Proto;
 
-// 协议：客户端发送账号验证请求给服务端
-message AccountCheck {
-	string account = 1;
-	string password = 2;
+// 向某个线程发送内部命令
+message CmdThread{
+    enum CmdType{
+        Entity = 0;
+        Pool = 1;
+		Connect = 2;
+    }
+
+    CmdType cmd_type = 1;
 }
 
-// 协议：服务端返回账号验证结果给客户端
-message AccountCheckRs {
-	enum ReturnCode {
-		ARC_OK = 0;
-		ARC_UNKONWN = 1;
-		ARC_NOT_FOUND_ACCOUNT = 2;
-		ARC_PASSWORD_WRONG = 3;
-		ARC_LOGGING = 4; // 正在登录
-		ARC_TIMEOUT = 5; // 超时
+message CmdApp {
+    enum CmdType {
+        Info = 0;
+    }
+
+    CmdType cmd_type = 1;
+}
+
+// 进程同步消息
+message AppInfoSync {
+	int32 app_id = 1;
+	int32 app_type = 2;
+	int32 online = 3;
+}
+
+// 网络连接断开（底层->上层）
+message NetworkDisconnect {
+    int32 network_type = 1;
+    int32 socket = 2;
+}
+
+enum NetworkObjectKeyType {
+	ObjectKeyTypeNone = 0;
+	ObjectKeyTypeAccount = 1;
+	ObjectKeyTypeApp = 2;    
+}
+
+message NetworkObjectKeyValue {
+	int64 key_int64 = 1;
+	string key_str = 2;
+}
+
+// ObjectKey标识
+message NetworkObjectKey {
+	NetworkObjectKeyType key_type = 1;
+	NetworkObjectKeyValue key_value = 2;
+}
+
+// 发起网络连接
+message NetworkConnect {
+    int32 network_type = 1;
+    NetworkObjectKey key = 2;
+    string ip = 3;
+    int32 port = 4;
+}
+
+// Http 响应
+message Http {
+	string body = 1;
+	int32 status_code = 2;
+}
+
+// 创建组件时传入的一个构造参数
+message CreateComponentParam{
+    enum ParamType{
+        Int = 0;
+        String = 1;
+    }
+
+    ParamType type = 1;
+    int32 int_param = 2;
+    string string_param = 3;
+}
+
+// 创建一个组件
+message CreateComponent{
+    int32 thread_type = 1; // 组件所在线程类型
+    string class_name = 2; // 要创建的组件类名
+    uint64 parent_sn = 3;  // 父实体/父组件的唯一编号
+	repeated CreateComponentParam params = 4; // 创建组件时的参数列表
+}
+
+// 删除组件
+message RemoveComponent{
+    uint64 sn = 1;
+}
+
+// 账号验证协议
+message AccountCheck{
+    string account = 1;  // 账号
+    string password = 2; // 密码
+}
+
+enum AccountCheckReturnCode{
+	ARC_OK = 0;                  // ok
+	ARC_UNKONWN = 1;             // 未知
+	ARC_NOT_FOUND_ACCOUNT = 2;   // 未找到账号
+	ARC_PASSWORD_WRONG = 3;      // 密码错误
+	ARC_LOGGING = 4;	         // 正在登录
+	ARC_TIMEOUT = 5;	         // 超时
+	ARC_ONLINE = 6;		         // 已在线		
+}
+
+// 账号验证响应
+message AccountCheckRs{
+    AccountCheckReturnCode return_code = 1;
+}
+
+// 第三方账号验证响应
+enum LoginHttpReturnCode {
+    LHRC_OK = 0;
+    LHRC_TIMEOUT = 1;
+    LHRC_NOTFOUND = 2; // 没有Login进程
+}
+
+message RobotState{
+    string account = 1;
+    int32 state = 2;
+}
+
+message RobotSyncState{
+    repeated RobotState states = 1;
+}
+
+// 玩家精减信息
+message PlayerLittle {
+	uint64 sn = 1;
+	string name = 2;
+	Gender gender = 3;
+	int32 level = 4;
+}
+
+// 玩家角色列表
+message PlayerList{
+	string account = 1;
+	repeated PlayerLittle player = 2;
+}
+
+// 查询玩家角色列表
+message QueryPlayerList {
+	string account = 1;
+}
+
+// 查询角色
+message QueryPlayer {
+	uint64 player_sn = 1;
+}
+
+// 返回角色信息
+message QueryPlayerRs {
+	string account = 1;
+	Player player = 2;
+}
+
+// 创建角色
+message CreatePlayer {
+	string name = 1;
+	Gender gender = 2; 
+}
+
+enum CreatePlayerReturnCode {
+	CPR_Create_OK = 0;
+	CPR_Unkonwn = 1;
+	CPR_Rename = 2; 
+}
+
+message CreatePlayerRs {
+	CreatePlayerReturnCode return_code = 2;
+}
+
+// 创建角色持久化到数据库
+message CreatePlayerToDB {
+	string account = 2;
+	Player player = 3;
+}
+
+message CreatePlayerToDBRs {
+	string account = 1;
+	CreatePlayerReturnCode return_code = 2;
+}
+
+// 选择角色
+message SelectPlayer {
+	uint64 player_sn = 1;
+}
+
+message SelectPlayerRs {
+	enum SelectPlayerReturnCode {
+		SPRC_OK = 0;
+		SPRC_NotFound = 1;
 	}
 
-	int32 return_code = 1;
+	SelectPlayerReturnCode return_code = 1;
 }
 
-// 协议：第三方登录验证结果发给服务端
-message AccountCheckToHttpRs {
-	int32 return_code = 1;	// AccountCheckRs::ReturnCode
-	string account = 2;
-}
-
-message RobotState {
-	string account = 1;
-	int32 state = 2;
-}
-
-message RobotSyncState {
-	repeated RobotState states = 1;
-}
-
-message RobotTestEnd {
-	int32 state = 1;
+// 持久化角色信息
+message SavePlayer {
+	uint64 player_sn = 1;
+	Player player = 2;
 }

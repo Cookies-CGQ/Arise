@@ -1,109 +1,142 @@
-#pragma once 
+#pragma once
 #include <algorithm>
-#include <vector>
 #include <list>
+#include <map>
+#include <queue>
+#include "log4_help.h"
 #include "disposable.h"
 
 template <class T>
-class CacheRefresh : public IDisposable
+class CacheRefresh: public IDisposable
 {
 public:
-    // 获取add 缓存
-    std::vector<T*>* GetAddCache();
-    // 获取remove 缓存
-    std::vector<T*>* GetRemoveCache();
-    // 获取reader 缓存
-    std::vector<T*>* GetReaderCache();
-    // refresh 操作 -- 处理add和remove更新到主缓存reader中;返回删除的obj，后续是否有内存回收处理
-    std::list<T*> Swap();
-    // 是否可以进行refresh 操作
+    // 获取读缓冲区
+    std::map<uint64, T*>* GetReaderCache();
+
+    // 添加
+    void AddObj(T* pObj);
+    // 删除
+    void RemoveObj(uint64 sn);
+    // 缓冲区数据个数
+    int Count();
+
+    // 返回删除的Obj，后续是否有内存回收处理
+    void Swap(std::queue<T*>* pRecycleList);
+    // 是否状态需要更新
     bool CanSwap();
-    // 释放自身资源
+    // 回收到对象池
+    void BackToPool();
+    // 释放资源
     void Dispose() override;
 
 protected:
-    std::vector<T*> _reader;  // 主缓存
-    std::vector<T*> _add;     // 新增缓存
-    std::vector<T*> _remove;  // 删除缓存
+    std::map<uint64, T*> _objs; // 读缓冲区
+    std::map<uint64, T*> _adds; // 添加缓冲区
+    std::list<uint64> _removes;  // 删除缓冲区
 };
 
 template <class T>
-inline std::vector<T*>* CacheRefresh<T>::GetAddCache()
+inline std::map<uint64, T *> *CacheRefresh<T>::GetReaderCache()
 {
-    return &_add;
+    return &_objs;
 }
 
 template <class T>
-inline std::vector<T*>* CacheRefresh<T>::GetRemoveCache()
+inline void CacheRefresh<T>::AddObj(T *pObj)
 {
-    return &_remove;
+    _adds.emplace(std::make_pair(pObj->GetSN(), pObj));
 }
 
 template <class T>
-inline std::vector<T*>* CacheRefresh<T>::GetReaderCache()
+inline void CacheRefresh<T>::RemoveObj(uint64 sn)
 {
-    return &_reader;
+    _removes.emplace_back(sn);
 }
 
 template <class T>
-inline std::list<T*> CacheRefresh<T>::Swap()
+inline int CacheRefresh<T>::Count()
 {
-    std::list<T*> rs;
-    // 新增
-    for(auto e : _add)
+    return _objs.size() + _adds.size();
+}
+
+template <class T>
+void CacheRefresh<T>::Swap(std::queue<T*>* pRecycleList)
+{
+    if (!_adds.empty())
     {
-        _reader.push_back(e);
+        _objs.insert(_adds.begin(), _adds.end());
+        _adds.clear();
     }
-    _add.clear();
-    // 删除
-    for(auto e : _remove)
+
+    if (!_removes.empty())
     {
-        auto iterReader = std::find_if(_reader.begin(), _reader.end(), [e](auto x){
-            return x == e;
-        });
-        
-        if(iterReader == _reader.end())
+        for (auto one : _removes)
         {
-            std::cout << "CacheRefresh Swap error. not find obj to remove. sn:" << e->GetSN() << std::endl;
+            auto iter = _objs.find(one);
+            if (iter == _objs.end())
+            {
+                LOG_WARN("CacheRefresh Swap error. not find obj to remove. type:" << typeid(T).name() << " sn:" << one);
+            }
+            else
+            {
+                if (pRecycleList != nullptr)
+                {
+                    iter->second->ResetSN(true);
+                    pRecycleList->emplace(iter->second);
+                } 
+                else
+                {
+                    delete iter->second;
+                }
+
+                _objs.erase(iter);
+            }
         }
-        else
-        {
-            rs.push_back(e);
-            _reader.erase(iterReader);
-        }
+        _removes.clear();
     }
-    _remove.clear();
-    
-    return rs;
 }
 
 template <class T>
-bool CacheRefresh<T>::CanSwap()
+inline bool CacheRefresh<T>::CanSwap()
 {
-    return _add.size() > 0 || _remove.size() > 0;
+    return !_adds.empty() || !_removes.empty();
+}
+
+template <class T>
+inline void CacheRefresh<T>::BackToPool()
+{
+    for (auto iter = _adds.begin(); iter != _adds.end(); ++iter)
+    {
+        iter->second->ComponentBackToPool();
+    }
+    _adds.clear();
+
+    for (auto iter = _objs.begin(); iter != _objs.end(); ++iter)
+    {
+        iter->second->ComponentBackToPool();
+    }
+    _objs.clear();
+
+    _removes.clear();
 }
 
 template <class T>
 void CacheRefresh<T>::Dispose()
 {
-    for (auto iter = _add.begin(); iter != _add.end(); ++iter)
+    for (auto iter = _adds.begin(); iter != _adds.end(); ++iter)
     {
-        (*iter)->Dispose();
-        delete (*iter);
+        auto pObj = iter->second;
+        pObj->Dispose();
+        delete pObj;
     }
-    _add.clear();
+    _adds.clear();
 
-    for (auto iter = _remove.begin(); iter != _remove.end(); ++iter)
+    for (auto iter = _objs.begin(); iter != _objs.end(); ++iter)
     {
-        (*iter)->Dispose();
-        delete (*iter);
+        auto pObj = iter->second;
+        pObj->Dispose();
+        delete pObj;
     }
-    _remove.clear();
-
-    for (auto iter = _reader.begin(); iter != _reader.end(); ++iter)
-    {
-        (*iter)->Dispose();
-        delete (*iter);
-    }
-    _reader.clear();
+    _objs.clear();
+    _removes.clear();
 }

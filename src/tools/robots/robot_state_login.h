@@ -2,7 +2,9 @@
 
 #include "robot_state.h"
 
-class RobotStateLoginConnecting : public RobotState {
+// 状态类 -- 正在连接
+class RobotStateLoginConnecting : public RobotState
+{
 public:
     DynamicStateCreate(RobotStateLoginConnecting, RobotState_Login_Connecting);
 
@@ -10,14 +12,25 @@ public:
     RobotStateType OnUpdate() override;
 };
 
-class RobotStateLoginConnected : public RobotState {
+// 状态类 -- 已连接，发送验证
+class RobotStateLoginConnected : public RobotState
+{
 public:
-    DynamicStateCreate( RobotStateLoginConnected, RobotState_Login_Connected );
+    DynamicStateCreate(RobotStateLoginConnected, RobotState_Login_Connected);
 
-    void OnEnterState( ) override;
+    void OnEnterState() override;
 };
 
-class RobotStateLoginLogined : public RobotState {
+// 状态类 -- 已验证通过
+class RobotStateLoginLogined : public RobotState
+{
 public:
-    DynamicStateCreate( RobotStateLoginLogined, RobotState_Login_Logined );
+    DynamicStateCreate(RobotStateLoginLogined, RobotState_Login_Logined);
+};
+
+// 状态类 -- 已选择角色
+class RobotStateLoginSelectPlayer : public RobotState
+{
+public:
+    DynamicStateCreate(RobotStateLoginSelectPlayer, RobotState_Login_SelectPlayer);
 };

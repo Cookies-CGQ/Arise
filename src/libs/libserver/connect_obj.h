@@ -1,51 +1,61 @@
 #pragma once
 
-#include <memory>
-#include "disposable.h"
-#include "object_block.h"
-#include "network.h"
-#include "util_time.h"
+#include "common.h"
+#include "entity.h"
+#include "system.h"
+#include "socket_object.h"
 
 class RecvNetworkBuffer;
 class SendNetworkBuffer;
 class Packet;
 
-#define PingTime 1000
-#define PingDelayTime 10 * 1000
+#define PingTime 1000 // 1秒
+#define PingDelayTime  10 * 1000 // 10秒
 
-class ConnectObj : public ObjectBlock
+// 表示连接的状态
+enum class ConnectStateType
+{
+    None,        
+    Connecting, // 正在连接
+    Connected,  // 已连接
+};
+
+class ConnectObj : public Entity<ConnectObj>, public NetworkIdentify, public IAwakeFromPoolSystem<SOCKET, NetworkType, ObjectKey, ConnectStateType>
 {
 public:
-    // 因为ConnectObj使用了对象池，作为对象池的对象，这里的初始化只初始化来自哪个对象池，关于对象的初始化使用另外的函数
-    ConnectObj(IDynamicObjectPool* pPool);
+    ConnectObj();
     virtual ~ConnectObj();
 
-    // 获取socket
-    SOCKET GetSocket() const { return _socket; }
-    // 接收缓冲区是否有数据
-    bool HasRecvData() const;
-    // 获取packet
-    Packet *GetRecvPacket() const;
-    // 接收数据到接收缓冲区，并广播给Actor
-    bool Recv() const;
-
-    // 发送缓冲区是否有数据
-    bool HasSendData() const;
-    // 发送packet到发送缓冲区
-    void SendPacket(Packet *pPacket) const;
-    // 从发送缓存区读取发送数据
-    bool Send() const;
-    // 关闭连接
-    void Close();
-
-    // 用于对象池中初始化对象的函数
-    void TakeoutFromPool(Network* pNetWork, SOCKET socket);
-    // 回收对象
+    // 对象池初始化
+    void Awake(SOCKET socket, NetworkType networkType, ObjectKey key, ConnectStateType state) override;
+	// 归还对象池前资源清理
     virtual void BackToPool() override;
 
+	// 是否有接收信息
+    bool HasRecvData() const;
+    // 接收并分发packet
+	bool Recv();
+
+    // 是否有发送信息
+	bool HasSendData() const;
+	// 发送packet
+    void SendPacket(Packet* pPacket) const;
+
+	// 发送
+    bool Send() const;
+    
+    void Close();
+    
+    // 获取状态
+    ConnectStateType GetState() const;
+    // 状态转移 -> 已连接
+    void ChangeStateToConnected();
+    // 修改ObjectKey
+    void ModifyConnectKey(ObjectKey key);
+
 protected:
-    Network *_pNetWork = nullptr;             // 父级网络对象：NetworkListen / NetworkConnector
-    SOCKET _socket;                           // socket，生命由父级网络对象创建，由自生销毁
+    ConnectStateType _state = ConnectStateType::None; // 连接状态
+
     RecvNetworkBuffer* _recvBuffer = nullptr; // 接收缓冲区
     SendNetworkBuffer* _sendBuffer = nullptr; // 发送缓冲区
 };

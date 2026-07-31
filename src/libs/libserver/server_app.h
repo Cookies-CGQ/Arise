@@ -1,7 +1,4 @@
 #pragma once
-#include "disposable.h"
-#include "thread_mgr.h"
-#include "common.h"
 
 #if ENGINE_PLATFORM != PLATFORM_WIN32
 #include <signal.h>
@@ -9,40 +6,33 @@
 #include <csignal>
 #endif
 
-// 启动一个进程服务
-template<class APPClass>
-inline int MainTemplate()
-{
-    APPClass* pApp = new APPClass();  // 创建服务
-    pApp->InitApp();                  // 初始化服务
-    pApp->Run();                      // 本线程持续更新全局时间，是工作线程的时间的来源
-    delete pApp;                   
-    return 0;
-}
+#include "disposable.h"
+#include "common.h"
+#include "thread_mgr.h"
+#include "app_type.h"
 
-// 服务类（每个服务一个进程）
-class ServerApp : public IDisposable
+// 启动一个服务，放置main中
+class ServerApp :public Singleton<ServerApp>, public IDisposable
 {
 public:
-    // 初始化服务，指定服务类型和工作线程个数
-    ServerApp(APP_TYPE appType, int cnt = 10);
-    ~ServerApp();
-    // 初始化服务
-    virtual void InitApp() = 0;
-    // 释放自身资源
+    ServerApp(APP_TYPE appType, int argc, char* argv[]);
+
+    // 初始化
+    void Initialize();
+    // 释放资源
     void Dispose() override;
-    // 启动所有线程
-    void StartAllThread() const;
-    // 本线程持续更新时间戳
-    void Run() const; 
-    // 更新全局时间
-    void UpdateTime() const;
-    // 创建一个网络监听Actor
-    bool AddListenerToThread(std::string ip, int port) const;
-    // 信号处理
+
+    // 负责主线程驱动、全局时间更新、其他组件状态更新
+    void Run();
+
+    // signal
     static void Signalhandler(int signalValue);
 
 protected:
-    ThreadMgr* _pThreadMgr;  // 线程管理
-    APP_TYPE _appType;       // 服务类型
+    ThreadMgr* _pThreadMgr = nullptr;               // 线程管理
+    APP_TYPE _appType = APP_TYPE::APP_None;         // 服务类型
+    int _appId = 0;                                 // 服务ID -- 每个同类型服务可能有多个，所以用ID进行区分
+
+    int _argc;
+    char** _argv;
 };

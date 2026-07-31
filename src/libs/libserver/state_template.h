@@ -1,135 +1,138 @@
 #pragma once
 
 #include <map>
-#include <iostream>
 
-#define DynamicStateCreate(classname, enumType) \
-    static void* CreateState() { return new classname; } \
-    RobotStateType GetState( ) override { return enumType; }
+// 状态机模板
+
+// 宏展开获得函数：工厂方法 + 返回自己的枚举值
+#define DynamicStateCreate(classname, enumType)          \
+    static void *CreateState() { return new classname; } \
+    RobotStateType GetState() override { return enumType; }
 
 #define DynamicStateBind(classname) \
-    reinterpret_cast<CreateIstancePt>( &( classname::CreateState ) )
+    reinterpret_cast<CreateIstancePt>(&(classname::CreateState))
 
-// 状态类模板(enumType:状态枚举类型, T:管理状态的类)
+// 状态基类模板 -- enumType：状态枚举类型；T：状态拥有者的类型
 template <typename enumType, class T>
-class StateTemplate 
+class StateTemplate
 {
 public:
-    StateTemplate(){}
-    // 设置状态管理对象
-    void SetParentObj(T* pObj)
+    StateTemplate()
+    {
+
+    }
+
+    // 设置状态拥有者
+    void SetParentObj(T *pObj)
     {
         _pParentObj = pObj;
     }
 
     virtual ~StateTemplate() {}
-    // 获取状态类型
+
+    // 返回当前状态的枚举值
     virtual enumType GetState() = 0;
-    // 更新状态，返回更新之后的状态类型
+    // 帧函数，返回新状态（状态不变则返回当前）
     virtual enumType Update() = 0;
-    // 进入状态行为
+    // 进入状态时调用
     virtual void EnterState() = 0;
-    // 离开状态行为
+    // 离开状态时调用
     virtual void LeaveState() = 0;
-    
+
 protected:
-    // 状态管理对象
-    T* _pParentObj;
+    T *_pParentObj; // 指向拥有这个状态的对象的指针
 };
 
+// 状态管理器 -- enumType：状态枚举；StateClass：状态的基类；T：拥有者的类型
 template <typename enumType, class StateClass, class T>
 class StateTemplateMgr
 {
 public:
     virtual ~StateTemplateMgr()
     {
-        if(_pState != nullptr)
+        if (_pState != nullptr)
         {
-            delete _pState; // 释放状态对象资源
-            _pState = nullptr;
+            delete _pState;
         }
     }
 
-    // 初始化默认状态，并注册创建状态对象回调
+    // 初始化
     void InitStateTemplateMgr(enumType defaultState)
     {
         _defaultState = defaultState;
         RegisterState();
     }
 
-    // 切换状态
-    // 1、创建新状态对象
-    // 2、调用旧状态对象的LeaveState
-    // 3、释放旧状态对象
-    // 4、调用新状态对象的EnterState
+    // 状态切换
     void ChangeState(enumType stateType)
     {
-        StateClass* pNewState = CreateStateObj(stateType);
-        if(pNewState == nullptr)
+        StateClass *pNewState = CreateStateObj(stateType);
+        if (pNewState == nullptr)
         {
-            std::cout << "ChangeState failed, stateType: " << stateType << std::endl;
             return;
         }
-        else
+
+        if (pNewState != nullptr)
         {
-            if(_pState != nullptr)
+            if (_pState != nullptr)
             {
+                // 状态转移调用
                 _pState->LeaveState();
                 delete _pState;
             }
+
             _pState = pNewState;
-            _pState->EnterState(); // 进入新状态
+            _pState->EnterState();
         }
     }
 
-    // 状态更新
+    // 帧函数 -- 状态更新
     void UpdateState()
     {
-        // 起始切换到默认起始状态
-        if(_pState == nullptr)
+        if (_pState == nullptr)
         {
             ChangeState(_defaultState);
         }
+
+        // 执行状态对象Update，如果状态切换执行ChangeState
         enumType curState = _pState->Update();
-        // 如果更新之后的状态与旧状态不一致就切换状态
-        if(curState != _pState->GetState())
+        if (curState != _pState->GetState())
         {
-            ChangeState(curState); // 状态类型切换
+            ChangeState(curState);
         }
     }
 
 protected:
-    // 批量注册创建状态对象回调函数
+    // 批量注册 -- 状态枚举：工厂函数
     virtual void RegisterState() = 0;
 
 public:
-    // 创建状态对象回调函数类型
-    typedef StateClass* (*CreateIstancePt)();
+    // 创建状态对象函数类型
+    typedef StateClass *(*CreateIstancePt)();
 
-    // 根据状态类型创建相应的状态对象
-    StateClass* CreateStateObj(enumType enumValue) 
+    // 根据状态类型创建状态对象
+    StateClass *CreateStateObj(enumType enumValue)
     {
         auto iter = _dynCreateMap.find(enumValue);
         if (iter == _dynCreateMap.end())
             return nullptr;
 
+        // 创建函数
         CreateIstancePt np = iter->second;
-        StateClass* pState = np();
-        pState->SetParentObj(static_cast<T*>(this));
+        StateClass *pState = np();
+        pState->SetParentObj(static_cast<T*>(this)); // 状态拥有者
+        
         return pState;
     }
 
-    // 注册创建状态对象回调函数
+    // 注册 -- 状态枚举：工厂函数
     void RegisterStateClass(enumType enumValue, CreateIstancePt np)
     {
         _dynCreateMap[enumValue] = np;
     }
 
 protected:
-    // 状态类型与创建该状态对象的函数的映射
-    std::map<enumType, CreateIstancePt> _dynCreateMap;
-    // 状态对象
-    StateClass* _pState = nullptr;
-    // 默认起始状态
-    enumType _defaultState;
+    std::map<enumType, CreateIstancePt> _dynCreateMap;  // 状态枚举：工厂函数
+    StateClass *_pState = nullptr;                      // 当前状态对象
+    enumType _defaultState;                             // 初始状态
 };

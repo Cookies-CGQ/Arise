@@ -1,23 +1,23 @@
-#include "console.h"
-
 #include <iostream>
 #include <thread>
-#include "thread.h"
+#include "console.h"
 #include "util_string.h"
-#include "console_cmd_pool.h"
+#include "log4_help.h"
+#include "update_component.h"
+#include "component_help.h"
+#include "global.h"
 
 void ConsoleCmd::OnRegisterHandler(std::string key, HandleConsole handler)
 {
     _handles[key] = handler;
 }
 
-bool ConsoleCmd::CheckParamCnt(std::vector<std::string>& params, const size_t count)
+bool ConsoleCmd::CheckParamCnt(std::vector<std::string> &params, const size_t count)
 {
     if (params.size() == count)
         return true;
 
     std::cout << "input param size is error. see: -help" << std::endl;
-
     return false;
 }
 
@@ -26,7 +26,7 @@ void ConsoleCmd::Dispose()
     _handles.clear();
 }
 
-void ConsoleCmd::Process(std::vector<std::string>& params)
+void ConsoleCmd::Process(std::vector<std::string> &params)
 {
     if (params.size() <= 1)
         return;
@@ -36,7 +36,13 @@ void ConsoleCmd::Process(std::vector<std::string>& params)
 
     if (iter == _handles.end())
     {
-        std::cout << "input error. can't find cmd:" << key.c_str() << std::endl;
+        if (key == "-help")
+        {
+            HandleHelp();
+            return;
+        }
+
+        LOG_ERROR("input error. can't find cmd:" << key.c_str());
         return;
     }
 
@@ -44,10 +50,9 @@ void ConsoleCmd::Process(std::vector<std::string>& params)
     iter->second(params);
 }
 
-bool Console::Init()
+void Console::Awake()
 {
-    _thread = std::thread([this]()
-    {
+    _thread = std::thread([this]() {
         char _buffer[ConsoleMaxBuffer];
         do
         {
@@ -57,29 +62,40 @@ bool Console::Init()
             _commands.push(std::string(_buffer));
             _lock.unlock();
 
+            // 停止服务端服务
             std::string cmdMsg = _buffer;
-            auto iter = cmdMsg.find("exit");
+            auto iter = cmdMsg.find("-exit");
             if (iter != std::string::npos)
-            {                
-                _isRun = false;
+            {
                 Global::GetInstance()->IsStop = true;
+                _isRun = false;
             }
-
-        } while (_isRun);
+        } while (_isRun); 
     });
 
-    Register<ConsoleCmdPool>("pool");
-    return true;
+    auto pUpdateComponent = AddComponent<UpdateComponent>();
+    pUpdateComponent->UpdataFunction = BindFunP0(this, &Console::Update);
 }
 
-void Console::RegisterMsgFunction()
+void Console::BackToPool()
 {
+    for (auto &pair : _handles)
+    {
+        pair.second->Dispose();
+        delete pair.second;
+    }
+    _handles.clear();
+
+    if (_isRun)
+        _thread.detach();
+    else
+        _thread.join();
 }
 
 void Console::Update()
 {
     _lock.lock();
-    if (_commands.size() <= 0)
+    if (_commands.empty())
     {
         _lock.unlock();
         return;
@@ -91,34 +107,27 @@ void Console::Update()
 
     std::vector<std::string> params;
     strutil::split(cmd, ' ', params);
-    if (params.size() <= 0)
+    if (params.empty())
         return;
 
     const std::string key = params[0];
-    const auto iter = _handles.find(key);
-
+    auto iter = _handles.find(key);
     if (iter == _handles.end())
     {
-        std::cout << "input error. cmd:" << cmd.c_str() << std::endl;
+        if (key == "help")
+        {
+            iter = _handles.begin();
+            while (iter != _handles.end())
+            {
+                std::cout << "\r\n" << iter->first.c_str() << std::endl;
+                iter->second->HandleHelp();
+                ++iter;
+            }
+            return;
+        }
+        LOG_ERROR("input error. cmd:" << cmd.c_str());
         return;
     }
 
     iter->second->Process(params);
-}
-
-void Console::Dispose()
-{
-    for (auto &pair : _handles)
-    {
-        pair.second->Dispose();
-    }
-
-    _handles.clear();
-
-    if (_isRun)
-        _thread.detach();
-    else
-        _thread.join();
-
-    ThreadObject::Dispose();
 }

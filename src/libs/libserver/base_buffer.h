@@ -1,38 +1,41 @@
-#pragma once 
+#pragma once
 
-#include "disposable.h"
-
-// 一次缓冲区扩容大小
+// 单次追加大小
 #define ADDITIONAL_SIZE 1024 * 128
 
-// 最大缓存空间
+// 最大缓冲
 #define MAX_SIZE 1024 * 1024
 
 class Buffer
 {
 public:
-	virtual unsigned int GetEmptySize();
-    // 追加缓冲区空间(参数dataLength是有效数据的大小，用于判断当_beginIndex == _endIndex时，是否为空还是为满)
-	void ReAllocBuffer(unsigned int dataLength);
+    // 返回剩余空间
+    virtual unsigned int GetEmptySize();
+    
+    // 申请一次空间，dataLength表示有效数据长度，这里主要是为了用于判断缓冲区是为满还是为空（因为这两种情况都是_beginIndex == _endIndex， 所以传入有效数据长度解决这个问题）
+    void ReAllocBuffer(unsigned int dataLength);
+    
+    // 返回数据起始位置
+    unsigned int GetBeginIndex() const 
+    {
+        return _beginIndex;
+    }
 
-	unsigned int GetEndIndex() const
-	{
-		return _endIndex;
-	}
+    // 返回数据终止位置
+    unsigned int GetEndIndex() const 
+    {
+        return _endIndex;
+    }
 
-	unsigned int GetBeginIndex() const
-	{
-		return _beginIndex;
-	}
-
-	unsigned int GetTotalSize() const
-	{
-		return _bufferSize;
-	}
+    // 返回缓冲区大小
+    unsigned int GetTotalSize() const
+    {
+        return _bufferSize;
+    }
 
 protected:
     char* _buffer = nullptr;        // 缓冲区
-    unsigned int _beginIndex = 0;   // 可读起始位置
-    unsigned int _endIndex = 0;     // 可写起始位置
+    unsigned int _beginIndex = 0;   // _buffer数据的起始位置
+    unsigned int _endIndex = 0;     // _buffer数据的终止位置的下一个可写入位置
     unsigned int _bufferSize = 0;   // 缓冲区大小
 };

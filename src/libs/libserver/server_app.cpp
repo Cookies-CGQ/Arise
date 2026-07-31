@@ -1,36 +1,63 @@
-#include <ctime>
-#include <sys/time.h>
 #include "common.h"
 #include "server_app.h"
-#include "network_listen.h"
-#include "object_pool_mgr.h"
+#include "res_path.h"
+#include "app_type.h"
+#include "yaml.h"
+#include "object_pool_packet.h"
+#include "component_help.h"
 
-ServerApp::ServerApp(APP_TYPE appType, int cnt)
+ServerApp::ServerApp(APP_TYPE appType, int argc, char* argv[])
 {
-    // 注册信号
-    signal(SIGINT, Signalhandler);
-    _appType = appType;                  // 服务类型
-    DynamicObjectPoolMgr::Instance();    // 对象池管理单例对象初始化
-    Global::Instance();                  // global单例对象初始化
-    ThreadMgr::Instance();               // 线程管理单例对象初始化
-    _pThreadMgr = ThreadMgr::Instance(); // 线程管理单例对象初始化
-
-    // 更新全局时间
-    UpdateTime();
-
-    // 创建线程
-    _pThreadMgr->NewThread(cnt);
-    // 启动所有工作线程
-    _pThreadMgr->StartAllThread();
+    _appType = appType;
+    _argc = argc;
+    _argv = argv;
 }
 
-ServerApp::~ServerApp()
+void ServerApp::Dispose()
 {
-    _pThreadMgr->DestroyInstance();
+    DynamicPacketPool::GetInstance()->Dispose();
+    DynamicPacketPool::DestroyInstance();
+    ThreadMgr::DestroyInstance();
+}
+
+void ServerApp::Initialize()
+{
+    // std::cout << "\ncommand arguments:" << std::endl;
+    // for (auto count = 0; count < _argc; count++)
+    //     std::cout << "  argv[" << count << "]   " << _argv[count] << std::endl;
+
+    // 参数分析，找到-sid=，获取服务ID
+    // 例如启动时：./login -sid=101
+    for(int argIdx = 1; argIdx < _argc; ++argIdx)
+    {
+        std::string cmd = _argv[argIdx];
+        std::string findcmd = "-sid=";
+        std::string::size_type fi1 = cmd.find(findcmd);
+        if(fi1 != std::string::npos)
+        {
+            cmd.erase(fi1, findcmd.size());
+            _appId = std::stoi(cmd);
+            break;
+        }
+    }
+
+    // 信号捕捉
+    signal(SIGINT, Signalhandler);
+
+    Global::Instance(_appType, _appId);
+
+    // Packet对象池
+    DynamicPacketPool::Instance();
+
+    // 初始化线程管理类
+    _pThreadMgr = ThreadMgr::Instance();
+    _pThreadMgr->InitializeGlobalComponent(_appType, 0);
+    _pThreadMgr->InitializeThread(); // InitializeThread只创建工作线程
 }
 
 void ServerApp::Signalhandler(const int signalValue)
 {
+    auto pGlobal = Global::GetInstance();
     switch (signalValue)
     {
 #if ENGINE_PLATFORM != PLATFORM_WIN32
@@ -40,88 +67,47 @@ void ServerApp::Signalhandler(const int signalValue)
 
     case SIGTERM:
     case SIGINT:
-        Global::GetInstance()->IsStop = true;
+        pGlobal->IsStop = true; // 停止线程运行
         break;
     }
 
-    std::cout << "\nrecv signal. value:" << signalValue << " Global IsStop::" << Global::GetInstance()->IsStop << std::endl;
+    std::cout << "\nrecv signal. value:" << signalValue << " Global IsStop::" << pGlobal->IsStop << std::endl;
 }
 
-
-void ServerApp::Dispose()
+void ServerApp::Run()
 {
-    _pThreadMgr->Dispose();
-}
+    log4cplus::initialize();
 
-// void ServerApp::StartAllThread() const
-// {
-//     _pThreadMgr->StartAllThread();
-// }
-
-void ServerApp::Run() const
-{
-    while (!Global::GetInstance()->IsStop)
+    auto pGlobal = Global::GetInstance();
+    while (!pGlobal->IsStop)
     {
-        UpdateTime();
-        _pThreadMgr->Update();
-        DynamicObjectPoolMgr::GetInstance()->Update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        pGlobal->UpdateTime(); // 更新全局时间
+        _pThreadMgr->Update(); // 主线程update
+        DynamicPacketPool::GetInstance()->Update(); // packet对象池更新
+        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 休眠1ms
     }
 
-    // 停止所有线程
+    // 等待所有线程停止
     std::cout << "stoping all threads..." << std::endl;
-    bool isStop;
+    bool isStop = false;
     do
     {
         isStop = _pThreadMgr->IsStopAll();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     } while (!isStop);
 
-    // 释放所有线程资源
-    std::cout << "disposing all threads..." << std::endl;
-
-    // 1.子线程资源
-    bool isDispose;
+    // 等待所有线程销毁
+    std::cout << "destroy all threads..." << std::endl;
+    _pThreadMgr->DestroyThread();
+    bool isDestroy = false;
     do
     {
-        isDispose = _pThreadMgr->IsDisposeAll();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    } while (!isDispose);
+        isDestroy = _pThreadMgr->IsDestroyAll();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } while (!isDestroy);
 
-    // 2.主线程资源
+    // 资源清理
     _pThreadMgr->Dispose();
 
-    std::cout << "disposing all pool..." << std::endl;
-    DynamicObjectPoolMgr::GetInstance()->Update();
-    DynamicObjectPoolMgr::GetInstance()->Dispose();
-    DynamicObjectPoolMgr::DestroyInstance();
-
-    Global::DestroyInstance();
-    ThreadMgr::DestroyInstance();
-}
-
-void ServerApp::UpdateTime() const
-{
-#if ENGINE_PLATFORM != PLATFORM_WIN32
-    struct timeval tv;
-    gettimeofday(&tv, nullptr);
-    Global::GetInstance()->TimeTick = tv.tv_sec * 1000 +  tv.tv_usec * 0.001;
-#else
-    auto timeValue = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
-    Global::GetInstance()->TimeTick = timeValue.time_since_epoch().count();
-#endif
-}
-
-bool ServerApp::AddListenerToThread(std::string ip, int port) const
-{
-    // 创建并监听，作为一个监听网络连接的actor对象
-    NetworkListen* pListener = new NetworkListen();
-    if (!pListener->Listen(ip, port))
-    {
-        delete pListener;
-        return false;
-    }
-    // 添加到线程中，同时注册到网络定位器（SendPacket依赖此注册）
-    _pThreadMgr->AddNetworkToThread(APP_Listen, pListener);
-    return true;
+    log4cplus::deinitialize();
 }

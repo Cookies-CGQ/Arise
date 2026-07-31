@@ -3,6 +3,7 @@
 
 void RobotStateLoginConnecting::OnEnterState()
 {
+
 }
 
 RobotStateType RobotStateLoginConnecting::OnUpdate()
@@ -15,7 +16,7 @@ RobotStateType RobotStateLoginConnecting::OnUpdate()
     return GetState();
 }
 
-void RobotStateLoginConnected::OnEnterState() {
+void RobotStateLoginConnected::OnEnterState() 
+{
     _pParentObj->SendMsgAccountCheck();
 }
-

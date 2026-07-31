@@ -1,0 +1,3 @@
+/home/ayanami/myfile/learn/Arise/Arise/src/tools/robots/CMakeFiles/robotsd.dir
+/home/ayanami/myfile/learn/Arise/Arise/src/tools/robots/CMakeFiles/edit_cache.dir
+/home/ayanami/myfile/learn/Arise/Arise/src/tools/robots/CMakeFiles/rebuild_cache.dir

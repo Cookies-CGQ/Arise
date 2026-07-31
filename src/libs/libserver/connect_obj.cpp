@@ -1,15 +1,18 @@
-#include <iostream>
 #include "connect_obj.h"
 #include "network.h"
 #include "network_buffer.h"
-#include "packet.h"
 #include "thread_mgr.h"
-#include "object_pool_interface.h"
+#include "system_manager.h"
+#include "message_system.h"
+#include "message_system_help.h"
+#include "component_help.h"
+#include "object_pool_packet.h"
+#include "global.h"
+#include "network_locator.h"
 
-ConnectObj::ConnectObj(IDynamicObjectPool* pPool) :ObjectBlock(pPool)
+ConnectObj::ConnectObj()
 {
-    _pNetWork = nullptr;
-    _socket = INVALID_SOCKET;
+    _state = ConnectStateType::None;
     _recvBuffer = new RecvNetworkBuffer(DEFAULT_RECV_BUFFER_SIZE, this);
     _sendBuffer = new SendNetworkBuffer(DEFAULT_SEND_BUFFER_SIZE, this);
 }
@@ -17,156 +20,206 @@ ConnectObj::ConnectObj(IDynamicObjectPool* pPool) :ObjectBlock(pPool)
 ConnectObj::~ConnectObj()
 {
     if (_recvBuffer != nullptr)
+    {
         delete _recvBuffer;
+        _recvBuffer = nullptr;
+    }
 
     if (_sendBuffer != nullptr)
+    {
         delete _sendBuffer;
+        _sendBuffer = nullptr;
+    }
 }
 
-void ConnectObj::TakeoutFromPool(Network* pNetWork, SOCKET socket)
+void ConnectObj::Awake(SOCKET socket, NetworkType networkType, ObjectKey key, ConnectStateType state)
 {
-    _pNetWork = pNetWork;
-    _socket = socket;
+    _socketKey = SocketKey(socket, networkType);
+    _objKey = key;
+    _state = state;
 }
 
 void ConnectObj::BackToPool()
 {
-    if (!Global::GetInstance()->IsStop)
+#ifdef LOG_TRACE_COMPONENT_OPEN
+    const auto traceMsg = std::string("close.  network type:").append(GetNetworkTypeName(_socketKey.NetType));
+    ComponentHelp::GetTraceComponent()->Trace(TraceType::Connector, _socketKey.Socket, traceMsg);
+#endif
+
+    // 如果是服务之间的连接
+    if (GetObjectKey().KeyType == ObjectKeyType::App)
     {
-        // 通知其他对象，有Socket中断了
-        Packet* pResultPacket = new Packet(Proto::MsgId::MI_NetworkDisconnect, _socket);
-        MessageList::DispatchPacket(pResultPacket);
+        auto pLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+        pLocator->RemoveNetworkIdentify(GetObjectKey().KeyValue.KeyInt64);
+    }
+    // 如果是服务与客户端之间的连接
+    else
+    {
+        // 通知逻辑层，该连接关闭了
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkDisconnect, this);
     }
 
-    _pNetWork = nullptr;
-    _socket = INVALID_SOCKET;
+    if (_socketKey.Socket != INVALID_SOCKET)
+        _sock_close(_socketKey.Socket);
+
+    _state = ConnectStateType::None;
+    _socketKey.Clean();
+    _objKey.Clean();
+
     _recvBuffer->BackToPool();
     _sendBuffer->BackToPool();
-
-    _pPool->FreeObject(this);
 }
 
-// 接收缓冲区是否有数据
 bool ConnectObj::HasRecvData() const
 {
     return _recvBuffer->HasData();
 }
 
-// 获取packet
-Packet* ConnectObj::GetRecvPacket() const
+bool ConnectObj::Recv()
 {
-    return _recvBuffer->GetPacket();
-}
+    // 对于网络监听，如果可读，表示连接建立成功了，状态转移：正在连接->已连接
+    if(_state == ConnectStateType::Connecting)
+    {
+        ChangeStateToConnected();
+        return true;
+    }
 
-// 接收数据到接收缓冲区
-bool ConnectObj::Recv() const
-{
     bool isRs = false;
     char* pBuffer = nullptr;
-    // 非阻塞fd，使用while一次读完系统接收缓冲区
-    while(true)
+    while (true)
     {
-        // 总空间数据不足一个协议头的大小，需要扩容
-		if (_recvBuffer->GetEmptySize() < (sizeof(PacketHead) + sizeof(TotalSizeType)))
-		{
-			_recvBuffer->ReAllocBuffer();
-		}
+        // 总空间数据不足一个头的大小，扩容
+        if (_recvBuffer->GetEmptySize() < (sizeof(PacketHead) + sizeof(TotalSizeType)))
+        {
+            _recvBuffer->ReAllocBuffer();
+        }
 
-		const int emptySize = _recvBuffer->GetBuffer(pBuffer);
-		const int dataSize = ::recv(_socket, pBuffer, emptySize, 0);
-        if(dataSize > 0)
+        const int emptySize = _recvBuffer->GetBuffer(pBuffer);
+        const int dataSize = ::recv(_socketKey.Socket, pBuffer, emptySize, 0);
+        if (dataSize > 0)
         {
             _recvBuffer->FillDate(dataSize);
+            isRs = true;
         }
-        else if(dataSize == 0)
+        // 对端关闭
+        else if (dataSize == 0)
         {
-            // 对端关闭，由父级Network关闭连接
             break;
         }
         else
         {
             const auto socketError = _sock_err();
-#ifndef WIN32
-            if (socketError == EINTR || socketError == EWOULDBLOCK || socketError == EAGAIN)
+            isRs = (socketError != 0);
+            if (!NetworkHelp::IsError(socketError))
             {
                 isRs = true;
             }
-#else
-            if (socketError == WSAEINTR || socketError == WSAEWOULDBLOCK)
-            {
-                isRs = true;
-            }
-#endif
+
+            if (!isRs)
+                LOG_WARN("recv size:" << dataSize << " error:" << socketError);
+
             break;
         }
     }
 
-    // 将收到的信息打包成packet分发给所有Actor
+    // 数据打包成packet进行分发
     if (isRs)
     {
-        while (true) 
+        const auto pNetwork = this->GetParent<Network>();
+        const auto iNetworkType = pNetwork->GetNetworkType();
+        while (true)
         {
             const auto pPacket = _recvBuffer->GetPacket();
             if (pPacket == nullptr)
                 break;
 
-            if(pPacket->GetMsgId() == Proto::MsgId::MI_Ping)
+            const auto msgId = pPacket->GetMsgId();
+            const bool isTcp = NetworkHelp::IsTcp(iNetworkType);
+            // HTTP
+            if (!isTcp)
             {
-                // RecvPing();
+                if (msgId == Proto::MsgId::MI_HttpRequestBad)
+                {
+                    // 404
+                    MessageSystemHelp::SendHttpResponse404(pPacket);
+                    DynamicPacketPool::GetInstance()->FreeObject(pPacket);
+                    continue;
+                }
             }
+            // TCP
             else
             {
-                if (_pNetWork->IsBroadcast() && _pNetWork->GetThread() != nullptr)
+                if (msgId == Proto::MsgId::MI_Ping)
                 {
-                    ThreadMgr::GetInstance()->DispatchPacket(pPacket);
-                }
-                else
-                {
-                    _pNetWork->GetThread()->AddPacketToList(pPacket);
+                    //RecvPing();
+                    continue;
                 }
             }
+
+            if (!isTcp)
+            {
+                if ((msgId <= Proto::MsgId::MI_HttpBegin || msgId >= Proto::MsgId::MI_HttpEnd) && msgId != Proto::MsgId::MI_HttpOuterResponse)
+                {
+                    // 检查一下http协议编号，非法
+                    LOG_WARN("http connect recv. tcp proto");
+                    DynamicPacketPool::GetInstance()->FreeObject(pPacket);
+                    continue;
+                }
+            }
+
+            ThreadMgr::GetInstance()->DispatchPacket(pPacket);
         }
     }
 
     return isRs;
 }
 
-// 发送缓冲区是否有数据
 bool ConnectObj::HasSendData() const
 {
     return _sendBuffer->HasData();
 }
 
-// 发送packet到发送缓冲区
-void ConnectObj::SendPacket(Packet *pPacket) const
+void ConnectObj::SendPacket(Packet* pPacket) const
 {
-	_sendBuffer->AddPacket(pPacket);
+    _sendBuffer->AddPacket(pPacket);
+    DynamicPacketPool::GetInstance()->FreeObject(pPacket);
 }
 
-// 从发送缓存区读取发送数据
 bool ConnectObj::Send() const
 {
-    while(true)
+    // 对于网络连接，如果可写，表示连接建立成功了，状态转移：正在连接->已连接
+    if (_state == ConnectStateType::Connecting)
+    {
+        ChangeStateToConnected();
+        return true;
+    }
+
+    while (true) 
     {
         char* pBuffer = nullptr;
         const int needSendSize = _sendBuffer->GetBuffer(pBuffer);
-        if(needSendSize <= 0)
-            return true;
 
-        const int size = ::send(_socket, pBuffer, needSendSize, 0);
-        // 发送成功
-        if(size > 0)
+        // 没有数据可发送
+        if (needSendSize <= 0)
+        {
+            return true;
+        }
+
+        const int size = ::send(_socketKey.Socket, pBuffer, needSendSize, 0);
+        if (size > 0)
         {
             _sendBuffer->RemoveDate(size);
-            // 发送缓冲区数据还没发完，等下次再发
-            if(size < needSendSize)
+
+            // 下一帧再发送
+            if (size < needSendSize)
+            {
                 return true;
+            }
         }
-        // 发送失败
-        else if(size <= 0)
+        else if (size <= 0)
         {
             const auto socketError = _sock_err();
-			std::cout << "needSendSize:" << needSendSize << " error:" << socketError << std::endl;
+            std::cout << "needSendSize:" << needSendSize << " error:" << socketError << std::endl;
             return false;
         }
     }
@@ -174,7 +227,33 @@ bool ConnectObj::Send() const
 
 void ConnectObj::Close()
 {
-    const auto pPacketDis = new Packet(Proto::MsgId::MI_NetworkDisconnectToNet, GetSocket());
-    // 发送packet到NetWork所在线程并进行断开连接处理（使用发送packet的方式是因为Close可能会在其他线程调用）
-    _pNetWork->GetThread()->AddPacketToList(pPacketDis);
+    // ConnectoObj 一定和Network在同一个线程中的，这里，只需要本线程发送数据即可
+    const auto pPacketDis = MessageSystemHelp::CreatePacket(Proto::MsgId::MI_NetworkRequestDisconnect, this);
+    GetSystemManager()->GetMessageSystem()->AddPacketToList(pPacketDis);
+    pPacketDis->OpenRef();
+}
+
+ConnectStateType ConnectObj::GetState() const
+{
+    return _state;
+}
+
+void ConnectObj::ChangeStateToConnected()
+{
+    _state = ConnectStateType::Connected;
+    if (GetObjectKey().KeyType == ObjectKeyType::App)
+    {
+        auto pLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+        pLocator->AddNetworkIdentify(GetObjectKey().KeyValue.KeyInt64, GetSocketKey(), GetObjectKey());
+    }
+    else
+    {
+        // 通知逻辑层，有连接连接成功了
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkConnected, this);
+    }
+}
+
+void ConnectObj::ModifyConnectKey(ObjectKey key)
+{
+    _objKey = key;
 }

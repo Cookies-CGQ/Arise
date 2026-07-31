@@ -1,57 +1,59 @@
-#include "base_buffer.h"
 #include <iostream>
 #include <cstring>
-#include <string>
+#include "base_buffer.h"
+#include "log4_help.h"
 
-unsigned Buffer::GetEmptySize()
+unsigned int Buffer::GetEmptySize()
 {
     return _bufferSize - _endIndex;
 }
 
-void Buffer::ReAllocBuffer(unsigned int dataLength)
+void Buffer::ReAllocBuffer(const unsigned int dataLength)
 {
-    // 如果缓冲区已经超过最大缓冲区，可能有异常
-    if(_bufferSize >= MAX_SIZE)
+	// 如果缓冲区超过最大缓冲值，发出警告
+	if (_bufferSize >= MAX_SIZE) 
     {
-        std::cout << "Buffer::ReAllocBuffer: Buffer size is too large!" << std::endl;
-        return;
-    }
+		std::cout << "Buffer::Realloc except!! Max size:" << _bufferSize << std::endl;
+	}
 
-    // 新扩容缓冲区
     char* tempBuffer = new char[_bufferSize + ADDITIONAL_SIZE];
-    unsigned int newEndIndex;
-    // 情况一：未环回
+    unsigned int _newEndIndex = 0;
+    // 此时数据未成环且一定有数据
     if(_beginIndex < _endIndex)
     {
         ::memcpy(tempBuffer, _buffer + _beginIndex, _endIndex - _beginIndex);
-        newEndIndex = _endIndex - _beginIndex;
+        _newEndIndex = _endIndex - _beginIndex;
     }
-    // 情况二：环回
+    // 此时有几种情况：1、数据为空；2、数据为满；3、数据成环；2 3情况同一处理
     else
     {
-        // 为空
+        // 数据为空
         if(_beginIndex == _endIndex && dataLength <= 0)
         {
-            newEndIndex = 0;
+            _newEndIndex = 0;
         }
-        // 为满
+        // 数据为满/数据成环 
         else
         {
-            // 先copy尾部
+            // 从_beginIndex拷贝到缓冲区结束
             ::memcpy(tempBuffer, _buffer + _beginIndex, _bufferSize - _beginIndex);
-            newEndIndex = _bufferSize - _beginIndex;
-            // 再追加头部
+            _newEndIndex = _bufferSize - _beginIndex;
+            // 拷贝循环的数据
             if(_endIndex > 0)
             {
-                ::memcpy(tempBuffer + newEndIndex, _buffer, _endIndex);
-                newEndIndex += _endIndex;
+                ::memcpy(tempBuffer + _newEndIndex, _buffer, _endIndex);
+                _newEndIndex += _endIndex;
             }
         }
     }
 
-    _bufferSize += ADDITIONAL_SIZE;
     delete[] _buffer;
     _buffer = tempBuffer;
+    _bufferSize += ADDITIONAL_SIZE;
     _beginIndex = 0;
-    _endIndex = newEndIndex;
+    _endIndex = _newEndIndex;
+
+#if TestNetwork
+	LOG_WARN("Buffer::Realloc. _bufferSize:" << _bufferSize );
+#endif
 }

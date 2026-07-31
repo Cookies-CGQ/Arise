@@ -1,78 +1,75 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <queue>
-#include <string>
 #include <thread>
 #include <vector>
+#include <queue>
+#include <functional>
+#include "system.h"
+#include "disposable.h"
+#include "entity.h"
 
-#include "thread_obj.h"
+// 控制台命令系统
+// 额外的一个线程当作控制台输入线程
+// 命令格式：采用二级命令：<一级命令> <二级命令> [参数...]
+// 例如：login -a ayanami，login是一级命令为登录模块，二级命令选择模块的具体操作，ayanami表示参数
 
 #define ConsoleMaxBuffer 512
 
-// 控制台命令处理函数。
-// 参数是拆分后的字符串向量，第一个元素为命令名，后续为参数。
 typedef std::function<void(std::vector<std::string>&)> HandleConsole;
 
-// 一组二级控制台命令的基类。
-// 典型输入格式为：
-//   <cmd> <sub_cmd> [arg1] [arg2]
-// 其中 <cmd> 由 Console::_handles 定位到某个 ConsoleCmd 对象，
-// <sub_cmd> 再由 ConsoleCmd::_handles 定位到具体处理函数。
+// 管理一个一级命令模块
 class ConsoleCmd : public IDisposable
 {
 public:
-	// 子类在这里调用 OnRegisterHandler() 注册自身支持的二级命令。
+    // 注册模块支持的二级命令
 	virtual void RegisterHandler() = 0;
+	// 显示模块帮助
+    virtual void HandleHelp() = 0;
+
 	void Dispose() override;
-	// 按参数数组分发命令。params[0] 是一级命令，params[1] 是二级命令。
+    // 分发二级命令
 	void Process(std::vector<std::string>& params);
 
 protected:
-	// 注册二级命令和对应处理函数；同名 key 会覆盖旧处理函数。
+    // 注册二级命令
 	void OnRegisterHandler(std::string key, HandleConsole handler);
-    static bool CheckParamCnt(std::vector<std::string>& params, const size_t count);
+    // 检查业务参数数量
+	static bool CheckParamCnt(std::vector<std::string>& params, const size_t count);
 
 private:
-	// key: 二级命令名；value: 对应的处理函数。
-	std::map<std::string, HandleConsole> _handles;
+	std::map<std::string, HandleConsole> _handles; // 二级命令集合
 };
 
-// 控制台输入入口。
-// Init() 创建一个后台线程阻塞读取 stdin；Update() 在业务线程中取出输入并分发。
-class Console : public ThreadObject
+// 控制台管理器
+class Console : public Entity<Console>, public IAwakeSystem<>
 {
 public:
-	bool Init() override;
-	void RegisterMsgFunction() override;
-	void Update() override;
-	void Dispose() override;
+    // 初始化
+	void Awake() override;
+	void BackToPool() override;
 
-protected:
-	// 注册一级命令。
-	// T 必须继承 ConsoleCmd，且默认构造后能在 RegisterHandler() 中注册二级命令。
+    // 帧函数 -- 执行命令
+	void Update();
+
+    // 注册命令
 	template<class T>
 	void Register(std::string cmd);
 
 protected:
-	// key: 一级命令名；value: 负责该一级命令下所有二级命令的处理对象。
-	std::map<std::string, std::shared_ptr<ConsoleCmd>> _handles;
+	std::map<std::string, ConsoleCmd*> _handles; // 保存一级命令
 
-	// 后台输入线程与 Update() 之间共享命令队列，因此入队/出队都需要加锁。
 	std::mutex _lock;
-	std::thread _thread;
-	std::queue<std::string> _commands;
-    bool _isRun{ true };
+	std::thread _thread; // 控制台输入线程，用于等待控制台输入（没有输入回车会阻塞），输入线程只负责读取和排队，真正的命令处理函数在服务器主更新线程执行。
+	std::queue<std::string> _commands; // 待执行命令队列
+
+	bool _isRun = true;
 };
 
 template<class T>
 void Console::Register(std::string cmd)
 {
-	std::shared_ptr<T> pObj = std::make_shared<T>();
-	// 先让命令对象完成自身二级命令注册，再挂到 Console 的一级命令表中。
-	pObj->RegisterHandler();
-	this->_handles.insert(std::make_pair(cmd, pObj));
+	T* pObj = new T();	
+	pObj->RegisterHandler(); // 二级命令
+	this->_handles[cmd] = pObj; 
 }
+

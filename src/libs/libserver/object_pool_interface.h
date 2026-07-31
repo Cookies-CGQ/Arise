@@ -1,16 +1,15 @@
 #pragma once
 
-class ObjectBlock;
+#include "component.h"
+#include "disposable.h"
 
-class IDynamicObjectPool
+class IDynamicObjectPool:public IDisposable
 {
 public:
-    virtual ~IDynamicObjectPool() = default;
-    // 帧函数 -- 更新对象池中的对象
+    // 更新对象池内部状态
     virtual void Update() = 0;
-    // 销毁对象池
-    virtual void DestroyInstance() = 0;
     // 回收对象
-    virtual void FreeObject(ObjectBlock* pObj) = 0;
+    virtual void FreeObject(IComponent* pObj) = 0;
+    // 显示对象池状态信息
+    virtual void Show() = 0;
 };
-

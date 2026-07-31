@@ -29,21 +29,33 @@ static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_proto_5fid_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\016proto_id.proto\022\005Proto*\374\002\n\005MsgId\022\010\n\004Non"
-  "e\020\000\022\025\n\021MI_NetworkConnect\020\001\022\024\n\020MI_Network"
-  "Listen\020\002\022\030\n\024MI_NetworkDisconnect\020\003\022\032\n\026MI"
-  "_NetworkDisconnectEx\020\004\022\035\n\031MI_NetworkDisc"
-  "onnectToNet\020\005\022\013\n\007MI_Ping\020e\022\025\n\020C2L_Accoun"
+  "\n\016proto_id.proto\022\005Proto*\350\006\n\005MsgId\022\010\n\004Non"
+  "e\020\000\022\025\n\021MI_NetworkConnect\020\001\022\027\n\023MI_Network"
+  "Connected\020\002\022\024\n\020MI_NetworkListen\020\003\022\027\n\023MI_"
+  "NetworkListenKey\020\004\022\030\n\024MI_NetworkDisconne"
+  "ct\020\n\022\032\n\026MI_NetworkDisconnectEx\020\013\022\037\n\033MI_N"
+  "etworkRequestDisconnect\020\024\022\026\n\022MI_RemoveCo"
+  "mponent\0202\022\026\n\022MI_CreateComponent\0203\022\013\n\007MI_"
+  "Ping\020e\022\022\n\016MI_AppInfoSync\020g\022\025\n\020C2L_Accoun"
   "tCheck\020\351\007\022\027\n\022C2L_AccountCheckRs\020\352\007\022!\n\034MI"
   "_AccountQueryOnlineToRedis\020\353\007\022#\n\036MI_Acco"
-  "untQueryOnlineToRedisRs\020\354\007\022\034\n\027MI_Account"
-  "CheckToHttpRs\020\355\007\022\026\n\021MI_RobotSyncState\020\211\'"
-  "\022\026\n\021MI_RobotTestBegin\020\354\'\022\024\n\017MI_RobotTest"
-  "End\020\355\'b\006proto3"
+  "untQueryOnlineToRedisRs\020\354\007\022\031\n\024L2DB_Query"
+  "PlayerList\020\362\007\022\033\n\026L2DB_QueryPlayerListRs\020"
+  "\363\007\022\025\n\020G2DB_QueryPlayer\020\315\010\022\027\n\022G2DB_QueryP"
+  "layerRs\020\316\010\022\023\n\016L2C_PlayerList\020\317\010\022\025\n\020C2L_C"
+  "reatePlayer\020\321\010\022\027\n\022C2L_CreatePlayerRs\020\322\010\022"
+  "\026\n\021L2DB_CreatePlayer\020\323\010\022\030\n\023L2DB_CreatePl"
+  "ayerRs\020\324\010\022\024\n\017G2DB_SavePlayer\020\210\016\022\026\n\021MI_Ro"
+  "botSyncState\020\211\'\022\021\n\014MI_HttpBegin\020\220N\022\031\n\024MI"
+  "_HttpInnerResponse\020\221N\022\026\n\021MI_HttpRequestB"
+  "ad\020\222N\022\030\n\023MI_HttpRequestLogin\020\223N\022\017\n\nMI_Ht"
+  "tpEnd\020\203R\022\030\n\023MI_HttpOuterRequest\020\204R\022\031\n\024MI"
+  "_HttpOuterResponse\020\205R\022\022\n\014MI_CmdThread\020\241\234"
+  "\001\022\017\n\tMI_CmdApp\020\242\234\001b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_proto_5fid_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_proto_5fid_2eproto = {
-    false, false, 414, descriptor_table_protodef_proto_5fid_2eproto,
+    false, false, 906, descriptor_table_protodef_proto_5fid_2eproto,
     "proto_id.proto",
     &descriptor_table_proto_5fid_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_proto_5fid_2eproto::offsets,
@@ -68,16 +80,37 @@ bool MsgId_IsValid(int value) {
     case 2:
     case 3:
     case 4:
-    case 5:
+    case 10:
+    case 11:
+    case 20:
+    case 50:
+    case 51:
     case 101:
+    case 103:
     case 1001:
     case 1002:
     case 1003:
     case 1004:
-    case 1005:
+    case 1010:
+    case 1011:
+    case 1101:
+    case 1102:
+    case 1103:
+    case 1105:
+    case 1106:
+    case 1107:
+    case 1108:
+    case 1800:
     case 5001:
-    case 5100:
-    case 5101:
+    case 10000:
+    case 10001:
+    case 10002:
+    case 10003:
+    case 10499:
+    case 10500:
+    case 10501:
+    case 20001:
+    case 20002:
       return true;
     default:
       return false;

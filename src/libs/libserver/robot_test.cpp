@@ -1,26 +1,17 @@
 #include "robot_test.h"
 #include "robot_state_type.h"
 #include "packet.h"
+#include "message_component.h"
 
 #include <iostream>
 
-bool RobotTest::Init()
-{
-    return true;
-}
-
-void RobotTest::RegisterMsgFunction()
-{
+void RobotTest::Awake() 
+{ 
     auto pMsgCallBack = new MessageCallBackFunction();
-    AttachCallBackHandler(pMsgCallBack);
+    AddComponent<MessageComponent>(pMsgCallBack);
 
     pMsgCallBack->RegisterFunction(Proto::MsgId::MI_RobotTestBegin, BindFunP1(this, &RobotTest::HandleTestBegin));
     pMsgCallBack->RegisterFunction(Proto::MsgId::MI_RobotTestEnd, BindFunP1(this, &RobotTest::HandleTestEnd));
-}
-
-void RobotTest::Update()
-{
-
 }
 
 void RobotTest::HandleTestBegin(Packet* pPacket)
