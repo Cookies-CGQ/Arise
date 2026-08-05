@@ -17,6 +17,7 @@ aux_source_directory(. SRCS)
 aux_source_directory(../../libs/libserver SRCS)
 aux_source_directory(../../libs/libserver/protobuf SRCS)
 aux_source_directory(../../libs/libserver/mongoose SRCS)
+aux_source_directory(../../libs/libplayer SRCS)
 
 include_directories(../../libs)
 include_directories(../../../../include/common)
@@ -24,7 +25,7 @@ include_directories(/usr/local/include)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../../bin")
 
-set(CMAKE_CXX_FLAGS "-Wall -std=c++14 -pthread -lprotobuf -ljsoncpp -lyaml-cpp -llog4cplus -DEPOLL")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++14 -pthread -lprotobuf -ljsoncpp -lyaml-cpp -llog4cplus -lhiredis -luuid -DEPOLL")
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -O0 -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 

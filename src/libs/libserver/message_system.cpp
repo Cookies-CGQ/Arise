@@ -1,7 +1,7 @@
 #include "message_system.h"
+#include <utility>
 #include "system_manager.h"
 #include "packet.h"
-#include "message_component.h"
 #include "entity_system.h"
 #include "component.h"
 #include "object_pool_packet.h"
@@ -26,6 +26,34 @@ void MessageSystem::AddPacketToList(Packet* pPacket)
     pPacket->AddRef();
 }
 
+void MessageSystem::RegisterFunction(IEntity* obj, int msgId, MsgCallbackFun cbfun)
+{
+    auto iter = _callbacks.find(msgId);
+    if (iter == _callbacks.end())
+    {
+        _callbacks.insert(std::make_pair(msgId, std::list<IMessageCallBack*>()));
+    }
+
+    const auto pCallback = obj->AddComponent<MessageCallBack>(std::move(cbfun));
+    _callbacks[msgId].push_back(pCallback);
+}
+
+void MessageSystem::RemoveFunction(IComponent* obj)
+{
+    for (auto iter1 = _callbacks.begin(); iter1 != _callbacks.end(); ++iter1)
+    {
+        auto subList = iter1->second;
+        auto iter2 = std::find_if(subList.begin(), subList.end(), [obj](auto one){
+                return one->GetSN() == obj->GetSN();
+            });
+
+        if (iter2 == subList.end())
+            continue;
+
+        subList.erase(iter2);
+    }
+}
+
 void MessageSystem::Update(EntitySystem* pEntities)
 {
     _packet_lock.lock();
@@ -35,52 +63,26 @@ void MessageSystem::Update(EntitySystem* pEntities)
     }
     _packet_lock.unlock();
 
-    if (_cachePackets.GetReaderCache()->size() == 0)
+    if (_cachePackets.GetReaderCache()->empty())
         return;
 
-    auto pCollections = pEntities->GetComponentCollections<MessageComponent>();
-    if (pCollections == nullptr) 
-    {
-        _cachePackets.GetReaderCache()->clear();
-        return;
-    }
-
-    pCollections->Swap();
-
-    auto lists = pCollections->GetAll();
     auto packetLists = _cachePackets.GetReaderCache();
     for (auto iter = packetLists->begin(); iter != packetLists->end(); ++iter)
     {
         auto pPacket = (*iter);
-        Process(pPacket, lists);
+        const auto finditer = _callbacks.find(pPacket->GetMsgId());
+        if (finditer != _callbacks.end())
+        {
+            auto handleList = finditer->second;
+            for (auto pCallBack : handleList)
+            {
+                pCallBack->ProcessPacket(pPacket);
+            }
+        }
 
-        // 本线程处理完这个消息之后，这个包的引用计数-1
+        // 离开时 Ref - 1
         pPacket->RemoveRef();
     }
 
     _cachePackets.GetReaderCache()->clear();
-}
-
-void MessageSystem::Process(Packet* pPacket, std::map<uint64, IComponent*>& lists)
-{
-    for (auto iter = lists.begin(); iter != lists.end(); ++iter)
-    {
-        MessageComponent* pMsgComponent = static_cast<MessageComponent*>(iter->second);
-        if (pMsgComponent->IsFollowMsgId(pPacket))
-        {
-#ifdef LOG_TRACE_COMPONENT_OPEN
-            const google::protobuf::EnumDescriptor* descriptor = Proto::MsgId_descriptor();
-            const auto name = descriptor->FindValueByNumber(pPacket->GetMsgId())->name();
-
-            auto pParent = pMsgComponent->GetParent();
-            const auto traceMsg = std::string("process. ")
-                .append(" sn:").append(std::to_string(pPacket->GetSN()))
-                .append(" msgId:").append(name)
-                .append(" process by:").append(pParent->GetTypeName());                
-            ComponentHelp::GetTraceComponent()->Trace(TraceType::Packet, pPacket->GetSocketKey().Socket, traceMsg);
-#endif
-
-            pMsgComponent->ProcessPacket(pPacket);
-        }
-    }
 }

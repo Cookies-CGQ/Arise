@@ -1,10 +1,9 @@
+#include <iterator>
 #include "thread.h"
 #include "global.h"
 #include "entity_system.h"
 #include "log4.h"
 #include "component_help.h"
-
-#include <iterator>
 
 Thread::Thread(ThreadType threadType)
 {
@@ -14,7 +13,7 @@ Thread::Thread(ThreadType threadType)
 
 Thread::~Thread()
 {
-    std::cout << "close thread [3/3] delete. " << std::endl;
+
 }
 
 void Thread::Start()
@@ -35,9 +34,6 @@ void Thread::Start()
                 Update();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
-
-            const auto theadId = _thread.get_id();
-            std::cout << "close thread [1/3] stop. thread id:" << theadId << std::endl;
 
             Dispose();
             log4cplus::threadCleanup();
@@ -63,9 +59,7 @@ void Thread::DestroyThread()
 
     if (_thread.joinable())
     {
-        const auto theadId = _thread.get_id();
         _thread.join();
-        std::cout << "close thread [2/3] join. thread id:" << theadId << std::endl;
         _state = ThreadState::Destroy;
     }
 }

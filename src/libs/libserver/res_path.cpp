@@ -1,7 +1,7 @@
+#include "res_path.h"
 #include <ostream>
 #include "common.h"
 #include "util_string.h"
-#include "res_path.h"
 
 #if ENGINE_PLATFORM != PLATFORM_WIN32	
 #include <unistd.h>

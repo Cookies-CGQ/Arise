@@ -13,7 +13,7 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket)
     if (pPacket->GetMsgId() == Proto::MsgId::MI_CmdThread)
     {
         // 显示指令，每一个线程都执行
-        HandlerCreateMessage(pPacket);
+        HandlerCreateMessage(pPacket, true);
     }
     else
     {
@@ -32,14 +32,5 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket)
         }
 
         _nextThreadSn = iter->first;
-    }
-}
-
-void ThreadCollectorExclusive::HandlerCreateMessage(Packet* pPacket)
-{
-    auto pList = _threads.GetReaderCache();
-    for (auto iter = pList->begin(); iter != pList->end(); ++iter)
-    {
-        iter->second->GetMessageSystem()->AddPacketToList(pPacket);
     }
 }

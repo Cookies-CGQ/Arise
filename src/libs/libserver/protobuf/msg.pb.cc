@@ -153,8 +153,8 @@ PROTOBUF_CONSTEXPR CreateComponent::CreateComponent(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.params_)*/{}
   , /*decltype(_impl_.class_name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.parent_sn_)*/uint64_t{0u}
   , /*decltype(_impl_.thread_type_)*/0
+  , /*decltype(_impl_.is_to_all_thread_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct CreateComponentDefaultTypeInternal {
   PROTOBUF_CONSTEXPR CreateComponentDefaultTypeInternal()
@@ -485,7 +485,7 @@ const uint32_t TableStruct_msg_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(prot
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Proto::CreateComponent, _impl_.thread_type_),
   PROTOBUF_FIELD_OFFSET(::Proto::CreateComponent, _impl_.class_name_),
-  PROTOBUF_FIELD_OFFSET(::Proto::CreateComponent, _impl_.parent_sn_),
+  PROTOBUF_FIELD_OFFSET(::Proto::CreateComponent, _impl_.is_to_all_thread_),
   PROTOBUF_FIELD_OFFSET(::Proto::CreateComponent, _impl_.params_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Proto::RemoveComponent, _internal_metadata_),
@@ -679,74 +679,74 @@ static const ::_pb::Message* const file_default_instances[] = {
 };
 
 const char descriptor_table_protodef_msg_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\tmsg.proto\022\005Proto\032\010db.proto\"X\n\tCmdThrea"
+  "\n\tmsg.proto\022\005Proto\032\010db.proto\"e\n\tCmdThrea"
   "d\022*\n\010cmd_type\030\001 \001(\0162\030.Proto.CmdThread.Cm"
-  "dType\"\037\n\007CmdType\022\n\n\006Entity\020\000\022\010\n\004Pool\020\001\"F"
-  "\n\006CmdApp\022\'\n\010cmd_type\030\001 \001(\0162\025.Proto.CmdAp"
-  "p.CmdType\"\023\n\007CmdType\022\010\n\004Info\020\000\"\?\n\013AppInf"
-  "oSync\022\016\n\006app_id\030\001 \001(\005\022\020\n\010app_type\030\002 \001(\005\022"
-  "\016\n\006online\030\003 \001(\005\"9\n\021NetworkDisconnect\022\024\n\014"
-  "network_type\030\001 \001(\005\022\016\n\006socket\030\002 \001(\005\";\n\025Ne"
-  "tworkObjectKeyValue\022\021\n\tkey_int64\030\001 \001(\003\022\017"
-  "\n\007key_str\030\002 \001(\t\"r\n\020NetworkObjectKey\022-\n\010k"
-  "ey_type\030\001 \001(\0162\033.Proto.NetworkObjectKeyTy"
-  "pe\022/\n\tkey_value\030\002 \001(\0132\034.Proto.NetworkObj"
-  "ectKeyValue\"f\n\016NetworkConnect\022\024\n\014network"
-  "_type\030\001 \001(\005\022$\n\003key\030\002 \001(\0132\027.Proto.Network"
-  "ObjectKey\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\")\n\004H"
-  "ttp\022\014\n\004body\030\001 \001(\t\022\023\n\013status_code\030\002 \001(\005\"\226"
-  "\001\n\024CreateComponentParam\0223\n\004type\030\001 \001(\0162%."
-  "Proto.CreateComponentParam.ParamType\022\021\n\t"
-  "int_param\030\002 \001(\005\022\024\n\014string_param\030\003 \001(\t\" \n"
-  "\tParamType\022\007\n\003Int\020\000\022\n\n\006String\020\001\"z\n\017Creat"
-  "eComponent\022\023\n\013thread_type\030\001 \001(\005\022\022\n\nclass"
-  "_name\030\002 \001(\t\022\021\n\tparent_sn\030\003 \001(\004\022+\n\006params"
-  "\030\004 \003(\0132\033.Proto.CreateComponentParam\"\035\n\017R"
-  "emoveComponent\022\n\n\002sn\030\001 \001(\004\"1\n\014AccountChe"
-  "ck\022\017\n\007account\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"D\n"
-  "\016AccountCheckRs\0222\n\013return_code\030\001 \001(\0162\035.P"
-  "roto.AccountCheckReturnCode\",\n\nRobotStat"
-  "e\022\017\n\007account\030\001 \001(\t\022\r\n\005state\030\002 \001(\005\"3\n\016Rob"
-  "otSyncState\022!\n\006states\030\001 \003(\0132\021.Proto.Robo"
-  "tState\"V\n\014PlayerLittle\022\n\n\002sn\030\001 \001(\004\022\014\n\004na"
-  "me\030\002 \001(\t\022\035\n\006gender\030\003 \001(\0162\r.Proto.Gender\022"
-  "\r\n\005level\030\004 \001(\005\"B\n\nPlayerList\022\017\n\007account\030"
-  "\001 \001(\t\022#\n\006player\030\002 \003(\0132\023.Proto.PlayerLitt"
-  "le\"\"\n\017QueryPlayerList\022\017\n\007account\030\001 \001(\t\" "
-  "\n\013QueryPlayer\022\021\n\tplayer_sn\030\001 \001(\004\"\?\n\rQuer"
-  "yPlayerRs\022\017\n\007account\030\001 \001(\t\022\035\n\006player\030\002 \001"
-  "(\0132\r.Proto.Player\";\n\014CreatePlayer\022\014\n\004nam"
-  "e\030\001 \001(\t\022\035\n\006gender\030\002 \001(\0162\r.Proto.Gender\"D"
-  "\n\016CreatePlayerRs\0222\n\013return_code\030\002 \001(\0162\035."
-  "Proto.CreatePlayerReturnCode\"B\n\020CreatePl"
-  "ayerToDB\022\017\n\007account\030\002 \001(\t\022\035\n\006player\030\003 \001("
-  "\0132\r.Proto.Player\"Y\n\022CreatePlayerToDBRs\022\017"
-  "\n\007account\030\001 \001(\t\0222\n\013return_code\030\002 \001(\0162\035.P"
-  "roto.CreatePlayerReturnCode\"!\n\014SelectPla"
-  "yer\022\021\n\tplayer_sn\030\001 \001(\004\"\215\001\n\016SelectPlayerR"
-  "s\022A\n\013return_code\030\001 \001(\0162,.Proto.SelectPla"
-  "yerRs.SelectPlayerReturnCode\"8\n\026SelectPl"
-  "ayerReturnCode\022\013\n\007SPRC_OK\020\000\022\021\n\rSPRC_NotF"
-  "ound\020\001\">\n\nSavePlayer\022\021\n\tplayer_sn\030\001 \001(\004\022"
-  "\035\n\006player\030\002 \001(\0132\r.Proto.Player*]\n\024Networ"
-  "kObjectKeyType\022\025\n\021ObjectKeyTypeNone\020\000\022\030\n"
-  "\024ObjectKeyTypeAccount\020\001\022\024\n\020ObjectKeyType"
-  "App\020\002*\232\001\n\026AccountCheckReturnCode\022\n\n\006ARC_"
-  "OK\020\000\022\017\n\013ARC_UNKONWN\020\001\022\031\n\025ARC_NOT_FOUND_A"
-  "CCOUNT\020\002\022\026\n\022ARC_PASSWORD_WRONG\020\003\022\017\n\013ARC_"
-  "LOGGING\020\004\022\017\n\013ARC_TIMEOUT\020\005\022\016\n\nARC_ONLINE"
-  "\020\006*G\n\023LoginHttpReturnCode\022\013\n\007LHRC_OK\020\000\022\020"
-  "\n\014LHRC_TIMEOUT\020\001\022\021\n\rLHRC_NOTFOUND\020\002*L\n\026C"
-  "reatePlayerReturnCode\022\021\n\rCPR_Create_OK\020\000"
-  "\022\017\n\013CPR_Unkonwn\020\001\022\016\n\nCPR_Rename\020\002b\006proto"
-  "3"
+  "dType\",\n\007CmdType\022\n\n\006Entity\020\000\022\010\n\004Pool\020\001\022\013"
+  "\n\007Connect\020\002\"F\n\006CmdApp\022\'\n\010cmd_type\030\001 \001(\0162"
+  "\025.Proto.CmdApp.CmdType\"\023\n\007CmdType\022\010\n\004Inf"
+  "o\020\000\"\?\n\013AppInfoSync\022\016\n\006app_id\030\001 \001(\005\022\020\n\010ap"
+  "p_type\030\002 \001(\005\022\016\n\006online\030\003 \001(\005\"9\n\021NetworkD"
+  "isconnect\022\024\n\014network_type\030\001 \001(\005\022\016\n\006socke"
+  "t\030\002 \001(\005\";\n\025NetworkObjectKeyValue\022\021\n\tkey_"
+  "int64\030\001 \001(\003\022\017\n\007key_str\030\002 \001(\t\"r\n\020NetworkO"
+  "bjectKey\022-\n\010key_type\030\001 \001(\0162\033.Proto.Netwo"
+  "rkObjectKeyType\022/\n\tkey_value\030\002 \001(\0132\034.Pro"
+  "to.NetworkObjectKeyValue\"f\n\016NetworkConne"
+  "ct\022\024\n\014network_type\030\001 \001(\005\022$\n\003key\030\002 \001(\0132\027."
+  "Proto.NetworkObjectKey\022\n\n\002ip\030\003 \001(\t\022\014\n\004po"
+  "rt\030\004 \001(\005\")\n\004Http\022\014\n\004body\030\001 \001(\t\022\023\n\013status"
+  "_code\030\002 \001(\005\"\226\001\n\024CreateComponentParam\0223\n\004"
+  "type\030\001 \001(\0162%.Proto.CreateComponentParam."
+  "ParamType\022\021\n\tint_param\030\002 \001(\005\022\024\n\014string_p"
+  "aram\030\003 \001(\t\" \n\tParamType\022\007\n\003Int\020\000\022\n\n\006Stri"
+  "ng\020\001\"\201\001\n\017CreateComponent\022\023\n\013thread_type\030"
+  "\001 \001(\005\022\022\n\nclass_name\030\002 \001(\t\022\030\n\020is_to_all_t"
+  "hread\030\003 \001(\010\022+\n\006params\030\004 \003(\0132\033.Proto.Crea"
+  "teComponentParam\"\035\n\017RemoveComponent\022\n\n\002s"
+  "n\030\001 \001(\004\"1\n\014AccountCheck\022\017\n\007account\030\001 \001(\t"
+  "\022\020\n\010password\030\002 \001(\t\"D\n\016AccountCheckRs\0222\n\013"
+  "return_code\030\001 \001(\0162\035.Proto.AccountCheckRe"
+  "turnCode\",\n\nRobotState\022\017\n\007account\030\001 \001(\t\022"
+  "\r\n\005state\030\002 \001(\005\"3\n\016RobotSyncState\022!\n\006stat"
+  "es\030\001 \003(\0132\021.Proto.RobotState\"V\n\014PlayerLit"
+  "tle\022\n\n\002sn\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\022\035\n\006gender\030"
+  "\003 \001(\0162\r.Proto.Gender\022\r\n\005level\030\004 \001(\005\"B\n\nP"
+  "layerList\022\017\n\007account\030\001 \001(\t\022#\n\006player\030\002 \003"
+  "(\0132\023.Proto.PlayerLittle\"\"\n\017QueryPlayerLi"
+  "st\022\017\n\007account\030\001 \001(\t\" \n\013QueryPlayer\022\021\n\tpl"
+  "ayer_sn\030\001 \001(\004\"\?\n\rQueryPlayerRs\022\017\n\007accoun"
+  "t\030\001 \001(\t\022\035\n\006player\030\002 \001(\0132\r.Proto.Player\";"
+  "\n\014CreatePlayer\022\014\n\004name\030\001 \001(\t\022\035\n\006gender\030\002"
+  " \001(\0162\r.Proto.Gender\"D\n\016CreatePlayerRs\0222\n"
+  "\013return_code\030\002 \001(\0162\035.Proto.CreatePlayerR"
+  "eturnCode\"B\n\020CreatePlayerToDB\022\017\n\007account"
+  "\030\002 \001(\t\022\035\n\006player\030\003 \001(\0132\r.Proto.Player\"Y\n"
+  "\022CreatePlayerToDBRs\022\017\n\007account\030\001 \001(\t\0222\n\013"
+  "return_code\030\002 \001(\0162\035.Proto.CreatePlayerRe"
+  "turnCode\"!\n\014SelectPlayer\022\021\n\tplayer_sn\030\001 "
+  "\001(\004\"\215\001\n\016SelectPlayerRs\022A\n\013return_code\030\001 "
+  "\001(\0162,.Proto.SelectPlayerRs.SelectPlayerR"
+  "eturnCode\"8\n\026SelectPlayerReturnCode\022\013\n\007S"
+  "PRC_OK\020\000\022\021\n\rSPRC_NotFound\020\001\">\n\nSavePlaye"
+  "r\022\021\n\tplayer_sn\030\001 \001(\004\022\035\n\006player\030\002 \001(\0132\r.P"
+  "roto.Player*]\n\024NetworkObjectKeyType\022\025\n\021O"
+  "bjectKeyTypeNone\020\000\022\030\n\024ObjectKeyTypeAccou"
+  "nt\020\001\022\024\n\020ObjectKeyTypeApp\020\002*\232\001\n\026AccountCh"
+  "eckReturnCode\022\n\n\006ARC_OK\020\000\022\017\n\013ARC_UNKONWN"
+  "\020\001\022\031\n\025ARC_NOT_FOUND_ACCOUNT\020\002\022\026\n\022ARC_PAS"
+  "SWORD_WRONG\020\003\022\017\n\013ARC_LOGGING\020\004\022\017\n\013ARC_TI"
+  "MEOUT\020\005\022\016\n\nARC_ONLINE\020\006*G\n\023LoginHttpRetu"
+  "rnCode\022\013\n\007LHRC_OK\020\000\022\020\n\014LHRC_TIMEOUT\020\001\022\021\n"
+  "\rLHRC_NOTFOUND\020\002*L\n\026CreatePlayerReturnCo"
+  "de\022\021\n\rCPR_Create_OK\020\000\022\017\n\013CPR_Unkonwn\020\001\022\016"
+  "\n\nCPR_Rename\020\002b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_msg_2eproto_deps[1] = {
   &::descriptor_table_db_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_msg_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_msg_2eproto = {
-    false, false, 2401, descriptor_table_protodef_msg_2eproto,
+    false, false, 2422, descriptor_table_protodef_msg_2eproto,
     "msg.proto",
     &descriptor_table_msg_2eproto_once, descriptor_table_msg_2eproto_deps, 1, 27,
     schemas, file_default_instances, TableStruct_msg_2eproto::offsets,
@@ -768,6 +768,7 @@ bool CmdThread_CmdType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
+    case 2:
       return true;
     default:
       return false;
@@ -777,6 +778,7 @@ bool CmdThread_CmdType_IsValid(int value) {
 #if (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
 constexpr CmdThread_CmdType CmdThread::Entity;
 constexpr CmdThread_CmdType CmdThread::Pool;
+constexpr CmdThread_CmdType CmdThread::Connect;
 constexpr CmdThread_CmdType CmdThread::CmdType_MIN;
 constexpr CmdThread_CmdType CmdThread::CmdType_MAX;
 constexpr int CmdThread::CmdType_ARRAYSIZE;
@@ -2990,8 +2992,8 @@ CreateComponent::CreateComponent(const CreateComponent& from)
   new (&_impl_) Impl_{
       decltype(_impl_.params_){from._impl_.params_}
     , decltype(_impl_.class_name_){}
-    , decltype(_impl_.parent_sn_){}
     , decltype(_impl_.thread_type_){}
+    , decltype(_impl_.is_to_all_thread_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -3003,9 +3005,9 @@ CreateComponent::CreateComponent(const CreateComponent& from)
     _this->_impl_.class_name_.Set(from._internal_class_name(), 
       _this->GetArenaForAllocation());
   }
-  ::memcpy(&_impl_.parent_sn_, &from._impl_.parent_sn_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.thread_type_) -
-    reinterpret_cast<char*>(&_impl_.parent_sn_)) + sizeof(_impl_.thread_type_));
+  ::memcpy(&_impl_.thread_type_, &from._impl_.thread_type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.is_to_all_thread_) -
+    reinterpret_cast<char*>(&_impl_.thread_type_)) + sizeof(_impl_.is_to_all_thread_));
   // @@protoc_insertion_point(copy_constructor:Proto.CreateComponent)
 }
 
@@ -3016,8 +3018,8 @@ inline void CreateComponent::SharedCtor(
   new (&_impl_) Impl_{
       decltype(_impl_.params_){arena}
     , decltype(_impl_.class_name_){}
-    , decltype(_impl_.parent_sn_){uint64_t{0u}}
     , decltype(_impl_.thread_type_){0}
+    , decltype(_impl_.is_to_all_thread_){false}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.class_name_.InitDefault();
@@ -3053,9 +3055,9 @@ void CreateComponent::Clear() {
 
   _impl_.params_.Clear();
   _impl_.class_name_.ClearToEmpty();
-  ::memset(&_impl_.parent_sn_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.thread_type_) -
-      reinterpret_cast<char*>(&_impl_.parent_sn_)) + sizeof(_impl_.thread_type_));
+  ::memset(&_impl_.thread_type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.is_to_all_thread_) -
+      reinterpret_cast<char*>(&_impl_.thread_type_)) + sizeof(_impl_.is_to_all_thread_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -3083,10 +3085,10 @@ const char* CreateComponent::_InternalParse(const char* ptr, ::_pbi::ParseContex
         } else
           goto handle_unusual;
         continue;
-      // uint64 parent_sn = 3;
+      // bool is_to_all_thread = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
-          _impl_.parent_sn_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          _impl_.is_to_all_thread_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -3149,10 +3151,10 @@ uint8_t* CreateComponent::_InternalSerialize(
         2, this->_internal_class_name(), target);
   }
 
-  // uint64 parent_sn = 3;
-  if (this->_internal_parent_sn() != 0) {
+  // bool is_to_all_thread = 3;
+  if (this->_internal_is_to_all_thread() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(3, this->_internal_parent_sn(), target);
+    target = ::_pbi::WireFormatLite::WriteBoolToArray(3, this->_internal_is_to_all_thread(), target);
   }
 
   // repeated .Proto.CreateComponentParam params = 4;
@@ -3193,14 +3195,14 @@ size_t CreateComponent::ByteSizeLong() const {
         this->_internal_class_name());
   }
 
-  // uint64 parent_sn = 3;
-  if (this->_internal_parent_sn() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_parent_sn());
-  }
-
   // int32 thread_type = 1;
   if (this->_internal_thread_type() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_thread_type());
+  }
+
+  // bool is_to_all_thread = 3;
+  if (this->_internal_is_to_all_thread() != 0) {
+    total_size += 1 + 1;
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -3225,11 +3227,11 @@ void CreateComponent::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const 
   if (!from._internal_class_name().empty()) {
     _this->_internal_set_class_name(from._internal_class_name());
   }
-  if (from._internal_parent_sn() != 0) {
-    _this->_internal_set_parent_sn(from._internal_parent_sn());
-  }
   if (from._internal_thread_type() != 0) {
     _this->_internal_set_thread_type(from._internal_thread_type());
+  }
+  if (from._internal_is_to_all_thread() != 0) {
+    _this->_internal_set_is_to_all_thread(from._internal_is_to_all_thread());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -3256,11 +3258,11 @@ void CreateComponent::InternalSwap(CreateComponent* other) {
       &other->_impl_.class_name_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(CreateComponent, _impl_.thread_type_)
-      + sizeof(CreateComponent::_impl_.thread_type_)
-      - PROTOBUF_FIELD_OFFSET(CreateComponent, _impl_.parent_sn_)>(
-          reinterpret_cast<char*>(&_impl_.parent_sn_),
-          reinterpret_cast<char*>(&other->_impl_.parent_sn_));
+      PROTOBUF_FIELD_OFFSET(CreateComponent, _impl_.is_to_all_thread_)
+      + sizeof(CreateComponent::_impl_.is_to_all_thread_)
+      - PROTOBUF_FIELD_OFFSET(CreateComponent, _impl_.thread_type_)>(
+          reinterpret_cast<char*>(&_impl_.thread_type_),
+          reinterpret_cast<char*>(&other->_impl_.thread_type_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata CreateComponent::GetMetadata() const {

@@ -1,4 +1,3 @@
-#include <iostream>
 #include "thread_mgr.h"
 #include "common.h"
 #include "message_system.h"
@@ -11,6 +10,10 @@
 #include "console.h"
 #include "console_cmd_thread.h"
 #include "thread_collector_exclusive.h"
+#include "global.h"
+#include "trace_component.h"
+#include "console_cmd_trace.h"
+#include "component_help.h"
 
 ThreadMgr::ThreadMgr()
 {
@@ -33,6 +36,16 @@ void ThreadMgr::InitializeThread()
     if (pAppCofig->MysqlThreadNum > 0)
     {
         CreateThread(MysqlThread, pAppCofig->MysqlThreadNum);
+    }
+
+    if (pAppConfig->LogicThreadNum > 0 || pAppConfig->MysqlThreadNum > 0)
+    {
+        // 如果是多线程，自动创建监听和连接进程
+        if (pAppConfig->ListenThreadNum > 0)
+            CreateThread(ListenThread, pAppConfig->ListenThreadNum);
+
+        if (pAppConfig->ConnectThreadNum > 0)
+            CreateThread(ConnectThread, pAppConfig->ConnectThreadNum);
     }
 }
 
@@ -74,6 +87,11 @@ void ThreadMgr::InitializeGlobalComponent(APP_TYPE ppType, int appId)
     auto pConsole = GetEntitySystem()->AddComponent<Console>();
     pConsole->Register<ConsoleCmdThread>("thread");
 
+#ifdef LOG_TRACE_COMPONENT_OPEN
+    GetEntitySystem()->AddComponent<TraceComponent>();
+    pConsole->Register<ConsoleCmdTrace>("trace");
+#endif
+
     // 每个线程上的基本组件
     InitComponent(ThreadType::MainThread);
 }
@@ -112,7 +130,7 @@ void ThreadMgr::UpdateCreatePacket()
             }
 
             auto pThreadCollector = _threads[threadType];
-            pThreadCollector->HandlerCreateMessage(pPacket);
+            pThreadCollector->HandlerCreateMessage(pPacket, pCreateProto.is_to_all_thread());
         }
         else
         {
@@ -128,7 +146,8 @@ void ThreadMgr::UpdateCreatePacket()
 void ThreadMgr::UpdateDispatchPacket()
 {
     _packet_lock.lock();
-    if (_packets.CanSwap()) {
+    if (_packets.CanSwap()) 
+    {
         _packets.Swap();
     }
     _packet_lock.unlock();

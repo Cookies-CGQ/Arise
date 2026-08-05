@@ -4,6 +4,7 @@
 #include "common.h"
 #include "entity.h"
 #include "system.h"
+#include "socket_object.h"
 
 // 通信方式：TCP + 自定义4字节帧头 + Protobuf包体
 // 通信协议：TotalSize(2字节，表示整帧长度，包含长度字段、消息号、包体) + MsgId(2字节，消息类型编号) + Payload(N字节，Protobuf二进制数据)
@@ -16,24 +17,18 @@ struct PacketHead
     unsigned short MsgId; // 协议类型
 };
 
-struct PacketInnerHead: public PacketHead
-{
-    unsigned int ThreadType;    // 线程类型
-    unsigned short ChooseType;
-};
-
 #pragma pack(pop)
 
 // 默认大小 10KB
 #define DEFAULT_PACKET_BUFFER_SIZE	1024 * 10
 
-class Packet: public Entity<Packet>, public Buffer, public IAwakeFromPoolSystem<Proto::MsgId, SOCKET>
+class Packet : public Entity<Packet>, public Buffer, public NetworkIdentify, public IAwakeFromPoolSystem<Proto::MsgId, NetworkIdentify*>
 {
 public:
     Packet();
     ~Packet();
     // 初始化对象
-    void Awake(Proto::MsgId, SOCKET socket) override;
+    void Awake(Proto::MsgId msgId, NetworkIdentify* pIdentify) override;
 
     // 反序列化
     template<class ProtoClass>
@@ -44,7 +39,7 @@ public:
         return proto;
     }
 
-    // 序列化
+    // protobuf 序列化
     template<class ProtoClass>
     void SerializeToBuffer(ProtoClass& protoClase)
     {
@@ -58,6 +53,19 @@ public:
         protoClase.SerializePartialToArray(GetBuffer(), total);
         FillData(total);
     }
+
+    // HTTP请求/响应 序列化
+    void SerializeToBuffer(const char* s, unsigned int len)
+    {
+        while (GetEmptySize() < len)
+        {
+            ReAllocBuffer();
+        }
+
+        ::memcpy(_buffer + _endIndex, s, len);
+        FillData(len);
+    }
+
     
     // 归还对象池
     void BackToPool() override;
@@ -71,24 +79,19 @@ public:
     void FillData(unsigned int size);
     // 申请空间
     void ReAllocBuffer();
-    // 获取socket
-    SOCKET GetSocket() const;
-    // 设置socket
-    void SetSocket(SOCKET socket);
 
-    // 引用计数
+    // packet跨线程引用计数
     // +1
     void AddRef();
     // -1
     void RemoveRef();
-    //
+    // 如果没有启动，即使引用计数为0也不会回收，只有启动了且引用计数为0才会进行回收
     void OpenRef();
-    //
+    // 该packet可以回收
     bool CanBack2Pool();
 
 private:
     Proto::MsgId _msgId; // 这个包的消息类型
-    SOCKET _socket;      // 包来自哪个socket
 
 private:
     std::atomic<int> _ref{0}; // 由于同一个packet包可能存在多个线程中处理，所以packet采用引用计数

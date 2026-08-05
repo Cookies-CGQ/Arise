@@ -2,7 +2,7 @@
 #include "libserver/server_app.h"
 #include "libserver/network_listen.h"
 #include "libserver/network_connector.h"
-#include "libserver/component_help.h"
+#include "libserver/global.h"
 #include "login.h"
 
 int main(int argc, char* argv[])

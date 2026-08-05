@@ -78,9 +78,9 @@ protected:
     void SetSocketOpt(SOCKET socket);
     // 创建socket
     SOCKET CreateSocket();
-    // 
+    // 检查socket是否有误，有误则断开socket连接
     bool CheckSocket(SOCKET socket);
-    // 
+    // 创建连接
     bool CreateConnectObj(SOCKET socket, ObjectKey key, ConnectStateType iState);
     // 消息处理 -- 断开连接
     void HandleDisconnect(Packet* pPacket);
@@ -96,7 +96,7 @@ protected:
     void ModifyEvent(int epollfd, int fd, int flag);
     // 删除事件监听
     void DeleteEvent(int epollfd, int fd);
-    // 
+    // 对于epoll，用于标记监听套接字对应哪个epoll_event[index]，方便后续监听套接字接收连接
     virtual void OnEpoll(SOCKET fd, int index) { };
 #else
     // 执行一次select

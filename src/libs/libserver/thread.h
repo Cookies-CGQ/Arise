@@ -2,7 +2,6 @@
 
 #include <thread>
 #include <list>
-
 #include "sn_object.h"
 #include "system_manager.h"
 #include "thread_type.h"

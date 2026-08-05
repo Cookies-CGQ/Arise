@@ -12,7 +12,7 @@
 #include "app_type.h"
 
 // 启动一个服务，放置main中
-class ServerApp :public Singleton<ServerApp>, public IDisposable
+class ServerApp: public Singleton<ServerApp>, public IDisposable
 {
 public:
     ServerApp(APP_TYPE appType, int argc, char* argv[]);

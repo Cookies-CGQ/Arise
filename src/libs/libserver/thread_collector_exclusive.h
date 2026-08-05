@@ -8,5 +8,4 @@ public:
     ThreadCollectorExclusive(ThreadType threadType, int initNum);
 
     virtual void HandlerMessage(Packet* pPacket) override;
-    virtual void HandlerCreateMessage(Packet* pPacket) override;
 };

@@ -2,13 +2,20 @@
 #include "libserver/common.h"
 #include "libserver/thread_mgr.h"
 #include "libserver/log4_help.h"
-#include "libserver/message_component.h"
 #include "libserver/message_system_help.h"
 #include "libserver/component_help.h"
 #include "libserver/global.h"
+#include "libplayer/player_collector_component.h"
+#include "player_component_account.h"
+#include "libplayer/player_component_proto_list.h"
+#include "libserver/message_system.h"
+#include "libplayer/player.h"
+#include "player_component_onlineinlogin.h"
 
 void Account::Awake()
 {
+    AddComponent<PlayerCollectorComponent>();
+
     // http
     auto pYaml = ComponentHelp::GetYaml();
     const auto pLoginConfig = dynamic_cast<LoginConfig*>(pYaml->GetConfig(APP_LOGIN));
@@ -24,32 +31,44 @@ void Account::Awake()
         _method = info.Mothed;
     }
 
-    // 定时器 -- 定时向appmgr服务同步login服务状态
+    // 定时向appmgr服务同步本login服务的信息
     AddTimer(0, 10, true, 2, BindFunP0(this, &Account::SyncAppInfoToAppMgr));
 
-    // message
-    auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);
+    // 注册消息处理
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
 
-    // check account
-    pMsgCallBack->RegisterFunction(Proto::MsgId::C2L_AccountCheck, BindFunP1(this, &Account::HandleAccountCheck));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_HttpOuterResponse, BindFunP1(this, &Account::HandleHttpOuterResponse));
+    // 账号验证：客户端 -> Account
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::C2L_AccountCheck, BindFunP1(this, &Account::HandleAccountCheck));
+    // 查询是否在线：redis -> Account
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_AccountQueryOnlineToRedisRs, BindFunP1(this, &Account::HandleAccountQueryOnlineToRedisRs));
+    // 第三方账号验证：第三方 -> Account
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_HttpOuterResponse, BindFunP1(this, &Account::HandleHttpOuterResponse));
 
-    // player
-    pMsgCallBack->RegisterFunction(Proto::MsgId::C2L_CreatePlayer, BindFunP1(this, &Account::HandleCreatePlayer));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::L2DB_CreatePlayerRs, BindFunP1(this, &Account::HandleCreatePlayerRs));
+    // 返回角色列表
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::L2DB_QueryPlayerListRs, BindFunP1(this, &Account::HandleQueryPlayerListRs));
 
-    // db
-    pMsgCallBack->RegisterFunction(Proto::MsgId::L2DB_QueryPlayerListRs, BindFunP1(this, &Account::HandleQueryPlayerListRs));
+    // TCP客户端断线
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkDisconnect, BindFunP1(this, &Account::HandleNetworkDisconnect));
+    // HTTP 连接就绪
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkConnected, BindFunP1(this, &Account::HandleNetworkConnected));
 
-    // 处理断线
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkDisconnect, BindFunP1(this, &Account::HandleNetworkDisconnect));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkConnected, BindFunP1(this, &Account::HandleNetworkConnected));
+    // AppMgr向login同步game服务信息
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_AppInfoListSync, BindFunP1(this, &Account::HandleAppInfoListSync));
+
+    // 客户端请求创建角色
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::C2L_CreatePlayer, BindFunP1(this, &Account::HandleCreatePlayer));
+    // DB返回创建角色结果
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::L2DB_CreatePlayerRs, BindFunP1(this, &Account::HandleCreatePlayerRs));
+    // 客户端选择角色
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::C2L_SelectPlayer, BindFunP1(this, &Account::HandleSelectPlayer));
+
+    // Redis 返回GameToken
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_LoginTokenToRedisRs, BindFunP1(this, &Account::HandleTokenToRedisRs));
 }
 
 void Account::BackToPool()
 {
-    _playerMgr.BackToPool();
+    _apps.clear();
 }
 
 void Account::SyncAppInfoToAppMgr()
@@ -57,27 +76,40 @@ void Account::SyncAppInfoToAppMgr()
     Proto::AppInfoSync protoSync;
     protoSync.set_app_id(Global::GetInstance()->GetCurAppId());
     protoSync.set_app_type((int)Global::GetInstance()->GetCurAppType());
-    protoSync.set_online(_playerMgr.Count());
+    protoSync.set_online(GetComponent<PlayerCollectorComponent>()->OnlineSize());
 
     MessageSystemHelp::SendPacket(Proto::MsgId::MI_AppInfoSync, protoSync, APP_APPMGR);
 }
 
+void Account::HandleAppInfoListSync(Packet* pPacket)
+{
+    auto proto = pPacket->ParseToProto<Proto::AppInfoListSync>();
+    for (auto one : proto.apps())
+    {
+        Parse(one, INVALID_SOCKET);
+    }
+}
+
 void Account::HandleNetworkConnected(Packet* pPacket)
 {
-    auto connectKey = pPacket->GetObjectKey();
-    if (connectKey.KeyType != ObjectKeyType::Account)
+    auto objKey = pPacket->GetObjectKey();
+    if (objKey.KeyType != ObjectKeyType::Account)
         return;
 
     if (pPacket->GetSocketKey().NetType != NetworkType::HttpConnector)
         return;
 
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+
     // http 已经连接上了
-    auto pPlayer = _playerMgr.GetPlayer(connectKey.KeyValue.KeyStr);
+    auto pPlayer = pPlayerCollector->GetPlayerByAccount(objKey.KeyValue.KeyStr);
     if (pPlayer == nullptr)
     {
-        LOG_ERROR("http connected. but can't find player. account:" << pPlayer->GetAccount().c_str() << pPlayer);
+        LOG_ERROR("http connected. but can't find player. account:" << objKey.KeyValue.KeyStr.c_str() << pPacket);
         return;
     }
+
+    const auto pPlayerCAccount = pPlayer->GetComponent<PlayerComponentAccount>();
 
 #ifdef LOG_TRACE_COMPONENT_OPEN
     ComponentHelp::GetTraceComponent()->TraceAccount(pPlayer->GetAccount(), pPacket->GetSocketKey().Socket);
@@ -87,25 +119,22 @@ void Account::HandleNetworkConnected(Packet* pPacket)
     NetworkIdentify httpIndentify{ pPacket->GetSocketKey(), pPlayer->GetObjectKey() };
     std::map<std::string, std::string> params;
     params["account"] = pPlayer->GetAccount();
-    params["password"] = pPlayer->GetPassword();
+    params["password"] = pPlayerCAccount->GetPassword();
     MessageSystemHelp::SendHttpRequest(&httpIndentify, _httpIp, _httpPort, _method, &params);
 }
 
 void Account::HandleNetworkDisconnect(Packet* pPacket)
 {
-    if (pPacket->GetObjectKey().KeyType != ObjectKeyType::Account)
-        return;
-
     const auto socketKey = pPacket->GetSocketKey();
     if (socketKey.NetType != NetworkType::TcpListen)
         return;
 
-    _playerMgr.RemovePlayer(pPacket->GetSocketKey().Socket);
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+    pPlayerCollector->RemovePlayerBySocket(pPacket->GetSocketKey().Socket);
 }
 
 void Account::SocketDisconnect(std::string account, NetworkIdentify* pIdentify)
 {
-    // 响应该账号多人同时登录
     Proto::AccountCheckRs protoResult;
     protoResult.set_return_code(Proto::AccountCheckReturnCode::ARC_LOGGING);
     MessageSystemHelp::SendPacket(Proto::MsgId::C2L_AccountCheckRs, pIdentify, protoResult);
@@ -117,10 +146,10 @@ void Account::SocketDisconnect(std::string account, NetworkIdentify* pIdentify)
 void Account::HandleAccountCheck(Packet* pPacket)
 {
     auto protoCheck = pPacket->ParseToProto<Proto::AccountCheck>();
-    const auto socket = pPacket->GetSocketKey();
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
 
-    // 相同账号正在登录
-    auto pPlayer = _playerMgr.GetPlayer(protoCheck.account());
+    // 相同账号正在登录（同进程检测是否账号已经在线）
+    auto pPlayer = pPlayerCollector->GetPlayerByAccount(protoCheck.account());
     if (pPlayer != nullptr)
     {
         LOG_WARN("account check failed. same account:" << protoCheck.account().c_str() << ". " << pPlayer);
@@ -129,7 +158,7 @@ void Account::HandleAccountCheck(Packet* pPacket)
     }
 
     // 更新信息
-    pPlayer = _playerMgr.AddPlayer(pPacket, protoCheck.account(), protoCheck.password());
+    pPlayer = pPlayerCollector->AddPlayer(pPacket, protoCheck.account());
     if (pPlayer == nullptr)
     {
         LOG_WARN("account check failed. same socket. " << pPacket);
@@ -137,17 +166,41 @@ void Account::HandleAccountCheck(Packet* pPacket)
         return;
     }
 
+    pPlayer->AddComponent<PlayerComponentAccount>(protoCheck.password());
+
 #ifdef LOG_TRACE_COMPONENT_OPEN
-    ComponentHelp::GetTraceComponent()->TraceAccount(protoCheck.account(), socket.Socket);
+    ComponentHelp::GetTraceComponent()->TraceAccount(protoCheck.account(), pPacket->GetSocketKey().Socket);
 #endif
 
-    // 向第三方验证账号，先发起一个Http请求
-    Proto::NetworkConnect protoConn;
-    protoConn.set_network_type((int)NetworkType::HttpConnector);
-    pPlayer->GetObjectKey().SerializeToProto(protoConn.mutable_key());
-    protoConn.set_ip(_httpIp.c_str());
-    protoConn.set_port(_httpPort);
-    MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkConnect, protoConn, nullptr);
+    // 查询redis在线状态（不同进程是否账号已经在线）
+    Proto::AccountQueryOnlineToRedis protoToRedis;
+    protoToRedis.set_account(pPlayer->GetAccount().c_str());
+    MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_AccountQueryOnlineToRedis, protoToRedis, nullptr);
+}
+
+
+void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
+{
+    auto protoRs = pPacket->ParseToProto<Proto::AccountQueryOnlineToRedisRs>();
+
+    auto pPlayer = GetComponent<PlayerCollectorComponent>()->GetPlayerByAccount(protoRs.account());
+    if (pPlayer == nullptr)
+        return;
+
+    if (protoRs.return_code() != Proto::AccountQueryOnlineToRedisRs::SOTR_Offline)
+    {
+        // 结果给客户端，拒绝本次登录
+        Proto::AccountCheckRs protoResult;
+        protoResult.set_return_code(Proto::AccountCheckReturnCode::ARC_ONLINE);
+        MessageSystemHelp::SendPacket(Proto::MsgId::C2L_AccountCheckRs, pPlayer, protoResult);
+        return;
+    }
+
+    // 在线组件，持续标记在线
+    pPlayer->AddComponent<PlayerComponentOnlineInLogin>(pPlayer->GetAccount());
+
+    // 验证账号，发起一个Http第三方账号验证请求
+    MessageSystemHelp::CreateConnect(NetworkType::HttpConnector, pPlayer->GetObjectKey(), _httpIp.c_str(), _httpPort);
 }
 
 void Account::HandleQueryPlayerListRs(Packet* pPacket)
@@ -155,21 +208,30 @@ void Account::HandleQueryPlayerListRs(Packet* pPacket)
     auto protoRs = pPacket->ParseToProto<Proto::PlayerList>();
     std::string account = protoRs.account();
 
-    auto pPlayer = _playerMgr.GetPlayer(account);
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+
+    const auto pPlayer = pPlayerCollector->GetPlayerByAccount(account);
     if (pPlayer == nullptr)
     {
         LOG_ERROR("HandleQueryPlayerLists. pPlayer == nullptr. account:" << account.c_str());
         return;
     }
-    
+
+    if (protoRs.player_size() > 0)
+    {
+        const auto pListObj = pPlayer->AddComponent<PlayerComponentProtoList>();
+        pListObj->Parse(protoRs);
+    }
     // 将结果转送给客户端
     MessageSystemHelp::SendPacket(Proto::MsgId::L2C_PlayerList, pPlayer, protoRs);
 }
 
 void Account::HandleCreatePlayer(Packet* pPacket)
 {
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+
     auto protoCreate = pPacket->ParseToProto<Proto::CreatePlayer>();
-    auto pPlayer = _playerMgr.GetPlayer(pPacket->GetSocketKey().Socket);
+    const auto pPlayer = pPlayerCollector->GetPlayerBySocket(pPacket->GetSocketKey().Socket);
     if (pPlayer == nullptr)
     {
         LOG_ERROR("HandleCreatePlayer. pPlayer == nullptr. socket:" << pPacket->GetSocketKey().Socket);
@@ -195,7 +257,8 @@ void Account::HandleCreatePlayerRs(Packet* pPacket)
     auto protoRs = pPacket->ParseToProto<Proto::CreatePlayerToDBRs>();
     std::string account = protoRs.account();
 
-    auto pPlayer = _playerMgr.GetPlayer(pPacket->GetSocketKey().Socket);
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+    auto pPlayer = pPlayerCollector->GetPlayerBySocket(pPacket->GetSocketKey().Socket);
     if (pPlayer == nullptr)
     {
         LOG_ERROR("HandleCreatePlayerToDBRs. pPlayer == nullptr. account:" << account.c_str());
@@ -207,13 +270,83 @@ void Account::HandleCreatePlayerRs(Packet* pPacket)
     MessageSystemHelp::SendPacket(Proto::MsgId::C2L_CreatePlayerRs, pPlayer, createProto);
 }
 
-void Account::HandleHttpOuterResponse(Packet* pPacket)
+void Account::HandleSelectPlayer(Packet* pPacket)
 {
-    auto connectKey = pPacket->GetObjectKey();
-    auto pPlayer = _playerMgr.GetPlayer(connectKey.KeyValue.KeyStr);
+    Proto::SelectPlayerRs protoRs;
+    protoRs.set_return_code(Proto::SelectPlayerRs::SPRC_OK);
+
+    auto proto = pPacket->ParseToProto<Proto::SelectPlayer>();
+    auto pPlayerMgr = GetComponent<PlayerCollectorComponent>();
+    auto pPlayer = pPlayerMgr->GetPlayerBySocket(pPacket->GetSocketKey().Socket);
     if (pPlayer == nullptr)
     {
-        LOG_ERROR("http out response. but can't find player. account:" << connectKey.KeyValue.KeyStr.c_str() << pPlayer);
+        LOG_ERROR("HandleSelectPlayer. pPlayer == nullptr");
+        return;
+    }
+
+    uint64 selectPlayerSn = proto.player_sn();
+
+    auto pPlayerLoginInfo = pPlayer->GetComponent<PlayerComponentAccount>();
+    pPlayerLoginInfo->SetSelectPlayerSn(selectPlayerSn);
+
+    do
+    {
+        if (pPlayer == nullptr)
+        {
+            protoRs.set_return_code(Proto::SelectPlayerRs::SPRC_NotFound);
+            LOG_ERROR("HandleSelectPlayer. pPlayer == nullptr. " << pPacket);
+            break;
+        }
+
+        auto pSubCompoent = pPlayer->GetComponent<PlayerComponentProtoList>();
+        if (pSubCompoent == nullptr)
+        {
+            protoRs.set_return_code(Proto::SelectPlayerRs::SPRC_NotFound);
+            LOG_ERROR("HandleSelectPlayer. pPlayer == nullptr. " << pPacket);
+            break;
+        }
+
+        std::stringstream* pOpStream = pSubCompoent->GetProto(selectPlayerSn);
+        if (pOpStream == nullptr)
+        {
+            protoRs.set_return_code(Proto::SelectPlayerRs::SPRC_NotFound);
+            LOG_ERROR("HandleSelectPlayer. can't find player sn:" << selectPlayerSn);
+            break;
+        }
+
+        pPlayer->ParseFromStream(selectPlayerSn, pOpStream);
+    } while (false);
+
+    if (Proto::SelectPlayerRs::SPRC_OK != protoRs.return_code())
+    {
+        MessageSystemHelp::SendPacket(Proto::MsgId::C2L_SelectPlayerRs, pPlayer, protoRs);
+        return;
+    }
+
+    //  请求token
+    RequestToken(pPlayer);
+}
+
+void Account::RequestToken(Player* pPlayer) const
+{	
+    // 请求一个Token
+    Proto::LoginTokenToRedis protoToken;
+    protoToken.set_account(pPlayer->GetAccount().c_str());
+
+    const auto pLoginInfo = pPlayer->GetComponent<PlayerComponentAccount>();
+    protoToken.set_player_sn(pLoginInfo->GetSelectPlayerSn());
+    MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_LoginTokenToRedis, protoToken, nullptr);
+}
+
+void Account::HandleHttpOuterResponse(Packet* pPacket)
+{
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+
+    auto objKey = pPacket->GetObjectKey();
+    auto pPlayer = pPlayerCollector->GetPlayerByAccount(objKey.KeyValue.KeyStr);
+    if (pPlayer == nullptr)
+    {
+        LOG_ERROR("http out response. but can't find player. account:" << objKey.KeyValue.KeyStr.c_str() << pPacket);
         return;
     }
 
@@ -228,6 +361,7 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
 
         Json::Value value;
         JSONCPP_STRING errs;
+
 
         const bool ok = jsonReader->parse(response.data(), response.data() + response.size(), &value, &errs);
         if (ok && errs.empty())
@@ -272,4 +406,34 @@ Proto::AccountCheckReturnCode Account::ProcessMsg(Json::Value value) const
         code = Proto::AccountCheckReturnCode::ARC_PASSWORD_WRONG;
 
     return code;
+}
+
+void Account::HandleTokenToRedisRs(Packet* pPacket)
+{
+    auto protoRs = pPacket->ParseToProto<Proto::LoginTokenToRedisRs>();
+    const auto token = protoRs.token();
+
+    Player* pPlayer = GetComponent<PlayerCollectorComponent>()->GetPlayerByAccount(protoRs.account());
+    if (pPlayer == nullptr)
+    {
+        LOG_WARN("can't find player. account:" << protoRs.account().c_str());
+        return;
+    }
+
+    Proto::GameToken protoToken;
+    AppInfo info;
+    if (!GetOneApp(APP_GAME, &info))
+    {
+        protoToken.set_return_code(Proto::GameToken_ReturnCode_GameToken_NO_GAME);
+    }
+    else
+    {
+        protoToken.set_return_code(Proto::GameToken_ReturnCode_GameToken_OK);
+
+        protoToken.set_ip(info.Ip.c_str());
+        protoToken.set_port(info.Port);
+        protoToken.set_token(token);
+    }
+
+    MessageSystemHelp::SendPacket(Proto::MsgId::L2C_GameToken, pPlayer, protoToken);
 }

@@ -5,6 +5,7 @@
 #include "yaml.h"
 #include "object_pool_packet.h"
 #include "component_help.h"
+#include "global.h"
 
 ServerApp::ServerApp(APP_TYPE appType, int argc, char* argv[])
 {
@@ -22,10 +23,10 @@ void ServerApp::Dispose()
 
 void ServerApp::Initialize()
 {
-    // std::cout << "\ncommand arguments:" << std::endl;
-    // for (auto count = 0; count < _argc; count++)
-    //     std::cout << "  argv[" << count << "]   " << _argv[count] << std::endl;
-
+    std::cout << "\ncommand arguments:" << std::endl;
+    for (auto count = 0; count < _argc; count++)
+        std::cout << "  argv[" << count << "]   " << _argv[count] << std::endl;
+    
     // 参数分析，找到-sid=，获取服务ID
     // 例如启动时：./login -sid=101
     for(int argIdx = 1; argIdx < _argc; ++argIdx)
@@ -36,7 +37,7 @@ void ServerApp::Initialize()
         if(fi1 != std::string::npos)
         {
             cmd.erase(fi1, findcmd.size());
-            _appId = std::stoi(cmd);
+            _appId = std::stoi(cmd); // 获取服务ID
             break;
         }
     }
@@ -51,7 +52,7 @@ void ServerApp::Initialize()
 
     // 初始化线程管理类
     _pThreadMgr = ThreadMgr::Instance();
-    _pThreadMgr->InitializeGlobalComponent(_appType, 0);
+    _pThreadMgr->InitializeGlobalComponent(_appType, _appId);
     _pThreadMgr->InitializeThread(); // InitializeThread只创建工作线程
 }
 

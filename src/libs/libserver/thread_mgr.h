@@ -44,8 +44,12 @@ public:
     // 创建组件
     template<class T, typename ...TArgs>
     void CreateComponent(TArgs... args);
+    
     template<class T, typename ...TArgs>
-    void CreateComponent(ThreadType iType, TArgs... args);
+    void CreateComponent(bool isToAllThread, TArgs... args);
+
+    template<class T, typename ...TArgs>
+    void CreateComponent(ThreadType iType, bool isToAllThread, TArgs... args);
 
     // 添加一条消息（待分发）
     void DispatchPacket(Packet* pPacket);
@@ -76,29 +80,33 @@ private:
 template<class T, typename ...TArgs>
 void ThreadMgr::CreateComponent(TArgs ...args)
 {
-    // 没有指定线程类型默认就是安排在逻辑线程
-    CreateComponent<T>(LogicThread, std::forward<TArgs>(args)...);
+    CreateComponent<T>(LogicThread, false, std::forward<TArgs>(args)...);
 }
 
 template<class T, typename ...TArgs>
-void ThreadMgr::CreateComponent(ThreadType iType, TArgs ...args)
+void ThreadMgr::CreateComponent(bool isToAllThead, TArgs ...args)
+{
+    CreateComponent<T>(LogicThread, isToAllThead, std::forward<TArgs>(args)...);
+}
+
+template<class T, typename ...TArgs>
+void ThreadMgr::CreateComponent(ThreadType iType, bool isToAllThead, TArgs ...args)
 {
     std::lock_guard<std::mutex> guard(_create_lock);
 
-    // 如果还没注册就进行注册
     const std::string className = typeid(T).name();
     if (!ComponentFactory<TArgs...>::GetInstance()->IsRegisted(className))
     {
         RegistToFactory<T, TArgs...>();
     }
 
-    // 创建组件packet
     Proto::CreateComponent proto;
     proto.set_thread_type((int)iType);
     proto.set_class_name(className.c_str());
+    proto.set_is_to_all_thread(isToAllThead);
     AnalyseParam(proto, std::forward<TArgs>(args)...);
 
-    auto pCreatePacket = MessageSystemHelp::CreatePacket(Proto::MsgId::MI_CreateComponent, 0);
+    auto pCreatePacket = MessageSystemHelp::CreatePacket(Proto::MsgId::MI_CreateComponent, nullptr);
     pCreatePacket->SerializeToBuffer(proto);
     _createPackets.GetWriterCache()->emplace_back(pCreatePacket);
 }

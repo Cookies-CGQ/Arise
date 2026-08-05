@@ -22,6 +22,9 @@ public:
     // 创建一个packet
     static Packet* CreatePacket(Proto::MsgId msgId, NetworkIdentify* pIdentify);
 
+    // 创建一个连接
+    static void CreateConnect(NetworkType iType, ObjectKey objKey, std::string ip, int port);
+
     // 创建并分发一个packet（向内分发）
     static void DispatchPacket(const Proto::MsgId msgId, NetworkIdentify* pIdentify);
     static void DispatchPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, NetworkIdentify* pIdentify);
@@ -29,6 +32,9 @@ public:
     // 创建并发送一个packet（向外分发 -- 走网络出去）
     static void SendPacket(const Proto::MsgId msgId, NetworkIdentify* pIdentify, google::protobuf::Message& proto);
     static void SendPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, APP_TYPE appType, int appId = 0);
+
+    // 发送packet到指定服务
+    static void SendPacketToAllApp(Proto::MsgId msgId, google::protobuf::Message& proto, APP_TYPE appType);
 
     // http
     // 发送请求

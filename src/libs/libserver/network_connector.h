@@ -1,35 +1,58 @@
 #pragma once
 
-#include <memory>
+#include <utility>
 #include "network.h"
+#include "connect_obj.h"
+#include "app_type.h"
 
-class ConnectObj;
 class Packet;
 
-class NetworkConnector : public Network, virtual public IAwakeSystem<std::string, int>, public virtual IAwakeSystem<int, int>
+// 待连接信息
+struct ConnectDetail: public SnObject, public IDisposable
 {
 public:
-    // 初始化 -- 两种方式
-    void Awake(std::string ip, int port);
-    void Awake(int appType, int appId);
-    // 帧函数
-    virtual void Update();
-    // 是否连接
-    bool IsConnected() const;
-    // 获取类型名
-    const char* GetTypeName() override;
-    // 对象池为空时只创建一个对象，不进行预创建
-    static bool IsSingle() { return true; }
+    ConnectDetail(ObjectKey key, std::string ip, int port)
+    {
+        Key = std::move(key);
+        Ip = std::move(ip);
+        Port = port;
+    };
 
-protected:
-    // 发出连接请求
-    bool Connect(std::string ip, int port);
+    void Dispose() override 
+    { 
+
+    }
+
+    std::string Ip =  "";
+    int Port = 0;
+    ObjectKey Key { ObjectKeyType::None , { 0, ""} };
+};
+
+
+class NetworkConnector : public Network, public IAwakeSystem<int, int>
+{
+public:
+    // 初始化Connector，iType表示网络连接类型，mixConnectAppType表示需要直接连接的服务
+    void Awake(int iType, int mixConnectAppType) override;
+
+    virtual void Update();
+
+    const char* GetTypeName() override;
+    uint64 GetTypeHashCode() override;
+    // 连接处理
+    bool Connect(ConnectDetail* pDetail);
 
 private:
-    void TryCreateConnectObj();
+    // 消息处理 -- 请求连接处理
+    void HandleNetworkConnect(Packet* pPacket);
+    // 预创建连接，用于连接其他服务
+    void CreateConnector(APP_TYPE appType, int appId);
+    // 对于创建连接，一般有两种：
+    //     1、连接其他服务，一般初始化时直接创建连接
+    //     2、其他连接，一般通过消息机制通知Connector建立连接，例如：robot
 
-protected:
-    std::string _ip = "";
-    int _port = 0;
+private:
+    // 待连接
+    CacheRefresh<ConnectDetail> _connecting;
 };
 

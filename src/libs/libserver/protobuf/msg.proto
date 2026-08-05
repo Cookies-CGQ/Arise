@@ -82,7 +82,7 @@ message CreateComponentParam{
 message CreateComponent{
     int32 thread_type = 1; // 组件所在线程类型
     string class_name = 2; // 要创建的组件类名
-    uint64 parent_sn = 3;  // 父实体/父组件的唯一编号
+	bool is_to_all_thread = 3; // 是否同类线程全部创建
 	repeated CreateComponentParam params = 4; // 创建组件时的参数列表
 }
 

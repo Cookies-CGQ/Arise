@@ -15,7 +15,7 @@ struct AppInfo
     int Online;       // 在线人数
     SOCKET Socket;    // socket
 
-    // 反序列化
+    // proto -> AppInfo
     void Parse(Proto::AppInfoSync proto);
 };
 

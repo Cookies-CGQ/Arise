@@ -26,42 +26,41 @@ void Network::BackToPool()
 
 void Network::SetSocketOpt(SOCKET socket)
 {
-    // 1.端口关闭后马上重新启用
-    bool isReuseaddr = true;
-    setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (SetsockOptType)& isReuseaddr, sizeof(isReuseaddr));
+    // 1.发送、接收timeout
+    int netTimeout = 3000; // 1000 = 1秒
+    setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (SetsockOptType)&netTimeout, sizeof(netTimeout));
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (SetsockOptType)&netTimeout, sizeof(netTimeout));
 
-    // 2.发送、接收timeout
-    int netTimeout = 3000; // 3秒
-    setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (SetsockOptType)& netTimeout, sizeof(netTimeout));
-    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (SetsockOptType)& netTimeout, sizeof(netTimeout));
+#if ENGINE_PLATFORM != PLATFORM_WIN32
 
-#ifndef WIN32
-
-    int keepAlive = 1;
-    socklen_t optlen = sizeof(keepAlive);
-
-    int keepIdle = 60 * 2;	// 在socket 没有交互后 多久 开始发送侦测包
-    int keepInterval = 10;	// 多次发送侦测包之间的间隔
-    int keepCount = 5;		// 侦测包个数
-
-    setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (SetsockOptType)& keepAlive, optlen);
-    if (getsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, &optlen) < 0)
+    if (_networkType != NetworkType::HttpConnector && _networkType != NetworkType::HttpListen)
     {
-        std::cout << "getsockopt SO_KEEPALIVE failed." << std::endl;
-    }
+        int keepAlive = 1;
+        socklen_t optlen = sizeof(keepAlive);
 
-    setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, (void*)& keepIdle, optlen);
-    if (getsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &keepIdle, &optlen) < 0)
-    {
-        std::cout << "getsockopt TCP_KEEPIDLE failed." << std::endl;
-    }
+        int keepIdle = 60 * 2;	// 在socket 没有交互后 多久 开始发送侦测包
+        int keepInterval = 10;	// 多次发送侦测包之间的间隔
+        int keepCount = 5;		// 侦测包个数
 
-    setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, (void*)& keepInterval, optlen);
-    setsockopt(socket, SOL_TCP, TCP_KEEPCNT, (void*)& keepCount, optlen);
+        setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (SetsockOptType)&keepAlive, optlen);
+        if (getsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, &optlen) < 0)
+        {
+            LOG_WARN("getsockopt SO_KEEPALIVE failed. err:" << _sock_err() << " socket:" << socket << " networktype:" << GetNetworkTypeName(_networkType));
+        }
+
+        setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, (void*)&keepIdle, optlen);
+        if (getsockopt(socket, SOL_TCP, TCP_KEEPIDLE, &keepIdle, &optlen) < 0)
+        {
+            LOG_WARN("getsockopt TCP_KEEPIDLE failed. err:" << _sock_err() << " socket:" << socket << " networktype:" << GetNetworkTypeName(_networkType));
+        }
+
+        setsockopt(socket, SOL_TCP, TCP_KEEPINTVL, (void*)&keepInterval, optlen);
+        setsockopt(socket, SOL_TCP, TCP_KEEPCNT, (void*)&keepCount, optlen);
+    }
 
 #endif
 
-    // 3.非阻塞
+    // 非阻塞
     _sock_nonblock(socket);
 }
 
@@ -80,23 +79,74 @@ SOCKET Network::CreateSocket()
     return socket;
 }
 
-void Network::CreateConnectObj(SOCKET socket)
+bool Network::CheckSocket(SOCKET socket)
 {
-    auto pSys = GetSystemManager();
-    auto pCollector = pSys->GetPoolCollector();
-    auto pPool = (DynamicObjectPool<ConnectObj>*)pCollector->GetPool<ConnectObj>();
-    ConnectObj* pConnectObj = pPool->MallocObject(pSys, socket);
-    pConnectObj->SetParent(this);
-    if (_connects.find(socket) != _connects.end())
+    // 检查一下socket是否有误
+    int err = EBADF;
+    socklen_t len = sizeof(err);
+    if(::getsockopt(socket, SOL_SOCKET, SO_ERROR, (char*)(&err), &len) == 0)
     {
-        std::cout << "Network::CreateConnectObj. socket is exist. socket:" << socket << std::endl;
+        if(!NetworkHelp::IsError(err))
+        {
+            err = 0;
+        }
+    }
+    if(err != 0)
+    {
+        _sock_close(socket);
+        return false;
+    }
+    return true;
+}
+
+bool Network::CreateConnectObj(SOCKET socket, ObjectKey key, ConnectStateType iState)
+{
+    if(!CheckSocket(socket))
+        return false;
+    
+    const auto iter = _connects.find(socket);
+    // 如果底层socket发生重用，两个数据都销毁
+    if(iter != _connects.end())
+    {
+        LOG_ERROR("Network::CreateConnectObj. socket is exist. socket:" << socket << " sn:" << _sn);
+        _connects[socket]->ComponentBackToPool();
+        _connects.erase(iter);
+        return false;
     }
 
+    // Connect虽然是组件，但是不进入System系统，主要原因是Socket可能有重用的问题，所以它需要马上销毁，不能拖到下一帧
+    auto pCollector = _pSystemManager->GetPoolCollector();
+    auto pPool = dynamic_cast<DynamicObjectPool<ConnectObj>*>(pCollector->GetPool<ConnectObj>());
+    ConnectObj* pConnectObj = pPool->MallocObject(_pSystemManager, socket, _networkType, key, iState);
+    pConnectObj->SetParent(this);
     _connects[socket] = pConnectObj;
 
-#ifdef EPOLL
-    AddEvent(_epfd, socket, EPOLLIN | EPOLLET | EPOLLRDHUP);
+#ifdef LOG_TRACE_COMPONENT_OPEN
+    const auto traceMsg = std::string("create. network type:").append(GetNetworkTypeName(_networkType));
+    ComponentHelp::GetTraceComponent()->Trace(TraceType::Connector, socket, traceMsg);
 #endif
+
+#ifdef EPOLL
+    AddEvent(_epfd, socket, EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP);
+#endif
+
+    return true;
+}
+
+void Network::HandleDisconnect(Packet* pPacket)
+{
+    const auto socketKey = pPacket->GetSocket();
+    if(socketKey.NetType != _networkType)
+        return;
+    
+    auto iter = _connects.find(socketKey.Socket);
+    if (iter == _connects.end())
+    {
+        std::cout << "dis connect failed. socket not find." << pPacket << std::endl;
+        return;
+    }
+
+    RemoveConnectObj(iter);
 }
 
 #ifdef EPOLL
@@ -127,27 +177,19 @@ void Network::DeleteEvent(int epollfd, int fd)
 void Network::InitEpoll()
 {
     _epfd = epoll_create(MAX_CLIENT);
-    AddEvent(_epfd, _masterSocket, EPOLLIN | EPOLLOUT | EPOLLRDHUP);
 }
 
 void Network::Epoll()
 {
-    _mainSocketEventIndex = -1;
     const int nfds = epoll_wait(_epfd, _events, MAX_EVENT, 0);
     for (int index = 0; index < nfds; index++)
     {
-        int fd = _events[index].data.fd;
-
-        if (fd == _masterSocket)
-        {
-            _mainSocketEventIndex = index;
-        }
+        SOCKET fd = _events[index].data.fd;
+        OnEpoll(fd, index);
 
         auto iter = _connects.find(fd);
         if (iter == _connects.end())
-        {
             continue;
-        }
 
         if (_events[index].events & EPOLLRDHUP || _events[index].events & EPOLLERR || _events[index].events & EPOLLHUP)
         {
@@ -176,43 +218,33 @@ void Network::Epoll()
         }
     }
 }
+
+
 #else
 
 void Network::Select()
 {
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_ZERO(&exceptfds);
-
-    FD_SET(_masterSocket, &readfds);
-    FD_SET(_masterSocket, &writefds);
-    FD_SET(_masterSocket, &exceptfds);
-
-    SOCKET fdmax = _masterSocket;
-
     for (auto iter = _connects.begin(); iter != _connects.end(); ++iter)
     {
-        ConnectObj* pObj = iter->second;
-        if (iter->first > fdmax)
-            fdmax = iter->first;
+        if (iter->first > _fdMax)
+            _fdMax = iter->first;
 
         FD_SET(iter->first, &readfds);
         FD_SET(iter->first, &exceptfds);
-
-        if (pObj->HasSendData())
-            FD_SET(iter->first, &writefds);
+        FD_SET(iter->first, &writefds);
     }
 
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
-    const int nfds = ::select(fdmax + 1, &readfds, &writefds, &exceptfds, &timeout);
+    const int nfds = ::select(_fdMax + 1, &readfds, &writefds, &exceptfds, &timeout);
     if (nfds <= 0)
         return;
 
     auto iter = _connects.begin();
     while (iter != _connects.end())
     {
+        auto pObj = iter->second;
         if (FD_ISSET(iter->first, &exceptfds))
         {
             std::cout << "socket except!! socket:" << iter->first << std::endl;
@@ -222,7 +254,7 @@ void Network::Select()
 
         if (FD_ISSET(iter->first, &readfds))
         {
-            if (!iter->second->Recv())
+            if (!pObj->Recv())
             {
                 RemoveConnectObj(iter);
                 continue;
@@ -231,7 +263,7 @@ void Network::Select()
 
         if (FD_ISSET(iter->first, &writefds))
         {
-            if (!iter->second->Send())
+            if (!pObj->Send())
             {
                 RemoveConnectObj(iter);
                 continue;
@@ -257,18 +289,28 @@ void Network::OnNetworkUpdate()
     for (auto iter = pList->begin(); iter != pList->end(); ++iter)
     {
         Packet* pPacket = (*iter);
-        auto socket = pPacket->GetSocket();
-        auto itConnectObj = _connects.find(socket);
-        if (itConnectObj == _connects.end())
+        auto socketKey = pPacket->GetSocketKey();
+        auto iterObj = _connects.find(socketKey.Socket);
+        if (iterObj == _connects.end())
         {
-            std::cout << "send packet. can't find socket:" << socket << " msgId:" << pPacket->GetMsgId() << std::endl;
+            LOG_ERROR("failed to send packet. can't find socket." << pPacket);
+            DynamicPacketPool::GetInstance()->FreeObject(pPacket);
             continue;
         }
 
-        itConnectObj->second->SendPacket(pPacket);
+        // check
+        const auto pObj = iterObj->second;
+        if (pObj->GetObjectKey() != pPacket->GetObjectKey())
+        {
+            LOG_ERROR("failed to send packet. connect key is different. packet[" << pPacket << "] connect:[" << pObj << "]");
+            DynamicPacketPool::GetInstance()->FreeObject(pPacket);
+            continue;
+        }
+
+        pObj->SendPacket(pPacket);
 
 #ifdef  EPOLL
-        ModifyEvent(_epfd, socket, EPOLLIN | EPOLLOUT | EPOLLRDHUP);
+        ModifyEvent(_epfd, socketKey.Socket, EPOLLIN | EPOLLOUT | EPOLLRDHUP);
 #endif
     }
     pList->clear();
@@ -277,5 +319,22 @@ void Network::OnNetworkUpdate()
 void Network::SendPacket(Packet*& pPacket)
 {
     std::lock_guard<std::mutex> guard(_sendMsgMutex);
+
+    if (pPacket->GetSocketKey().NetType != _networkType)
+    {
+        LOG_ERROR("failed to send packet. network type is different." << pPacket);
+        return;
+    }
+
     _sendMsgList.GetWriterCache()->emplace_back(pPacket);
+
+#ifdef LOG_TRACE_COMPONENT_OPEN
+    const google::protobuf::EnumDescriptor* descriptor = Proto::MsgId_descriptor();
+    const auto name = descriptor->FindValueByNumber(pPacket->GetMsgId())->name();
+
+    const auto traceMsg = std::string("send net.")
+        .append(" sn:").append(std::to_string(pPacket->GetSN()))
+        .append(" msgId:").append(name);
+    ComponentHelp::GetTraceComponent()->Trace(TraceType::Packet, pPacket->GetSocketKey().Socket, traceMsg);
+#endif
 }

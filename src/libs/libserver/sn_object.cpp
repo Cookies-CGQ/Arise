@@ -6,22 +6,15 @@ SnObject::SnObject()
     _sn = Global::GetInstance()->GenerateSN();
 }
 
-SnObject::SnObject(uint64 sn)
-{
-    _sn = sn;
-}
-
 uint64 SnObject::GetSN() const
 {
     return _sn;
 }
 
-void SnObject::ResetSN()
+void SnObject::ResetSN(bool isClean)
 {
-    _sn = Global::GetInstance()->GenerateSN();
-}
-
-void SnObject::ResetSN(uint64 sn)
-{
-    _sn = sn;
+    if(!isClean)
+        _sn = Global::GetInstance()->GenerateSN();
+    else
+        _sn = 0;
 }

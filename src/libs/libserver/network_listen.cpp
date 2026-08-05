@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 
 #include "common.h"
 #include "network_listen.h"
@@ -8,26 +9,35 @@
 #include "log4_help.h"
 #include "message_component.h"
 #include "update_component.h"
+#include "component_help.h"
+#include "global.h"
 
-void NetworkListen::Awake(std::string ip, int port)
+void NetworkListen::Awake(std::string ip, int port, NetworkType iType)
 {
-    // 添加到网络对象路由表中
+    _networkType = iType;
+
+    // 添加到网络路由中
     auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
-    pNetworkLocator->AddListenLocator(this, NetworkTcpListen);
+    pNetworkLocator->AddListenLocator(this, iType);
 
-    // 添加消息组件并注册消息处理函数
+    // 注册消息处理函数
     auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);    
+    AddComponent<MessageComponent>(pMsgCallBack);
     pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkRequestDisconnect, BindFunP1(this, &NetworkListen::HandleDisconnect));
+    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkListenKey, BindFunP1(this, &NetworkListen::HandleListenKey));
 
-    // 添加update组件
+    // 帧处理组件
     auto pUpdateComponent = AddComponent<UpdateComponent>();
     pUpdateComponent->UpdataFunction = BindFunP0(this, &NetworkListen::Update);
 
-    // 初始化监听socket
+    // 创建监听socket
     _masterSocket = CreateSocket();
     if (_masterSocket == INVALID_SOCKET)
         return;
+
+    // 快速重启地址
+    int isOn = 1;
+    setsockopt(_masterSocket, SOL_SOCKET, SO_REUSEADDR, (SetsockOptType)&isOn, sizeof(isOn));
 
     sockaddr_in addr;
     memset(&addr, 0, sizeof(sockaddr_in));
@@ -37,24 +47,56 @@ void NetworkListen::Awake(std::string ip, int port)
 
     if (::bind(_masterSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
     {
-        std::cout << "::bind failed. err:" << _sock_err() << std::endl;
+        LOG_ERROR("::bind failed. err:" << _sock_err());
         return;
     }
 
-    if (::listen(_masterSocket, SOMAXCONN) < 0)
+    const int maxConn = 1024; // SOMAXCONN
+    if (::listen(_masterSocket, maxConn) < 0)
     {
         std::cout << "::listen failed." << _sock_err() << std::endl;
         return;
     }
 
 #ifdef EPOLL
-    LOG_INFO("epoll model. listen " << ip.c_str() << ":" << port);
+    LOG_INFO("epoll model. listen " << ip.c_str() << ":" << port << " SOMAXCONN:" << maxConn);
     InitEpoll();
+    AddEvent(_epfd, _masterSocket, EPOLLIN | EPOLLET | EPOLLOUT | EPOLLRDHUP);
 #else
-    LOG_INFO("select model. listen " << ip.c_str() << ":" << port);
+    LOG_INFO("select model. listen " << ip.c_str() << ":" << port << " SOMAXCONN:" << maxConn);
 #endif
 
     return;
+}
+
+void NetworkListen::BackToPool()
+{
+#ifdef EPOLL
+    _mainSocketEventIndex = -1;
+#endif
+    _sock_close(_masterSocket);
+    _masterSocket = INVALID_SOCKET;
+
+    Network::BackToPool();
+}
+
+void NetworkListen::Awake(int appType, int appId)
+{
+    auto pGlobal = Global::GetInstance();
+    auto pYaml = ComponentHelp::GetYaml();
+    const auto pCommonConfig = pYaml->GetIPEndPoint(pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    if (pCommonConfig == nullptr)
+    {
+        LOG_ERROR("failed to get config of listen. appType:" << GetAppName(pGlobal->GetCurAppType()) << " appId:" << pGlobal->GetCurAppId());
+        return;
+    }
+
+    Awake(pCommonConfig->Ip, pCommonConfig->Port, NetworkType::TcpListen);
+}
+
+void NetworkListen::Awake(std::string ip, int port)
+{
+    Awake(ip, port, NetworkType::HttpListen);
 }
 
 int NetworkListen::Accept()
@@ -63,21 +105,22 @@ int NetworkListen::Accept()
     socklen_t socketLength = sizeof(socketClient);
 
     int rs = 0;
-    // 循环接收，因为_masterSocket也是非阻塞的
     while (true)
     {
-        // accept -> 设置socket -> 创建连接对象
         const SOCKET socket = ::accept(_masterSocket, &socketClient, &socketLength);
         if (socket == INVALID_SOCKET)
             return rs;
 
-        SetSocketOpt(socket);
-        CreateConnectObj(socket);
+        // 如果listen获取到了socket，那就说明已经连接建立成功了
+        if (!CreateConnectObj(socket, ObjectKey(), ConnectStateType::Connected))
+        {
+            _sock_close(socket);
+            continue;
+        }
 
+        SetSocketOpt(socket);
         ++rs;
     }
-
-    return rs;
 }
 
 const char* NetworkListen::GetTypeName()
@@ -85,27 +128,57 @@ const char* NetworkListen::GetTypeName()
     return typeid(NetworkListen).name();
 }
 
+uint64 NetworkListen::GetTypeHashCode()
+{
+    return typeid(NetworkListen).hash_code();
+}
+
+void NetworkListen::CmdShow()
+{
+    LOG_DEBUG("\tsocket size:" << _connects.size());
+}
+
 #ifndef EPOLL
 
 void NetworkListen::Update()
 {
-    // 进行以此select
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+    FD_ZERO(&exceptfds);
+
+    FD_SET(_masterSocket, &readfds);
+    FD_SET(_masterSocket, &writefds);
+    FD_SET(_masterSocket, &exceptfds);
+
+    _fdMax = _masterSocket;
+
+    // 读写事件处理
     Select();
 
-    // 是否有连接请求
+    // 连接接收
     if (FD_ISSET(_masterSocket, &readfds))
     {
         Accept();
     }
 
-    // 处理待发送的packet
+    // 发送packet
     Network::OnNetworkUpdate();
 }
 
 #else
 
+void NetworkListen::OnEpoll(SOCKET fd, int index)
+{
+    if (fd == _masterSocket)
+    {
+        _mainSocketEventIndex = index;
+    }
+}
+
 void NetworkListen::Update()
 {
+    _mainSocketEventIndex = -1;
+
     Epoll();
 
     if (_mainSocketEventIndex >= 0)
@@ -118,16 +191,19 @@ void NetworkListen::Update()
 
 #endif
 
-void NetworkListen::HandleDisconnect(Packet* pPacket)
+void NetworkListen::HandleListenKey(Packet* pPacket)
 {
-    auto socket = pPacket->GetSocket();
-    auto iter = _connects.find(socket);
+    const auto socketKey = pPacket->GetSocketKey();
+    if (socketKey.NetType != _networkType)
+        return;
+
+    auto iter = _connects.find(socketKey.Socket);
     if (iter == _connects.end())
     {
-        std::cout << "dis connect failed. socket not find. socket:" << socket << std::endl;
+        std::cout << "failed to modify connect key. socket not find." << pPacket << std::endl;
         return;
     }
 
-    RemoveConnectObj(iter);
-    std::cout << "logical layer requires shutdown. socket:" << socket << std::endl;
+    auto pObj = iter->second;
+    pObj->ModifyConnectKey(pPacket->GetObjectKey());
 }

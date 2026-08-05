@@ -13,6 +13,17 @@ Packet* MessageSystemHelp::CreatePacket(Proto::MsgId msgId, NetworkIdentify* pId
     return DynamicPacketPool::GetInstance()->MallocPacket(msgId, pIdentify);
 }
 
+void MessageSystemHelp::CreateConnect(NetworkType iType, ObjectKey objKey, std::string ip, int port)
+{
+    Proto::NetworkConnect protoConn;
+    protoConn.set_network_type((int)iType);
+    objKey.SerializeToProto(protoConn.mutable_key());
+
+    protoConn.set_ip(ip.c_str());
+    protoConn.set_port(port);
+    DispatchPacket(Proto::MsgId::MI_NetworkConnect, protoConn, nullptr);
+}
+
 void MessageSystemHelp::DispatchPacket(Packet* pPacket)
 {
     ThreadMgr::GetInstance()->DispatchPacket(pPacket);
@@ -92,6 +103,38 @@ void MessageSystemHelp::SendPacket(Packet* pPacket)
     }
 
     LOG_ERROR("failed to send packet." << dynamic_cast<NetworkIdentify*>(pPacket));
+}
+
+void MessageSystemHelp::SendPacketToAllApp(Proto::MsgId msgId, google::protobuf::Message& proto, APP_TYPE appType)
+{
+    if ((Global::GetInstance()->GetCurAppType() & appType) != 0)
+    {
+        DispatchPacket(msgId, proto, nullptr);
+    }
+    else
+    {
+        auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+        auto networks = pNetworkLocator->GetAppNetworks(appType);
+        if (!networks.empty())
+        {
+            auto pConnector = pNetworkLocator->GetConnector(NetworkType::TcpConnector);
+            if (pConnector == nullptr)
+            {
+                pConnector = pNetworkLocator->GetListen(NetworkType::TcpListen);
+            }
+
+            for (auto& one : networks)
+            {
+                Packet* pPacket = CreatePacket(msgId, &one);
+                pPacket->SerializeToBuffer(proto);
+                pConnector->SendPacket(pPacket);
+            }
+
+            return;
+        }
+
+        LOG_WARN("failed to send packet. msgId:" << (int)msgId << " to appType:" << GetAppName(appType));
+    }
 }
 
 void MessageSystemHelp::SendHttpResponseBase(NetworkIdentify* pIdentify, int status_code, const char* content, int size)

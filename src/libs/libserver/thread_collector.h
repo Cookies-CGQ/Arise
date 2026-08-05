@@ -30,8 +30,8 @@ public:
 
     // 分发packet到其他所有线程
     virtual void HandlerMessage(Packet* pPacket);
-    // 分发创建组件消息到其中一个线程（负载均衡）
-    virtual void HandlerCreateMessage(Packet* pPacket);
+    // 分发创建组件消息到其中一个线程（负载均衡），isToAllThread控制是否分发到全部线程
+    virtual void HandlerCreateMessage(Packet* pPacket, bool isToAllThread);
 
 protected:
     ThreadType _threadType;          // 线程集合的类型

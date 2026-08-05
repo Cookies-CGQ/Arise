@@ -163,12 +163,13 @@ namespace Proto {
 enum CmdThread_CmdType : int {
   CmdThread_CmdType_Entity = 0,
   CmdThread_CmdType_Pool = 1,
+  CmdThread_CmdType_Connect = 2,
   CmdThread_CmdType_CmdThread_CmdType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   CmdThread_CmdType_CmdThread_CmdType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool CmdThread_CmdType_IsValid(int value);
 constexpr CmdThread_CmdType CmdThread_CmdType_CmdType_MIN = CmdThread_CmdType_Entity;
-constexpr CmdThread_CmdType CmdThread_CmdType_CmdType_MAX = CmdThread_CmdType_Pool;
+constexpr CmdThread_CmdType CmdThread_CmdType_CmdType_MAX = CmdThread_CmdType_Connect;
 constexpr int CmdThread_CmdType_CmdType_ARRAYSIZE = CmdThread_CmdType_CmdType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CmdThread_CmdType_descriptor();
@@ -492,6 +493,8 @@ class CmdThread final :
     CmdThread_CmdType_Entity;
   static constexpr CmdType Pool =
     CmdThread_CmdType_Pool;
+  static constexpr CmdType Connect =
+    CmdThread_CmdType_Connect;
   static inline bool CmdType_IsValid(int value) {
     return CmdThread_CmdType_IsValid(value);
   }
@@ -2071,8 +2074,8 @@ class CreateComponent final :
   enum : int {
     kParamsFieldNumber = 4,
     kClassNameFieldNumber = 2,
-    kParentSnFieldNumber = 3,
     kThreadTypeFieldNumber = 1,
+    kIsToAllThreadFieldNumber = 3,
   };
   // repeated .Proto.CreateComponentParam params = 4;
   int params_size() const;
@@ -2106,15 +2109,6 @@ class CreateComponent final :
   std::string* _internal_mutable_class_name();
   public:
 
-  // uint64 parent_sn = 3;
-  void clear_parent_sn();
-  uint64_t parent_sn() const;
-  void set_parent_sn(uint64_t value);
-  private:
-  uint64_t _internal_parent_sn() const;
-  void _internal_set_parent_sn(uint64_t value);
-  public:
-
   // int32 thread_type = 1;
   void clear_thread_type();
   int32_t thread_type() const;
@@ -2122,6 +2116,15 @@ class CreateComponent final :
   private:
   int32_t _internal_thread_type() const;
   void _internal_set_thread_type(int32_t value);
+  public:
+
+  // bool is_to_all_thread = 3;
+  void clear_is_to_all_thread();
+  bool is_to_all_thread() const;
+  void set_is_to_all_thread(bool value);
+  private:
+  bool _internal_is_to_all_thread() const;
+  void _internal_set_is_to_all_thread(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Proto.CreateComponent)
@@ -2134,8 +2137,8 @@ class CreateComponent final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Proto::CreateComponentParam > params_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr class_name_;
-    uint64_t parent_sn_;
     int32_t thread_type_;
+    bool is_to_all_thread_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -5680,24 +5683,24 @@ inline void CreateComponent::set_allocated_class_name(std::string* class_name) {
   // @@protoc_insertion_point(field_set_allocated:Proto.CreateComponent.class_name)
 }
 
-// uint64 parent_sn = 3;
-inline void CreateComponent::clear_parent_sn() {
-  _impl_.parent_sn_ = uint64_t{0u};
+// bool is_to_all_thread = 3;
+inline void CreateComponent::clear_is_to_all_thread() {
+  _impl_.is_to_all_thread_ = false;
 }
-inline uint64_t CreateComponent::_internal_parent_sn() const {
-  return _impl_.parent_sn_;
+inline bool CreateComponent::_internal_is_to_all_thread() const {
+  return _impl_.is_to_all_thread_;
 }
-inline uint64_t CreateComponent::parent_sn() const {
-  // @@protoc_insertion_point(field_get:Proto.CreateComponent.parent_sn)
-  return _internal_parent_sn();
+inline bool CreateComponent::is_to_all_thread() const {
+  // @@protoc_insertion_point(field_get:Proto.CreateComponent.is_to_all_thread)
+  return _internal_is_to_all_thread();
 }
-inline void CreateComponent::_internal_set_parent_sn(uint64_t value) {
+inline void CreateComponent::_internal_set_is_to_all_thread(bool value) {
   
-  _impl_.parent_sn_ = value;
+  _impl_.is_to_all_thread_ = value;
 }
-inline void CreateComponent::set_parent_sn(uint64_t value) {
-  _internal_set_parent_sn(value);
-  // @@protoc_insertion_point(field_set:Proto.CreateComponent.parent_sn)
+inline void CreateComponent::set_is_to_all_thread(bool value) {
+  _internal_set_is_to_all_thread(value);
+  // @@protoc_insertion_point(field_set:Proto.CreateComponent.is_to_all_thread)
 }
 
 // repeated .Proto.CreateComponentParam params = 4;

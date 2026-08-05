@@ -1,16 +1,12 @@
+#include <thread>
 #include "system_manager.h"
-
 #include "create_component.h"
-
 #include "message_system.h"
 #include "entity_system.h"
 #include "update_system.h"
-
 #include "console_thread_component.h"
 #include "object_pool_collector.h"
 #include "timer_component.h"
-
-#include <thread>
 
 SystemManager::SystemManager()
 {

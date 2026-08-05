@@ -5,7 +5,7 @@
 #include "update_component.h"
 #include "util_time.h"
 
-// 用于Timer比较 
+// 用于Timer比较，建立小根堆
 struct CompareTimer
 {
     constexpr bool operator()(const Timer& _Left, const Timer& _Right) const

@@ -9,29 +9,10 @@
 namespace strutil
 {
     // 用于比较两个 C 风格字符串，并且忽略英文字母大小写
-    inline int stricmp(char const *c1, char const *c2)
-    {
-        return engine_stricmp(c1, c2);
-    }
+    int stricmp(char const *c1, char const *c2);
 
     // 格式化字符串
-    inline std::string format(const char *_format, ...)
-    {
-        std::string str;
-        va_list args1;
-        va_start(args1, _format);
-        va_list args2;
-        va_copy(args2, args1);
-
-        const size_t num_of_chars = std::vsnprintf(nullptr, 0, _format, args1);
-        if (num_of_chars > str.capacity())
-            str.resize(num_of_chars + 1);
-
-        std::vsnprintf(const_cast<char *>(str.data()), str.capacity(), _format, args2);
-        va_end(args1);
-        va_end(args2);
-        return str;
-    }
+    std::string format(const char *_format, ...);
 
     // 用于去掉字符串首尾的空白字符，保留中间内容
     inline std::string trim(const std::string &s)

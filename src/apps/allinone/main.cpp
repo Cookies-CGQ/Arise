@@ -6,6 +6,8 @@
 #include "login/login.h"
 #include "dbmgr/dbmgr.h"
 #include "appmgr/appmgr.h"
+#include "game/game.h"
+#include "space/space.h"
 #include "libserver/network_listen.h"
 #include "libserver/thread_type.h"
 #include "libserver/global.h"
@@ -30,6 +32,12 @@ int main(int argc, char *argv[])
 
 	// login
 	InitializeComponentLogin(pThreadMgr);
+	
+    // game
+    InitializeComponentGame(pThreadMgr);
+
+    // space
+    InitializeComponentSpace(pThreadMgr);
 
 	// listen
     const auto pGlobal = Global::GetInstance();

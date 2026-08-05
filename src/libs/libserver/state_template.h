@@ -40,7 +40,7 @@ public:
     virtual void LeaveState() = 0;
 
 protected:
-    T *_pParentObj; // 指向拥有这个状态的对象的指针
+    T *_pParentObj = nullptr; // 指向拥有这个状态的对象的指针
 };
 
 // 状态管理器 -- enumType：状态枚举；StateClass：状态的基类；T：拥有者的类型

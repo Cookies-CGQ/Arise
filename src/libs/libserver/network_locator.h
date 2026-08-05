@@ -2,37 +2,41 @@
 
 #include "network.h"
 #include "system.h"
+#include "app_type.h"
+#include "socket_object.h"
 
-// 进程内的网络对象路由表（连接/监听）
-class NetworkLocator : public Component<NetworkLocator>, public IAwakeSystem<>
+class NetworkLocator : public Entity<NetworkLocator>, public IAwakeSystem<>
 {
 public:
-	void Awake() override {};
-    // 归还对象池之前清理资源
-	void BackToPool() override;
-    // 添加连接对象
-	void AddConnectorLocator(INetwork* pNetwork, APP_TYPE appType, int appId);
-	// 添加监听对象
+    void Awake() override;;
+    void BackToPool() override;
+
+    // 添加Connector
+    void AddConnectorLocator(INetwork* pNetwork, NetworkType networkType);
+	// 获取Connector
+    INetwork* GetConnector(NetworkType networkType);
+
+	// 添加服务连接
+	void AddNetworkIdentify(uint64 appKey, SocketKey socket, ObjectKey objKey);
+    // 移除服务连接
+	void RemoveNetworkIdentify(uint64 appKey);
+	// 获取服务连接
+	NetworkIdentify GetNetworkIdentify(const APP_TYPE appType, const int appId);
+
+    // 添加Listen
     void AddListenLocator(INetwork* pNetwork, NetworkType networkType);
-
-    // 获取监听对象
+    // 获取Listen
 	INetwork* GetListen(NetworkType networkType);
-	// 获取连接对象
-    INetwork* GetNetworkConnector(const SOCKET socket);
-	// 获取连接对象
-    INetwork* GetNetworkConnector(const APP_TYPE appType, const int appId);
-    // 获取连接对象
-	std::tuple<APP_TYPE, int> GetNetworkConnectorInfo(const SOCKET socket);
-    // 从 _connectors 中取出某个 APP_TYPE 下的所有 INetwork*，放进一个 std::list返回。
-	std::list<INetwork*> GetNetworks(const APP_TYPE appType);
-
-    // 获取socket对应的连接对象类型
-	APP_TYPE GetNetworkAppType(const int socket);
-    // 获取socket对应的连接对象的Id
-    int GetNetworkAppId(const SOCKET socket);
 
 private:
-	std::mutex _lock;
-	std::map<APP_TYPE, std::map<int, INetwork*>> _connectors; // 连接对象
-	std::map<NetworkType, INetwork*> _listens;                // 监听对象
+    std::mutex _lock;
+
+    // <apptype + appId, NetworkIdentify>，服务连接映射表
+    std::map<uint64, NetworkIdentify> _netIdentify;
+
+    // TCP Connector / HTTP Connector
+    std::map<NetworkType, INetwork*> _connectors;
+
+    // TCP Listen / HTTP Listen
+    std::map<NetworkType, INetwork*> _listens;
 };
