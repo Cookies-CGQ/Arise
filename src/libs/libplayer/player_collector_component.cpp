@@ -1,5 +1,6 @@
 #include "player_collector_component.h"
 #include "player.h"
+#include "libserver/message_system_help.h"
 
 void PlayerCollectorComponent::Awake()
 {
@@ -20,92 +21,105 @@ void PlayerCollectorComponent::BackToPool()
     _players.clear();
 }
 
-Player* PlayerCollectorComponent::AddPlayer(NetworkIdentify* pIdentify, const std::string account)
+Player* PlayerCollectorComponent::AddPlayer(NetIdentify* pIdentify, const std::string account)
 {
-    const auto socket = pIdentify->GetSocketKey().Socket;
-    const auto iter = _players.find(socket);
-    if (iter != _players.end())
-    {
-        std::cout << "AddPlayer error." << std::endl;
-        return nullptr;
-    }
+    const auto socket = pIdentify->GetSocketKey()->Socket;
+	const auto iter = _players.find(socket);
+	if (iter != _players.end())
+	{
+		std::cout << "AddPlayer error." << std::endl;
+		return nullptr;
+	}
 
-    _accounts[account] = socket;
-    const auto pPlayer = GetSystemManager()->GetEntitySystem()->AddComponent<Player>(pIdentify, account);
-    _players[socket] = pPlayer;
-    return pPlayer;
+	_accounts[account] = socket;
+	const auto pPlayer = GetSystemManager()->GetEntitySystem()->AddComponent<Player>(pIdentify, account);
+	_players[socket] = pPlayer;
+	return pPlayer;
+}
+
+void PlayerCollectorComponent::RemovePlayer(Player* pPlayer)
+{
+    _players.erase(pPlayer->GetSocketKey()->Socket);
+    _accounts.erase(pPlayer->GetAccount());
+    GetSystemManager()->GetEntitySystem()->RemoveComponent(pPlayer);
 }
 
 void PlayerCollectorComponent::RemovePlayerBySocket(SOCKET socket)
 {
-    const auto iter = _players.find(socket);
-    if (iter == _players.end())
-        return;
+	const auto iter = _players.find(socket);
+	if (iter == _players.end())
+		return;
 
-    Player* pPlayer = iter->second;
-
-    _players.erase(socket);
-    _accounts.erase(pPlayer->GetAccount());
-
-    GetSystemManager()->GetEntitySystem()->RemoveComponent(pPlayer);
+    RemovePlayer(iter->second);
 }
 
 void PlayerCollectorComponent::RemovePlayerBySn(uint64 playerSn)
 {
-    auto iter = std::find_if(_players.begin(), _players.end(), [&playerSn](auto pair){
-            return pair.second->GetPlayerSN() == playerSn;
-        });
+	auto iter = std::find_if(_players.begin(), _players.end(), [&playerSn](auto pair){
+        return pair.second->GetPlayerSN() == playerSn;
+	});
 
-    if (iter == _players.end())
-        return;
+	if (iter == _players.end())
+		return;
 
-    RemovePlayerBySocket(iter->second->GetSocketKey().Socket);
+    RemovePlayer(iter->second);
+}
+
+void PlayerCollectorComponent::RemoveAllPlayerAndCloseConnect()
+{
+    while(!_players.empty())
+    {
+        auto iter = _players.begin();
+        const auto pPlayer = iter->second;
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPlayer);
+        RemovePlayer(pPlayer);
+    }    
 }
 
 Player* PlayerCollectorComponent::GetPlayerBySocket(const SOCKET socket)
 {
-    const auto iter = _players.find(socket);
-    if (iter == _players.end())
-        return nullptr;
+	const auto iter = _players.find(socket);
+	if (iter == _players.end())
+		return nullptr;
 
-    return iter->second;
+	return iter->second;
 }
 
 Player* PlayerCollectorComponent::GetPlayerByAccount(const std::string account)
 {
-    const auto iter = _accounts.find(account);
-    if (iter == _accounts.end())
-        return nullptr;
+	const auto iter = _accounts.find(account);
+	if (iter == _accounts.end())
+		return nullptr;
 
-    SOCKET socket = iter->second;
-    auto iterPlayer = _players.find(socket);
-    if (iterPlayer == _players.end())
-    {
-        _accounts.erase(account);
-        return nullptr;
-    }
+	SOCKET socket = iter->second;
+	auto iterPlayer = _players.find(socket);
+	if (iterPlayer == _players.end())
+	{
+		_accounts.erase(account);
+		return nullptr;
+	}
 
-    return iterPlayer->second;
+	return iterPlayer->second;
 }
 
 Player* PlayerCollectorComponent::GetPlayerBySn(uint64 playerSn)
 {
-    auto iter = std::find_if(_players.begin(), _players.end(), [&playerSn](auto pair){
-            return pair.second->GetPlayerSN() == playerSn;
-        });
+	auto iter = std::find_if(_players.begin(), _players.end(), [&playerSn](auto pair){
+        return pair.second->GetPlayerSN() == playerSn;
+	});
 
-    if (iter == _players.end())
-        return nullptr;
+	if (iter == _players.end())
+		return nullptr;
 
-    return iter->second;
+	return iter->second;
 }
 
 int PlayerCollectorComponent::OnlineSize() const
 {
-    return _players.size();
+	return _players.size();
 }
 
 std::map<SOCKET, Player*>& PlayerCollectorComponent::GetAll()
 {
-    return _players;
+	return _players;
 }

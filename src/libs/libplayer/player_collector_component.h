@@ -14,11 +14,14 @@ public:
     void BackToPool() override;
 
     // 创建Player实体并注册到两张映射表中
-	Player* AddPlayer(NetworkIdentify* pIdentify, std::string account);
+	Player* AddPlayer(NetIdentify* pIdentify, std::string account);
 
     // Player移除
 	void RemovePlayerBySocket(SOCKET socket);
 	void RemovePlayerBySn(uint64 playerSn);
+
+	// 移除所有Player并请求断开底层连接
+    void RemoveAllPlayerAndCloseConnect();
 
     // 获取Player
 	Player* GetPlayerBySocket(SOCKET socket);
@@ -29,6 +32,9 @@ public:
 	int OnlineSize() const;
 
 	std::map<SOCKET, Player*>& GetAll();
+
+protected:
+    void RemovePlayer(Player* pPlayer);
 
 private:
 	// <socket, Player*>
