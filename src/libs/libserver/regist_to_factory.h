@@ -14,12 +14,27 @@ public:
         ComponentFactory<Targs...>::GetInstance()->Regist(typeid(T).name(), CreateComponent);
     }
 
-    // 生成函数
-    static T* CreateComponent(SystemManager* pSysMgr, Targs... args)
+    static T* CreateComponent(SystemManager* pSysMgr, uint64 sn, Targs... args)
     {
-        // 从对象池获取组件对象
+        // 从对象池获取对象
         auto pCollector = pSysMgr->GetPoolCollector();
-        auto pPool = (DynamicObjectPool<T>*)pCollector->GetPool<T>();
-        return pPool->MallocObject(pSysMgr, std::forward<Targs>(args)...);
+        auto pPool = dynamic_cast<DynamicObjectPool<T>*>(pCollector->GetPool<T>());
+        return pPool->MallocObject(pSysMgr, nullptr, sn, std::forward<Targs>(args)...);
+    }
+};
+
+template<typename T, typename...Targs>
+class RegistObject
+{
+public:
+    RegistObject()
+    {
+        ComponentFactory<Targs...>::GetInstance()->Regist(typeid(T).name(), CreateComponent);
+    }
+
+    static T* CreateComponent(SystemManager* pSysMgr, uint64 sn, Targs... args)
+    {
+        // 通过 new 获取对象
+        return new T(std::forward<Targs>(args)...);
     }
 };

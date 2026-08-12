@@ -11,7 +11,10 @@ public:
     void HandleHelp() override;
 
 private:
+    // 查看entity信息
 	void HandleEntity(std::vector<std::string>& params);
+    // 查看pool信息
     void HandlePool(std::vector<std::string>& params);
+    // 查看connect信息
     void HandleConnect(std::vector<std::string>& params);
 };

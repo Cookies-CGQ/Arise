@@ -86,7 +86,7 @@ void TraceComponent::Show(TraceType iType, int key)
     if (iter == _traces.end())
         return;
 
-    const auto& keyTrace = _traces[iType];
+    auto keyTrace = _traces[iType];
     auto iterKey = keyTrace.find(key);
     if (iterKey == keyTrace.end())
         return;

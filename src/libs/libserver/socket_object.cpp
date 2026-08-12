@@ -8,70 +8,158 @@ SocketKey::SocketKey(SOCKET socket, NetworkType netType)
     NetType = netType;
 }
 
-void SocketKey::Clean()
+void SocketKey::Clear()
 {
     Socket = INVALID_SOCKET;
     NetType = NetworkType::None;
 }
 
-void ObjectKeyValue::Clean()
+void SocketKey::CopyFrom(SocketKey* pSocketKey)
 {
-    KeyInt64 = 0;
-    KeyStr = "";
+    Socket = pSocketKey->Socket;
+    NetType = pSocketKey->NetType;
 }
 
-void ObjectKey::ParseFromProto(Proto::NetworkObjectKey protoKey)
+void TagKey::Clear()
 {
-    if (protoKey.key_type() == Proto::NetworkObjectKeyType::ObjectKeyTypeApp)
+    _tags.clear();
+}
+
+void TagKey::AddTag(TagType tagType, std::string value)
+{
+    const auto iter = _tags.find(tagType);
+    // 没有就创建
+    if (iter == _tags.end())
     {
-        KeyType = ObjectKeyType::App;
-        KeyValue.KeyInt64 = protoKey.key_value().key_int64();
-        KeyValue.KeyStr = "";
+        _tags[tagType] = TagValue{ value, 0L };
     }
-    else if (protoKey.key_type() == Proto::NetworkObjectKeyType::ObjectKeyTypeAccount)
+    // 有就覆盖
+    else
     {
-        KeyType = ObjectKeyType::Account;
-        KeyValue.KeyInt64 = 0;
-        KeyValue.KeyStr = protoKey.key_value().key_str();
+        _tags[tagType].KeyStr = value;
+        _tags[tagType].KeyInt64 = 0;
+    }
+}
+
+void TagKey::AddTag(TagType tagType, uint64 value)
+{
+    const auto iter = _tags.find(tagType);
+    if (iter == _tags.end())
+    {
+        _tags[tagType] = TagValue{ "", value };
     }
     else
     {
-        KeyType = ObjectKeyType::None;
-        KeyValue.KeyInt64 = 0;
-        KeyValue.KeyStr = "";
+        _tags[tagType].KeyStr = "";
+        _tags[tagType].KeyInt64 = value;
     }
 }
 
-void ObjectKey::SerializeToProto(Proto::NetworkObjectKey* pProto) const
+void TagKey::AddTag(TagType tagType, TagValue value)
 {
-    pProto->set_key_type((Proto::NetworkObjectKeyType)KeyType);
-    auto pKeyValue = pProto->mutable_key_value();
-    pKeyValue->set_key_int64(KeyValue.KeyInt64);
-    pKeyValue->set_key_str(KeyValue.KeyStr.c_str());
-}
-
-void ObjectKey::Clean()
-{
-    KeyType = ObjectKeyType::None;
-    KeyValue.Clean();
-}
-
-NetworkIdentify::NetworkIdentify(SocketKey socketKey, ObjectKey objKey)
-{
-    _socketKey = socketKey;
-    _objKey = objKey;
-}
-
-std::ostream& operator<<(std::ostream& os, NetworkIdentify* pIdentify)
-{
-    os  << " socket:" << pIdentify->GetSocketKey().Socket
-        << " networkType:" << GetNetworkTypeName(pIdentify->GetSocketKey().NetType)
-        << " connect type:" << GetConnectKeyTypeName(pIdentify->GetObjectKey().KeyType) << " value:";
-
-    if (pIdentify->GetObjectKey().KeyType == ObjectKeyType::Account)
-        os << pIdentify->GetObjectKey().KeyValue.KeyStr.c_str();
+    if (value.KeyInt64 != 0)
+        AddTag(tagType, value.KeyInt64);
     else
-        os << pIdentify->GetObjectKey().KeyValue.KeyInt64;
+        AddTag(tagType, value.KeyStr);
+}
+
+TagValue* TagKey::GetTagValue(TagType tagType)
+{
+    if (_tags.find(tagType) == _tags.end())
+        return nullptr;
+
+    return &(_tags[tagType]);
+}
+
+void TagKey::CopyFrom(TagKey* pNetIdentify)
+{
+    auto tags = pNetIdentify->GetTags();
+    for (auto iter = tags->begin(); iter != tags->end(); ++iter)
+    {
+        AddTag(iter->first, iter->second);
+    }
+}
+
+bool TagKey::CompareTags(TagKey* pIdentify)
+{
+    if (!CompareTags(this, pIdentify, TagType::Account))
+        return false;
+
+    if (!CompareTags(this, pIdentify, TagType::App))
+        return false;
+
+    return true;
+}
+
+bool TagKey::CompareTags(TagKey* pA, TagKey* pB, TagType tagtype)
+{
+    TagValue* pTagValueA = pA->GetTagValue(tagtype);
+    TagValue* pTagValueB = pB->GetTagValue(tagtype);
+    if (pTagValueA != nullptr && pTagValueB != nullptr)
+    {
+        if (IsTagTypeStr(tagtype))
+            return pTagValueA->KeyStr == pTagValueB->KeyStr;
+        else
+            return pTagValueA->KeyInt64 == pTagValueB->KeyInt64;
+    }
+
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& os, TagKey* pTagKey)
+{
+    auto tags = pTagKey->GetTags();
+    for (auto iter = tags->begin(); iter != tags->end(); ++iter)
+    {
+        auto typeName = GetTagTypeName(iter->first);
+        os << " tag:" << typeName << " v:";
+
+        if (IsTagTypeStr(iter->first))
+            os << iter->second.KeyStr.c_str();
+        else
+            os << iter->second.KeyInt64;
+    }
 
     return os;
 }
+
+std::ostream& operator<<(std::ostream& os, NetIdentify* pIdentify)
+{
+    os << " socket:" << pIdentify->GetSocketKey()->Socket
+        << " networkType:" << GetNetworkTypeName(pIdentify->GetSocketKey()->NetType);
+
+    auto tags = pIdentify->GetTagKey();
+    os << tags;
+
+    return os;
+}
+
+#if ENGINE_PLATFORM == PLATFORM_WIN32
+log4cplus::tostream& operator<<(log4cplus::tostream& os, TagKey* pTagKey)
+{
+    auto tags = pTagKey->GetTags();
+    for (auto iter = tags->begin(); iter != tags->end(); ++iter)
+    {
+        auto typeName = GetTagTypeName(iter->first);
+        os << " tag:" << typeName << " v:";
+
+        if (IsTagTypeStr(iter->first))
+            os << iter->second.KeyStr.c_str();
+        else
+            os << iter->second.KeyInt64;
+    }
+
+    return os;
+}
+
+log4cplus::tostream& operator<<(log4cplus::tostream& os, NetIdentify* pIdentify)
+{
+    os << " socket:" << pIdentify->GetSocketKey()->Socket
+        << " networkType:" << GetNetworkTypeName(pIdentify->GetSocketKey()->NetType);
+
+    auto tags = pIdentify->GetTagKey();
+    os << tags;
+
+    return os;
+}
+#endif

@@ -1,8 +1,8 @@
+#include <thread>
 #include "check_time_component.h"
 #include "global.h"
 #include "log4_help.h"
 #include "component_help.h"
-#include <thread>
 
 void CheckTimeComponent::CheckBegin()
 {

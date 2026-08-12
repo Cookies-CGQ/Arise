@@ -7,7 +7,7 @@
 #include "socket_object.h"
 
 // 通信方式：TCP + 自定义4字节帧头 + Protobuf包体
-// 通信协议：TotalSize(2字节，表示整帧长度，包含长度字段、消息号、包体) + MsgId(2字节，消息类型编号) + Payload(N字节，Protobuf二进制数据)
+// 通信协议：TotalSize（2字节，表示整帧长度，也包含自身两个字节）+ PacketHeadSize（Head长度，根据PacketHead类型而定）+ PacketHead（PacketHead / PacketHeadS2S）+ Protobuf序列化数据
 
 #pragma pack(push)
 #pragma pack(4)
@@ -17,18 +17,24 @@ struct PacketHead
     unsigned short MsgId; // 协议类型
 };
 
+struct PacketHeadS2S : public PacketHead
+{
+    uint64 EntitySn;
+    uint64 PlayerSn;
+};
+
 #pragma pack(pop)
 
 // 默认大小 10KB
 #define DEFAULT_PACKET_BUFFER_SIZE	1024 * 10
 
-class Packet : public Entity<Packet>, public Buffer, public NetworkIdentify, public IAwakeFromPoolSystem<Proto::MsgId, NetworkIdentify*>
+class Packet : public Entity<Packet>, public Buffer, public NetIdentify, public IAwakeFromPoolSystem<Proto::MsgId, NetIdentify*>
 {
 public:
     Packet();
     ~Packet();
     // 初始化对象
-    void Awake(Proto::MsgId msgId, NetworkIdentify* pIdentify) override;
+    void Awake(Proto::MsgId msgId, NetIdentify* pIdentify) override;
 
     // 反序列化
     template<class ProtoClass>
@@ -65,10 +71,11 @@ public:
         ::memcpy(_buffer + _endIndex, s, len);
         FillData(len);
     }
-
     
     // 归还对象池
     void BackToPool() override;
+    // 拷贝传入packet的数据
+    void CopyFrom(Packet* pPacket);
     // 获取缓存
     char* GetBuffer() const;
     // 有效数据长度
@@ -94,6 +101,6 @@ private:
     Proto::MsgId _msgId; // 这个包的消息类型
 
 private:
-    std::atomic<int> _ref{0}; // 由于同一个packet包可能存在多个线程中处理，所以packet采用引用计数
+    std::atomic<int> _ref = 0; // 由于同一个packet包可能存在多个线程中处理，所以packet采用引用计数
     bool _isRefOpen = false;   
 };

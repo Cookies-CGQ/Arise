@@ -2,6 +2,9 @@
 
 #if ENGINE_PLATFORM != PLATFORM_WIN32
 #include <sys/time.h>
+#include <uuid/uuid.h>
+#else
+#include <objbase.h>
 #endif
 
 Global::Global(APP_TYPE appType, int appId)
@@ -12,12 +15,19 @@ Global::Global(APP_TYPE appType, int appId)
     UpdateTime();
 }
 
+int Global::GetAppIdFromSN(uint64 sn)
+{
+    sn = sn << 38;
+    sn = sn >> 38;
+    sn = sn >> 16;
+    return static_cast<int>(sn);
+}
+
 uint64 Global::GenerateSN()
 {
-    // 65535 的容量在一个时间单位内足够应对任何突发情况，单个服务器很少会在一毫秒内生成上万个 ID。真溢出了也只是等到下一个时间 tick，因为有锁保护，不会重复
     std::lock_guard<std::mutex> guard(_mtx);
-    // (40, 8, 16)
-    const uint64 ret = (TimeTick >> 8 << 24) + (_serverId << 16) + _snTicket;
+    // (38, 10, 16)
+    const uint64 ret = ((TimeTick >> 10) << 26) + (_appId << 16) + _snTicket;
     _snTicket += 1;
     return ret;
 }
@@ -42,4 +52,35 @@ void Global::UpdateTime()
     auto timeValue = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
     TimeTick = timeValue.time_since_epoch().count();
 #endif
+}
+
+std::string Global::GenerateUUID()
+{
+#if ENGINE_PLATFORM == PLATFORM_WIN32
+    char buf[64] = { 0 };
+    GUID guid;
+    if (S_OK == ::CoCreateGuid(&guid))
+    {
+        _snprintf_s(buf, sizeof(buf)
+            , "%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X"
+            , guid.Data1
+            , guid.Data2
+            , guid.Data3
+            , guid.Data4[0], guid.Data4[1]
+            , guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5]
+            , guid.Data4[6], guid.Data4[7]
+        );
+    }
+
+    std::string tokenkey = buf;
+#else
+    uuid_t uuid;
+    uuid_generate(uuid);
+
+    char key[36];
+    uuid_unparse(uuid, key);
+
+    std::string tokenkey = key;
+#endif
+    return tokenkey;
 }

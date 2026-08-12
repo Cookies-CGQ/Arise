@@ -14,6 +14,9 @@
 #include "trace_component.h"
 #include "console_cmd_trace.h"
 #include "component_help.h"
+#include "console_cmd_app.h"
+#include "console_efficiency_component.h"
+#include "console_cmd_efficiency.h"
 
 ThreadMgr::ThreadMgr()
 {
@@ -22,20 +25,21 @@ ThreadMgr::ThreadMgr()
 
 void ThreadMgr::InitializeThread()
 {
-    auto pGlobal = Global::GetInstance();
+    // 读取服务配置文件
+    const auto pGlobal = Global::GetInstance();
     auto pYaml = GetEntitySystem()->GetComponent<Yaml>();
     const auto pConfig = pYaml->GetConfig(pGlobal->GetCurAppType());
-    auto pAppCofig = dynamic_cast<AppConfig*>(pConfig);
+    const auto pAppConfig = dynamic_cast<AppConfig*>(pConfig);
 
     // 根据服务的配置文件创建线程
-    if (pAppCofig->LogicThreadNum > 0)
+    if (pAppConfig->LogicThreadNum > 0)
     {
-        CreateThread(LogicThread, pAppCofig->LogicThreadNum);
+        CreateThread(LogicThread, pAppConfig->LogicThreadNum);
     }
 
-    if (pAppCofig->MysqlThreadNum > 0)
+    if (pAppConfig->MysqlThreadNum > 0)
     {
-        CreateThread(MysqlThread, pAppCofig->MysqlThreadNum);
+        CreateThread(MysqlThread, pAppConfig->MysqlThreadNum);
     }
 
     if (pAppConfig->LogicThreadNum > 0 || pAppConfig->MysqlThreadNum > 0)
@@ -51,6 +55,7 @@ void ThreadMgr::InitializeThread()
 
 void ThreadMgr::CreateThread(ThreadType iType, int num)
 {
+    // 不需要创建线程，单线程
     auto pGlobal = Global::GetInstance();
     auto pYaml = GetEntitySystem()->GetComponent<Yaml>();
     const auto pConfig = pYaml->GetConfig(pGlobal->GetCurAppType());
@@ -63,10 +68,10 @@ void ThreadMgr::CreateThread(ThreadType iType, int num)
     auto iter = _threads.find(iType);
     if (iter == _threads.end())
     {
-        // Mysql和其他线程不一样
+        // mysql的分发packet方法不一样
         if (iType == MysqlThread)
             _threads[iType] = new ThreadCollectorExclusive(iType, num);
-        else 
+        else
             _threads[iType] = new ThreadCollector(iType, num);
     }
     else
@@ -75,24 +80,31 @@ void ThreadMgr::CreateThread(ThreadType iType, int num)
     }
 }
 
-void ThreadMgr::InitializeGlobalComponent(APP_TYPE ppType, int appId)
+void ThreadMgr::InitializeGlobalComponent(APP_TYPE appType, int appId)
 {
     // 全局 Component
     GetEntitySystem()->AddComponent<ResPath>();
-    GetEntitySystem()->AddComponent<Log4>(ppType);
+    GetEntitySystem()->AddComponent<Log4>(appType);
     GetEntitySystem()->AddComponent<Yaml>();
     GetEntitySystem()->AddComponent<NetworkLocator>();
 
-    // 控制台
     auto pConsole = GetEntitySystem()->AddComponent<Console>();
     pConsole->Register<ConsoleCmdThread>("thread");
 
-#ifdef LOG_TRACE_COMPONENT_OPEN
+#if LOG_EFFICIENCY_COMPONENT_OPEN
+    pConsole->Register<ConsoleCmdEfficiency>("efficiency");
+    GetEntitySystem()->AddComponent<ConsoleEfficiencyComponent>();
+#endif
+
+    if ((appType & APP_TYPE::APP_APPMGR) != 0 || (appType & APP_TYPE::APP_GAME) != 0)
+        pConsole->Register<ConsoleCmdApp>("app");
+
+#if LOG_TRACE_COMPONENT_OPEN
     GetEntitySystem()->AddComponent<TraceComponent>();
     pConsole->Register<ConsoleCmdTrace>("trace");
 #endif
 
-    // 每个线程上的基本组件
+    // 线程上的基本组件
     InitComponent(ThreadType::MainThread);
 }
 

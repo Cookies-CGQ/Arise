@@ -3,12 +3,15 @@
 #include <list>
 #include <mutex>
 
+// 只提供交换型数据结构的基本语义，如面对并发问题需要外部提供相应方案
 template<class T>
 class CacheSwap
 {
 public:
     CacheSwap()
     {
+        _caches1.clear();
+        _caches2.clear();
         _writerCache = &_caches1;
         _readerCache = &_caches2;
     }

@@ -11,10 +11,7 @@ uint64 SnObject::GetSN() const
     return _sn;
 }
 
-void SnObject::ResetSN(bool isClean)
+void SnObject::SetSN(uint64 sn)
 {
-    if(!isClean)
-        _sn = Global::GetInstance()->GenerateSN();
-    else
-        _sn = 0;
+    _sn = sn;
 }

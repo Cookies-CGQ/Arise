@@ -18,17 +18,20 @@ Packet::~Packet()
     delete[] _buffer;
 }
 
-void Packet::Awake(Proto::MsgId msgId, NetworkIdentify* pIdentify)
+void Packet::Awake(Proto::MsgId msgId, NetIdentify* pIdentify)
 {
     if (pIdentify != nullptr)
     {
-        _socketKey = pIdentify->GetSocketKey();
-        _objKey = pIdentify->GetObjectKey();
+        _socketKey.Clear();
+        _tagKey.Clear();
+
+        _socketKey.CopyFrom(pIdentify->GetSocketKey());
+        _tagKey.CopyFrom(pIdentify->GetTagKey());
     }
     else
     {
-        _socketKey.Clean();
-        _objKey.Clean();
+        _socketKey.Clear();
+        _tagKey.Clear();
     }
 
     _msgId = msgId;
@@ -41,8 +44,8 @@ void Packet::Awake(Proto::MsgId msgId, NetworkIdentify* pIdentify)
 void Packet::BackToPool()
 {
     _msgId = Proto::MsgId::None;
-    _socketKey.Clean();
-    _objKey.Clean();
+    _socketKey.Clear();
+    _tagKey.Clear();
 
     _beginIndex = 0;
     _endIndex = 0;
@@ -50,6 +53,18 @@ void Packet::BackToPool()
     _isRefOpen = false;
 }
 
+void Packet::CopyFrom(Packet* pPacket)
+{
+    const auto total = pPacket->GetDataLength();
+    while (GetEmptySize() < total)
+    {
+        ReAllocBuffer();
+    }
+
+    _beginIndex = 0;
+    _endIndex = total;
+    memcpy(_buffer, pPacket->GetBuffer(), _endIndex);
+}
 
 char* Packet::GetBuffer() const
 {

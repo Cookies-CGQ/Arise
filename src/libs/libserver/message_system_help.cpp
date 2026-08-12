@@ -8,41 +8,25 @@
 #include "global.h"
 #include "mongoose/mongoose.h"
 
-Packet* MessageSystemHelp::CreatePacket(Proto::MsgId msgId, NetworkIdentify* pIdentify)
-{
-    return DynamicPacketPool::GetInstance()->MallocPacket(msgId, pIdentify);
-}
-
-void MessageSystemHelp::CreateConnect(NetworkType iType, ObjectKey objKey, std::string ip, int port)
-{
-    Proto::NetworkConnect protoConn;
-    protoConn.set_network_type((int)iType);
-    objKey.SerializeToProto(protoConn.mutable_key());
-
-    protoConn.set_ip(ip.c_str());
-    protoConn.set_port(port);
-    DispatchPacket(Proto::MsgId::MI_NetworkConnect, protoConn, nullptr);
-}
-
 void MessageSystemHelp::DispatchPacket(Packet* pPacket)
 {
     ThreadMgr::GetInstance()->DispatchPacket(pPacket);
 }
 
-void MessageSystemHelp::DispatchPacket(const Proto::MsgId msgId, NetworkIdentify* pIdentify)
+void MessageSystemHelp::DispatchPacket(const Proto::MsgId msgId, NetIdentify* pIdentify)
 {
     const auto pPacket = CreatePacket(msgId, pIdentify);
     DispatchPacket(pPacket);
 }
 
-void MessageSystemHelp::DispatchPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, NetworkIdentify* pIdentify)
+void MessageSystemHelp::DispatchPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, NetIdentify* pIdentify)
 {
     const auto pPacket = CreatePacket(msgId, pIdentify);
     pPacket->SerializeToBuffer(proto);
     DispatchPacket(pPacket);
 }
 
-void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, NetworkIdentify* pIdentify, google::protobuf::Message& proto)
+void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, NetIdentify* pIdentify)
 {
     const auto pPacket = CreatePacket(msgId, pIdentify);
     pPacket->SerializeToBuffer(proto);
@@ -51,7 +35,6 @@ void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, NetworkIdentify* pI
 
 void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, APP_TYPE appType, int appId)
 {
-    // 如果目标服务在同一个进程中，直接分发到线程中就可以了，一般出现在allinone情况下
     if ((Global::GetInstance()->GetCurAppType() & appType) != 0)
     {
         DispatchPacket(msgId, proto, nullptr);
@@ -60,7 +43,7 @@ void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, google::protobuf::M
 
     auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
     auto networkIdentify = pNetworkLocator->GetNetworkIdentify(appType, appId);
-    if (networkIdentify.GetSocketKey().NetType == NetworkType::None)
+    if (networkIdentify.GetSocketKey()->NetType == NetworkType::None)
     {
         LOG_ERROR("can't find network. appType:" << GetAppName(appType) << " appId:" << appId);
         return;
@@ -71,38 +54,79 @@ void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, google::protobuf::M
     SendPacket(packet);
 }
 
-void MessageSystemHelp::SendPacket(Packet* pPacket)
+void MessageSystemHelp::SendPacket(Packet* pPacket, APP_TYPE appType, int appId)
 {
-    // 找不到Network，就向所有线程发送协议
-    if (pPacket->GetSocketKey().Socket == INVALID_SOCKET || pPacket->GetSocketKey().NetType == NetworkType::None)
+    if ((Global::GetInstance()->GetCurAppType() & appType) != 0)
     {
         DispatchPacket(pPacket);
         return;
     }
 
     auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
-    const auto socketKey = pPacket->GetSocketKey();
-    const auto networkType = socketKey.NetType;
-    if (networkType == NetworkType::TcpConnector || networkType == NetworkType::HttpConnector)
+    auto netIdentify = pNetworkLocator->GetNetworkIdentify(appType, appId);
+    if (netIdentify.GetSocketKey()->NetType == NetworkType::None)
     {
-        auto pNetwork = pNetworkLocator->GetConnector(networkType);
-        if (pNetwork != nullptr)
-        {
-            pNetwork->SendPacket(pPacket);
-            return;
-        }
-    }
-    else
-    {
-        auto pNetwork = pNetworkLocator->GetListen(networkType);
-        if (pNetwork != nullptr)
-        {
-            pNetwork->SendPacket(pPacket);
-            return;
-        }
+        LOG_ERROR("can't find network. appType:" << GetAppName(appType) << " appId:" << appId);
+        return;
     }
 
-    LOG_ERROR("failed to send packet." << dynamic_cast<NetworkIdentify*>(pPacket));
+    const auto appSocketKey = netIdentify.GetSocketKey();
+    pPacket->GetSocketKey()->Socket = appSocketKey->Socket;
+    pPacket->GetSocketKey()->NetType = appSocketKey->NetType;
+    SendPacket(pPacket);
+}
+
+void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, google::protobuf::Message& proto, TagKey* pTagKey, APP_TYPE appType, int appId)
+{
+    if ((Global::GetInstance()->GetCurAppType() & appType) != 0)
+    {
+        NetIdentify identify;
+        identify.GetTagKey()->CopyFrom(pTagKey);
+        DispatchPacket(msgId, proto, &identify);
+        return;
+    }
+
+    auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+    auto netIdentify = pNetworkLocator->GetNetworkIdentify(appType, appId);
+    if (netIdentify.GetSocketKey()->NetType == NetworkType::None)
+    {
+        LOG_ERROR("can't find network. appType:" << GetAppName(appType) << " appId:" << appId);
+        return;
+    }
+
+    NetIdentify identify;
+    identify.GetSocketKey()->CopyFrom(netIdentify.GetSocketKey());
+    identify.GetTagKey()->CopyFrom(pTagKey);
+
+    auto packet = CreatePacket(msgId, &identify);
+    packet->SerializeToBuffer(proto);
+    SendPacket(packet);
+}
+
+void MessageSystemHelp::SendPacket(const Proto::MsgId msgId, TagKey* pTagKey, APP_TYPE appType, int appId)
+{
+    if ((Global::GetInstance()->GetCurAppType() & appType) != 0)
+    {
+        NetIdentify identify;
+        identify.GetTagKey()->CopyFrom(pTagKey);
+        DispatchPacket(msgId, &identify);
+        return;
+    }
+
+    auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+    auto netIdentify = pNetworkLocator->GetNetworkIdentify(appType, appId);
+    if (netIdentify.GetSocketKey()->NetType == NetworkType::None)
+    {
+        LOG_ERROR("can't find network. appType:" << GetAppName(appType) << " appId:" << appId);
+        return;
+    }
+
+    NetIdentify identify;
+    identify.GetSocketKey()->CopyFrom(netIdentify.GetSocketKey());
+    identify.GetTagKey()->CopyFrom(pTagKey);
+
+    const auto packet = CreatePacket(msgId, &identify);
+    SendPacket(packet);
 }
 
 void MessageSystemHelp::SendPacketToAllApp(Proto::MsgId msgId, google::protobuf::Message& proto, APP_TYPE appType)
@@ -117,30 +141,66 @@ void MessageSystemHelp::SendPacketToAllApp(Proto::MsgId msgId, google::protobuf:
         auto networks = pNetworkLocator->GetAppNetworks(appType);
         if (!networks.empty())
         {
-            auto pConnector = pNetworkLocator->GetConnector(NetworkType::TcpConnector);
-            if (pConnector == nullptr)
-            {
-                pConnector = pNetworkLocator->GetListen(NetworkType::TcpListen);
-            }
-
             for (auto& one : networks)
             {
                 Packet* pPacket = CreatePacket(msgId, &one);
                 pPacket->SerializeToBuffer(proto);
-                pConnector->SendPacket(pPacket);
+                auto pConnector = pNetworkLocator->GetNetwork(one.GetSocketKey()->NetType);
+                if (pConnector != nullptr)
+                    pConnector->SendPacket(pPacket);
             }
 
             return;
         }
 
-        LOG_WARN("failed to send packet. msgId:" << (int)msgId << " to appType:" << GetAppName(appType));
+        LOG_WARN("failed to send packet. msgId:" << Log4Help::GetMsgIdName(msgId).c_str() << " to appType:" << GetAppName(appType));
     }
 }
 
-void MessageSystemHelp::SendHttpResponseBase(NetworkIdentify* pIdentify, int status_code, const char* content, int size)
+void MessageSystemHelp::SendPacket(Packet* pPacket)
+{
+    // 找不到Network，就向所有线程发送协议
+    if (pPacket->GetSocketKey()->Socket == INVALID_SOCKET || pPacket->GetSocketKey()->NetType == NetworkType::None)
+    {
+        DispatchPacket(pPacket);
+        return;
+    }
+
+    auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+    const auto socketKey = pPacket->GetSocketKey();
+    auto pNetwork = pNetworkLocator->GetNetwork(socketKey->NetType);
+    if (pNetwork != nullptr)
+    {
+        pNetwork->SendPacket(pPacket);
+        return;
+    }
+
+    LOG_ERROR("failed to send packet." << dynamic_cast<NetIdentify*>(pPacket));
+}
+
+Packet* MessageSystemHelp::CreatePacket(Proto::MsgId msgId, NetIdentify* pIdentify)
+{
+    return DynamicPacketPool::GetInstance()->MallocPacket(msgId, pIdentify);
+}
+
+void MessageSystemHelp::CreateConnect(NetworkType iType, TagType tagType, TagValue& tagValue, std::string ip, int port)
+{
+    Proto::NetworkConnect protoConn;
+    protoConn.set_network_type((int)iType);
+    auto protoTag = protoConn.mutable_tag();
+    protoTag->set_tag_type((Proto::TagType)tagType);
+    auto protoValue = protoTag->mutable_tag_value();
+    protoValue->set_value_int64(tagValue.KeyInt64);
+    protoValue->set_value_str(tagValue.KeyStr.c_str());   
+    protoConn.set_ip(ip.c_str());
+    protoConn.set_port(port);
+    DispatchPacket(Proto::MsgId::MI_NetworkConnect, protoConn, nullptr);
+}
+
+void MessageSystemHelp::SendHttpResponseBase(NetIdentify* pIdentify, int status_code, const char* content, int size)
 {
     auto pNetworkLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
-    auto pNetwork = pNetworkLocator->GetListen(NetworkType::HttpListen);
+    auto pNetwork = pNetworkLocator->GetNetwork(NetworkType::HttpListen);
     if (pNetwork == nullptr)
     {
         LOG_ERROR("can't find network. http send failed. socket:" << pIdentify);
@@ -168,12 +228,12 @@ void MessageSystemHelp::SendHttpResponseBase(NetworkIdentify* pIdentify, int sta
     pNetwork->SendPacket(pPacket);
 }
 
-void MessageSystemHelp::SendHttpResponse404(NetworkIdentify* pIdentify)
+void MessageSystemHelp::SendHttpResponse404(NetIdentify* pIdentify)
 {
     SendHttpResponseBase(pIdentify, 404, nullptr, 0);
 }
 
-void MessageSystemHelp::SendHttpResponse(NetworkIdentify* pIdentify, const char* content, int size)
+void MessageSystemHelp::SendHttpResponse(NetIdentify* pIdentify, const char* content, int size)
 {
     SendHttpResponseBase(pIdentify, 200, content, size);
 }
@@ -196,7 +256,7 @@ bool MessageSystemHelp::ParseUrl(const std::string& url, ParseUrlInfo& info)
     return true;
 }
 
-Packet* MessageSystemHelp::ParseHttp(NetworkIdentify* pIdentify, const char* s, unsigned int bodyLen, const bool isChunked, http_message* hm)
+Packet* MessageSystemHelp::ParseHttp(NetIdentify* pIdentify, const char* s, unsigned int bodyLen, const bool isChunked, http_message* hm)
 {
     Proto::Http proto;
     if (bodyLen > 0)
@@ -253,7 +313,7 @@ Packet* MessageSystemHelp::ParseHttp(NetworkIdentify* pIdentify, const char* s, 
     return pPacket;
 }
 
-void MessageSystemHelp::SendHttpRequest(NetworkIdentify* pIdentify, std::string ip, const int port, const std::string method, std::map<std::string, std::string>* pParams)
+void MessageSystemHelp::SendHttpRequest(NetIdentify* pIdentify, std::string ip, const int port, const std::string method, std::map<std::string, std::string>* pParams)
 {
     Packet* pPacket = CreatePacket(Proto::MsgId::MI_HttpOuterRequest, pIdentify);
 

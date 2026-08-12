@@ -4,6 +4,7 @@
 #include "thread_mgr.h"
 #include "object_pool.h"
 #include "timer_component.h"
+#include "message_system.h"
 
 void IComponent::SetParent(IEntity* pObj)
 {
@@ -38,7 +39,7 @@ void IComponent::ComponentBackToPool()
     {
         auto pTimer = _pSystemManager->GetEntitySystem()->GetComponent<TimerComponent>();
         if (pTimer != nullptr)
-            pTimer->Remove(_timers);
+            pTimer->Remove(_timers); // 从定时器组件中删除定时任务
 
         _timers.clear();
     }
@@ -47,6 +48,11 @@ void IComponent::ComponentBackToPool()
     {
         _pPool->FreeObject(this);
         _pPool = nullptr;
+    }
+
+    if(_pSystemManager != nullptr && _pSystemManager->GetMessageSystem() != nullptr)
+    {
+        _pSystemManager->GetMessageSystem()->RemoveFunction(this);
     }
 
     _sn = 0;

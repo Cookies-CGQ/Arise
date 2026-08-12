@@ -117,17 +117,17 @@ Packet* RecvNetworkBuffer::GetPacket()
 
 Packet* RecvNetworkBuffer::GetTcpPacket()
 {
-    // 判断有效数据是否大于一个总长度值
+    // 有效数据长度小于总长度字段大小
     if (_dataSize < sizeof(TotalSizeType))
     {
         return nullptr;
     }
 
-    // 读取总长度值
+    // 读取总长度
     unsigned short totalSize;
     MemcpyFromBuffer(reinterpret_cast<char*>(&totalSize), sizeof(TotalSizeType));
 
-    // 有效数据不足一条协议长度
+    // 有效数据长度小于总长度
     if (_dataSize < totalSize)
     {
         return nullptr;
@@ -135,13 +135,39 @@ Packet* RecvNetworkBuffer::GetTcpPacket()
 
     RemoveDate(sizeof(TotalSizeType));
 
-    // 读取 PacketHead
-    PacketHead head;
-    MemcpyFromBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHead));
-    RemoveDate(sizeof(PacketHead));
+    // 读取头部长度字段
+    unsigned short headSize;
+    MemcpyFromBuffer(reinterpret_cast<char*>(&headSize), sizeof(TotalSizeType));
+    RemoveDate(sizeof(TotalSizeType));
+
+    // 读取头部，PacketHead / PacketHeadS2S
+    Proto::MsgId msgId;
+    bool isS2S = false;
+    uint64 entitySn = 0;
+    uint64 playerSn = 0;
+    // PacketHead / PacketHeadS2S字段长度不同
+    if (headSize == sizeof(PacketHead))
+    {
+        // 读取头部
+        PacketHead head;
+        MemcpyFromBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHead));
+        RemoveDate(sizeof(PacketHead));
+        msgId = static_cast<Proto::MsgId>(head.MsgId);
+    }
+    else
+    {
+        // 读取头部
+        PacketHeadS2S head;
+        MemcpyFromBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHeadS2S));
+        RemoveDate(sizeof(PacketHeadS2S));
+        msgId = static_cast<Proto::MsgId>(head.MsgId);
+        entitySn = head.EntitySn;
+        playerSn = head.PlayerSn;
+        isS2S = true;
+    }
 
     const google::protobuf::EnumDescriptor* descriptor = Proto::MsgId_descriptor();
-    if (descriptor->FindValueByNumber(head.MsgId) == nullptr)
+    if (descriptor->FindValueByNumber(msgId) == nullptr)
     {
         _pConnectObj->Close();
         std::cout << "recv invalid msg." << std::endl;
@@ -149,8 +175,11 @@ Packet* RecvNetworkBuffer::GetTcpPacket()
     }
 
     // 创建packet
-    Packet* pPacket = MessageSystemHelp::CreatePacket((Proto::MsgId)head.MsgId, _pConnectObj);
-    const unsigned int dataLength = totalSize - sizeof(PacketHead) - sizeof(TotalSizeType);
+    Packet* pPacket = MessageSystemHelp::CreatePacket(msgId, _pConnectObj);
+    unsigned int dataLength = totalSize - sizeof(PacketHead) - sizeof(TotalSizeType) * 2;
+    if (isS2S)
+        dataLength = totalSize - sizeof(PacketHeadS2S) - sizeof(TotalSizeType) * 2;
+
     while (pPacket->GetTotalSize() < dataLength)
     {
         pPacket->ReAllocBuffer();
@@ -159,6 +188,13 @@ Packet* RecvNetworkBuffer::GetTcpPacket()
     MemcpyFromBuffer(pPacket->GetBuffer(), dataLength);
     pPacket->FillData(dataLength);
     RemoveDate(dataLength);
+
+    if (isS2S)
+    {
+        auto pTagKey = pPacket->GetTagKey();
+        pTagKey->AddTag(TagType::Entity, entitySn);
+        pTagKey->AddTag(TagType::Player, playerSn);
+    }
 
     return pPacket;
 }
@@ -264,7 +300,13 @@ int SendNetworkBuffer::GetBuffer(char*& pBuffer) const
 void SendNetworkBuffer::AddPacket(Packet* pPacket)
 {
     const auto dataLength = pPacket->GetDataLength();
-    TotalSizeType totalSize = dataLength + sizeof(PacketHead) + sizeof(TotalSizeType);
+    const auto pTagValue = pPacket->GetTagKey()->GetTagValue(TagType::Entity);
+
+    TotalSizeType totalSize = dataLength + sizeof(PacketHead) + sizeof(TotalSizeType) * 2;
+    if (pTagValue != nullptr)
+    {
+        totalSize = dataLength + sizeof(PacketHeadS2S) + sizeof(TotalSizeType) * 2;
+    }
 
     // 扩容
     while (GetEmptySize() < totalSize) 
@@ -279,9 +321,29 @@ void SendNetworkBuffer::AddPacket(Packet* pPacket)
         // 如果是tcp packet，还需要写入 总长度 + PacketHead，最后才是数据内容
         MemcpyToBuffer(reinterpret_cast<char*>(&totalSize), sizeof(TotalSizeType));
 
-        PacketHead head;
-        head.MsgId = pPacket->GetMsgId();
-        MemcpyToBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHead));
+        if (pTagValue == nullptr)
+        {
+            PacketHead head{};
+            head.MsgId = pPacket->GetMsgId();
+            TotalSizeType headSize = sizeof(PacketHead);
+            MemcpyToBuffer(reinterpret_cast<char*>(&headSize), sizeof(TotalSizeType));
+            MemcpyToBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHead));
+        }
+        else
+        {
+            PacketHeadS2S head{};
+            head.MsgId = pPacket->GetMsgId();
+            head.EntitySn = pTagValue->KeyInt64;
+            const auto pTagPlayer = pPacket->GetTagKey()->GetTagValue(TagType::Player);
+            if (pTagPlayer == nullptr)
+                head.PlayerSn = 0;
+            else
+                head.PlayerSn = pTagPlayer->KeyInt64;
+
+            TotalSizeType headSize = sizeof(PacketHeadS2S);
+            MemcpyToBuffer(reinterpret_cast<char*>(&headSize), sizeof(TotalSizeType));
+            MemcpyToBuffer(reinterpret_cast<char*>(&head), sizeof(PacketHeadS2S));
+        }
     }
 
     // 写入发送缓冲区

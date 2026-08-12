@@ -69,6 +69,16 @@ struct LoginConfig : public AppListConfig
     std::string UrlMethod; // method
 };
 
+struct GameConfig : public AppListConfig
+{
+
+};
+
+struct SpaceConfig :public AppListConfig
+{
+
+};
+
 // 数据库连接数据
 struct DBConfig
 {

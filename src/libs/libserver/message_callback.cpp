@@ -10,7 +10,7 @@ void MessageCallBack::BackToPool()
     _handleFunction = nullptr;
 }
 
-void MessageCallBack::ProcessPacket(Packet* pPacket)
+bool MessageCallBack::ProcessPacket(Packet* pPacket)
 {
 #ifdef LOG_TRACE_COMPONENT_OPEN
     const google::protobuf::EnumDescriptor* descriptor = Proto::MsgId_descriptor();
@@ -19,8 +19,9 @@ void MessageCallBack::ProcessPacket(Packet* pPacket)
     const auto traceMsg = std::string("process. ")
         .append(" sn:").append(std::to_string(pPacket->GetSN()))
         .append(" msgId:").append(name);
-    ComponentHelp::GetTraceComponent()->Trace(TraceType::Packet, pPacket->GetSocketKey().Socket, traceMsg);
+    ComponentHelp::GetTraceComponent()->Trace(TraceType::Packet, pPacket->GetSocketKey()->Socket, traceMsg);
 #endif
 
     _handleFunction(pPacket);
+    return true;
 }

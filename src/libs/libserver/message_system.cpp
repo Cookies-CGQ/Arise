@@ -1,5 +1,5 @@
-#include "message_system.h"
 #include <utility>
+#include "message_system.h"
 #include "system_manager.h"
 #include "packet.h"
 #include "entity_system.h"
@@ -22,7 +22,7 @@ void MessageSystem::AddPacketToList(Packet* pPacket)
     std::lock_guard<std::mutex> guard(_packet_lock);
     _cachePackets.GetWriterCache()->emplace_back(pPacket);
 
-    // 进入时 Ref +1
+    // packet进入本线程，packet引用计数 + 1
     pPacket->AddRef();
 }
 
@@ -31,27 +31,39 @@ void MessageSystem::RegisterFunction(IEntity* obj, int msgId, MsgCallbackFun cbf
     auto iter = _callbacks.find(msgId);
     if (iter == _callbacks.end())
     {
-        _callbacks.insert(std::make_pair(msgId, std::list<IMessageCallBack*>()));
+        _callbacks.insert(std::make_pair(msgId, new std::map<uint64, IMessageCallBack*>()));
     }
 
-    const auto pCallback = obj->AddComponent<MessageCallBack>(std::move(cbfun));
-    _callbacks[msgId].push_back(pCallback);
+    // 创建 MessageCallBack
+    const auto pCallback = _systemMgr->GetEntitySystem()->AddComponent<MessageCallBack>(std::move(cbfun));
+    pCallback->SetParent(obj);
+
+    // 将父类的SN，放在key值中，便于查找
+    _callbacks[msgId]->insert(std::make_pair(obj->GetSN(), pCallback));
+}
+
+void MessageSystem::RegisterDefaultFunction(IEntity* obj, MsgCallbackFun cbfun)
+{
+    // 创建 MessageCallBack
+    const auto pCallback = _systemMgr->GetEntitySystem()->AddComponent<MessageCallBack>(std::move(cbfun));
+    pCallback->SetParent(obj);
+
+    _defaultCallbacks.insert(std::make_pair(obj->GetSN(), pCallback));
 }
 
 void MessageSystem::RemoveFunction(IComponent* obj)
 {
     for (auto iter1 = _callbacks.begin(); iter1 != _callbacks.end(); ++iter1)
     {
-        auto subList = iter1->second;
-        auto iter2 = std::find_if(subList.begin(), subList.end(), [obj](auto one){
-                return one->GetSN() == obj->GetSN();
-            });
-
-        if (iter2 == subList.end())
+        auto pSub = iter1->second;
+        const auto iter2 = pSub->find(obj->GetSN());
+        if (iter2 == pSub->end())
             continue;
 
-        subList.erase(iter2);
+        pSub->erase(iter2);
     }
+
+    _defaultCallbacks.erase(obj->GetSN());
 }
 
 void MessageSystem::Update(EntitySystem* pEntities)
@@ -70,13 +82,57 @@ void MessageSystem::Update(EntitySystem* pEntities)
     for (auto iter = packetLists->begin(); iter != packetLists->end(); ++iter)
     {
         auto pPacket = (*iter);
-        const auto finditer = _callbacks.find(pPacket->GetMsgId());
-        if (finditer != _callbacks.end())
+        uint64 entitySn = 0;
+        auto pTags = pPacket->GetTagKey();
+        const auto pTagValue = pTags->GetTagValue(TagType::Entity);
+        if (pTagValue != nullptr)
         {
-            auto handleList = finditer->second;
-            for (auto pCallBack : handleList)
+            entitySn = pTagValue->KeyInt64;
+        }
+
+        const auto msgIterator = _callbacks.find(pPacket->GetMsgId());
+        bool isDo = false;
+
+        if (msgIterator != _callbacks.end())
+        {
+            auto pSub = msgIterator->second;
+            // 如果packet中有指定entitySn，那就定向发送
+            if (entitySn > 0)
             {
-                pCallBack->ProcessPacket(pPacket);
+                const auto iterSub = pSub->find(entitySn);
+                if (iterSub != pSub->end())
+                {
+                    if (iterSub->second->ProcessPacket(pPacket))
+                        isDo = true;
+                }
+            }
+            // 如果packet中没有指定entitySn，那就广播发送
+            else
+            {
+                for (auto iterSub = pSub->begin(); iterSub != pSub->end(); ++iterSub)
+                {
+                    if (iterSub->second->ProcessPacket(pPacket))
+                        isDo = true;
+                }
+            }
+        }
+
+        // 走到这里还没处理
+        if (!isDo)
+        {
+            // 是否有默认处理函数
+            if (entitySn > 0)
+            {
+                // allinone 时 ，world和worldproxy sn相同，但给world的协议，是不可能有默认处理函数的
+                const auto pTagToWorld = pTags->GetTagValue(TagType::ToWorld);
+                if (pTagToWorld == nullptr)
+                {
+                    auto pMsgCallback = _defaultCallbacks[entitySn];
+                    if (pMsgCallback != nullptr)
+                    {
+                        pMsgCallback->ProcessPacket(pPacket);
+                    }
+                }
             }
         }
 

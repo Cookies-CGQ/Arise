@@ -7,23 +7,21 @@
 #include <mutex>
 #include "component.h"
 
-// 组件工厂(模板参数是组件构造函数的参数)
+// 组件工厂(模板参数是组件构造函数的参数)，如果组件的构造函数的参数相同，那组件工厂的实例就是同一个
 template<typename ... Targs>
 class ComponentFactory
 {
 public:
-    typedef std::function<IComponent*(SystemManager*, Targs...)> FactoryFunction;
+	typedef std::function<SnObject*(SystemManager*, uint64 sn, Targs...)> FactoryFunction;
 
     static ComponentFactory<Targs...>* GetInstance()
     {
-        if(_pInstance == nullptr)
-        {
-            _pInstance = new ComponentFactory<Targs...>();
-        }
-        return _pInstance;
+        // 标准保证函数内 static 局部变量的初始化是线程安全的
+        static ComponentFactory<Targs...> _instance;
+        return &_instance;
     }
 
-    // 注册
+    // 注册 -- 类名：生成函数
     bool Regist(const std::string& className, FactoryFunction pFunc)
     {
         std::lock_guard<std::mutex> guard(_lock);
@@ -42,26 +40,22 @@ public:
     }
 
     // 创建组件
-    IComponent* Create(SystemManager* pSysMgr, const std::string className, Targs... args)
-    {
-        _lock.lock();
-        auto iter = _map.find(className);
-        if(iter == _map.end())
-        {
+    SnObject* Create(SystemManager* pSysMgr, const std::string className, uint64 sn, Targs... args)
+	{
+		_lock.lock();
+		auto iter = _map.find(className);
+		if (iter == _map.end())
+		{
 			std::cout << "ComponentFactory Create failed. can't find component. className:" << className.c_str() << std::endl;
-            return nullptr;
-        }
-        auto fun = iter->second;
-        _lock.unlock();
+			return nullptr;
+		}
+		auto fun = iter->second;
+		_lock.unlock();
 
-        return fun(pSysMgr, std::forward<Targs>(args)...);
-    }
+		return fun(pSysMgr, sn, std::forward<Targs>(args)...);
+	}
 
 private:
     std::mutex _lock;
-    static ComponentFactory<Targs...>* _pInstance;
     std::map<std::string, FactoryFunction> _map;     // 类名: 生成函数
 };
-
-template<typename... Targs>
-ComponentFactory<Targs...>* ComponentFactory<Targs...>::_pInstance = nullptr;

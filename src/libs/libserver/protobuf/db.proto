@@ -3,7 +3,7 @@ syntax = "proto3";
 // 该文件的所有结构都会存储于DB中
 package Proto;
 
-// 玩家位置
+// 三维向量，存储在游戏世界中的位置信息
 message Vector3{
     float x = 1;
     float y = 2;
@@ -17,14 +17,14 @@ enum Gender{
     female = 2;
 }
 
-// 玩家基本信息
+// 玩家基础属性 -- 玩家核心且经常变动的数据。
 message PlayerBase{
     Gender gender = 1; // 性别
     int32 level = 2;   // 等级
 }
 
 // 表示玩家上次离线时所在的地图及坐标，有两种情况：
-// 1、上次离开时，是公共地图，那么直接回到公告地图
+// 1、上次离开时，是公共地图，那么直接回到公共地图
 // 2、上次离开时，是从一个副本离开的，如果副本SN还能找到，就再次进入副本
 message LastWorld{
     int32 world_id = 1;    // 地图配置id
@@ -36,13 +36,13 @@ message LastWorld{
 message PlayerMisc {
 	LastWorld last_world = 1;	// 公共地图
 	LastWorld last_dungeon = 2;	// 副本地图
-	int32 online_version = 3;	// 在线版本（乐观锁）
+	int32 online_version = 3;	// 在线版本号（乐观锁），每次上线时版本号递增，更新DB时检查版本号一致性，防止并发覆盖
 }
 
-// 完整的玩家持久化对象
+// 顶层玩家数据结构，存入数据库的完整玩家记录
 message Player {
 	uint64 sn = 1;          // 角色唯一ID
 	string name = 2;        // 角色名称
-	PlayerBase base = 3;    // 玩家基础信息
+	PlayerBase base = 3;    // 玩家基础属性
 	PlayerMisc misc = 4;    // 玩家杂项信息
 }

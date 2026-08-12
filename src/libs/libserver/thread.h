@@ -33,6 +33,12 @@ public:
     // 线程是否已经销毁   
     bool IsDestroy()const;
 
+    // 获取线程类型
+    ThreadType GetThreadType() const 
+    { 
+        return _threadType; 
+    }
+
 private:
     ThreadType _threadType; // 线程类型
     ThreadState _state;     // 线程状态

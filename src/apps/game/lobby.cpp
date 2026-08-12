@@ -88,7 +88,63 @@ void Lobby::HandleGameTokenToRedisRs(Packet* pPacket)
     LOG_DEBUG("enter game. account:" << pPlayer->GetAccount().c_str() << " token:" << protoRs.token_info().token().c_str());
 
     // 查询玩家数据	
-    //Proto::QueryPlayer protoQuery;
-    //protoQuery.set_player_sn(protoRs.token_info().player_sn());
-    //MessageSystemHelp::SendPacket(Proto::MsgId::G2DB_QueryPlayer, protoQuery, APP_DB_MGR);
+    Proto::QueryPlayer protoQuery;
+    protoQuery.set_player_sn(protoRs.token_info().player_sn());
+    MessageSystemHelp::SendPacket(Proto::MsgId::G2DB_QueryPlayer, protoQuery, APP_DB_MGR);
+}
+
+void Lobby::HandleQueryPlayerRs(Packet* pPacket)
+{
+    auto protoRs = pPacket->ParseToProto<Proto::QueryPlayerRs>();
+    auto account = protoRs.account();
+    auto pPlayer = GetComponent<PlayerCollectorComponent>()->GetPlayerByAccount(account);
+    if (pPlayer == nullptr)
+    {
+        LOG_ERROR("HandleQueryPlayer. pPlayer == nullptr. account:" << account.c_str());
+        return;
+    }
+
+    // 向客户端发送玩家数据
+    Proto::SyncPlayer syncPlayer;
+    syncPlayer.mutable_player()->CopyFrom(protoRs.player());
+    MessageSystemHelp::SendPacket(Proto::MsgId::G2C_SyncPlayer, pPlayer, syncPlayer);
+
+    // 分析进入地图
+    auto protoPlayer = protoRs.player();
+    const auto playerSn = protoPlayer.sn();
+    pPlayer->ParserFromProto(playerSn, protoPlayer);
+    const auto pPlayerLastMap = pPlayer->AddComponent<PlayerComponentLastMap>();
+    auto pWorldLocator = ComponentHelp::GetGlobalEntitySystem()->GetComponent<WorldProxyLocator>();
+
+    // 进入副本
+    auto pLastMap = pPlayerLastMap->GetLastDungeon();
+    if (pLastMap != nullptr && pWorldLocator->IsExistDungeon(pLastMap->WorldSn))
+    {
+        // 存在副本，跳转
+        WorldProxyHelp::Teleport(pPlayer, GetSN(), pLastMap->WorldSn);
+        return;
+    }
+
+    // 进入公共地图
+    pLastMap = pPlayerLastMap->GetLastPublicMap();
+    const auto lastMapSn = pWorldLocator->GetWorldSnById(pLastMap->WorldId);
+    if (lastMapSn != (uint64)INVALID_ID)
+    {
+        // 存在公共地图，跳转
+        WorldProxyHelp::Teleport(pPlayer, GetSN(), lastMapSn);
+        return;
+    }
+
+    // 等待跳转
+    if (_waitingForWorld.find(pLastMap->WorldId) == _waitingForWorld.end())
+    {
+        _waitingForWorld[pLastMap->WorldId] = std::set<uint64>();
+    }
+
+    _waitingForWorld[pLastMap->WorldId].insert(pPlayer->GetPlayerSN());
+
+    // 向appmgr申请创建地图
+    Proto::RequestWorld protoToMgr;
+    protoToMgr.set_world_id(pLastMap->WorldId);
+    MessageSystemHelp::SendPacket(Proto::MsgId::G2M_RequestWorld, protoToMgr, APP_APPMGR);
 }

@@ -5,22 +5,20 @@
 #include "common.h"
 #include "network_type.h"
 
+// 网络连接标识系统：网络连接socket + 业务标签
+
 struct SocketKey
 {
     SocketKey(SOCKET socket, NetworkType netType);
 	// 清除
     void Clean();
+    // 拷贝指定数据
+    void CopyFrom(SocketKey* pSocketKey);
 
 	// !=重载
-    bool operator != (const SocketKey other)
+    bool operator != (const SocketKey other) const
     {
-        if (Socket != other.Socket)
-            return false;
-
-        if (NetType != other.NetType)
-            return false;
-
-        return true;
+        return (Socket != other.Socket) || (NetType != other.NetType);
     };
 
 	// ==重载
@@ -29,97 +27,113 @@ struct SocketKey
         return (Socket == other.Socket) && (NetType == other.NetType);
     };
 
-	SOCKET Socket;
-    NetworkType NetType;
+	SOCKET Socket;          // socket
+    NetworkType NetType;    // 网络类型
 
-    static SocketKey None;
+    static SocketKey None;  // 静态空哨兵
 };
 
-enum class ObjectKeyType
+// 标签类型
+enum class TagType
 {
-    None = Proto::NetworkObjectKeyType::ObjectKeyTypeNone,
-    Account = Proto::NetworkObjectKeyType::ObjectKeyTypeAccount,
-    App = Proto::NetworkObjectKeyType::ObjectKeyTypeApp,
+    None = Proto::TagType::TagTypeNone,         // 空标签
+    Account = Proto::TagType::TagTypeAccount,   // 账号标签
+    App = Proto::TagType::TagTypeApp,           // 服务标签
+    Entity = Proto::TagType::TagTypeEntity,     // Entity标签
+    ToWorld = Proto::TagType::TagTypeToWorld,   // 目标世界标签
+    Player = Proto::TagType::TagTypePlayer,     // 玩家标签
 };
 
-inline const char* GetConnectKeyTypeName(const ObjectKeyType iType)
+// 标签类型是否是字符串
+inline bool IsTagTypeStr(const TagType iType)
 {
-    if (iType == ObjectKeyType::Account)
+    return iType == TagType::Account;
+}
+
+// 获取标签名
+inline const char* GetTagTypeName(const TagType iType)
+{
+    if (iType == TagType::Account)
         return "Account";
-    else if (iType == ObjectKeyType::App)
+    else if (iType == TagType::App)
         return "App";
+    else if (iType == TagType::Entity)
+        return "world";
+    else if (iType == TagType::Player)
+        return "player";
     else
         return "None";
 }
 
-struct ObjectKeyValue
+// 标签值
+struct TagValue
 {
-    void Clean();
+    std::string KeyStr = "";
+    uint64 KeyInt64 = 0;
 
-    bool operator != (const ObjectKeyValue other)
+    bool operator != (const TagValue& other) const
     {
-        if (KeyInt64 != other.KeyInt64)
-            return false;
-
-        if (KeyStr != other.KeyStr)
-            return false;
-
-        return true;
+        return (KeyStr != other.KeyStr) || (KeyInt64 != other.KeyInt64);
     };
 
-    bool operator == (const ObjectKeyValue other)
+    bool operator == (const TagValue& other) const
     {
-        return (KeyInt64 == other.KeyInt64) && (KeyStr == other.KeyStr);
+        return (KeyStr == other.KeyStr) && (KeyInt64 == other.KeyInt64);
     };
-
-	uint64 KeyInt64 = 0;           // 用于标识Account
-    std::string KeyStr = "";       // 用于标识App
 };
 
-struct ObjectKey
-{
-	// proto -> ObjectKey
-    void ParseFromProto(Proto::NetworkObjectKey protoKey);
-    // ObjectKey -> proto
-	void SerializeToProto(Proto::NetworkObjectKey* pProto) const;
-    // 清除
-	void Clean();
-
-    bool operator != (const ObjectKey other)
-    {
-        if (KeyType != other.KeyType)
-            return false;
-
-        if (KeyValue != other.KeyValue)
-            return false;
-
-        return true;
-    };
-
-    bool operator == (const ObjectKey other)
-    {
-        return (KeyType == other.KeyType) && (KeyValue == other.KeyValue);
-    };
-
-    ObjectKeyType KeyType = ObjectKeyType::None;
-    ObjectKeyValue KeyValue { 0, "" };
-};
-
-// 网络与对象标识
-struct NetworkIdentify
+// 标签
+struct TagKey
 {
 public:
-    NetworkIdentify() = default;
-    NetworkIdentify(SocketKey socketKey, ObjectKey objKey);
+    void Clear();
 
-    virtual ~NetworkIdentify() = default;
-    SocketKey GetSocketKey() const { return _socketKey; }
-    ObjectKey GetObjectKey() const { return _objKey; }
+    std::map<TagType, TagValue>* GetTags() 
+    { 
+        return &_tags; 
+    }
+
+    // 添加标签
+    void AddTag(TagType tagType, std::string value);
+    void AddTag(TagType tagType, uint64 value);
+    void AddTag(TagType tagType, TagValue value);
+
+    // 根据标签类型获取标签值
+    TagValue* GetTagValue(TagType tagType);
+    // 拷贝
+    void CopyFrom(TagKey* pNetIdentify);
+    // 比较
+    bool CompareTags(TagKey* pIdentify);
 
 protected:
-    SocketKey _socketKey { INVALID_SOCKET, NetworkType::None };
-    ObjectKey _objKey { ObjectKeyType::None , {0, ""} };
+    static bool CompareTags(TagKey* pA, TagKey* pB, TagType tagtype);
+
+protected:
+    std::map<TagType, TagValue> _tags; // 多标签
 };
 
-// << 重载，方便输出NetworkIdentify信息
-std::ostream& operator <<(std::ostream& os, NetworkIdentify* pIdentify);
+struct NetIdentify
+{
+public:
+    NetIdentify() = default;
+    ~NetIdentify()
+    {
+        _socketKey.Clear();
+        _tagKey.Clear();
+    }
+
+    SocketKey* GetSocketKey() { return &_socketKey; }
+    TagKey* GetTagKey() { return &_tagKey; }
+
+protected:
+    SocketKey _socketKey{  INVALID_SOCKET, NetworkType::None };
+    TagKey _tagKey;
+};
+
+std::ostream& operator <<(std::ostream& os, TagKey* pTagKey);
+std::ostream& operator <<(std::ostream& os, NetIdentify* pIdentify);
+
+#if ENGINE_PLATFORM == PLATFORM_WIN32
+log4cplus::tostream& operator <<(log4cplus::tostream& os, TagKey* pTagKey);
+log4cplus::tostream& operator <<(log4cplus::tostream& os, NetIdentify* pIdentify);
+#endif

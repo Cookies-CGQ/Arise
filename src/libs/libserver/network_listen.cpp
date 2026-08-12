@@ -1,16 +1,15 @@
 #include <iostream>
 #include <set>
-
 #include "common.h"
 #include "network_listen.h"
 #include "connect_obj.h"
 #include "thread_mgr.h"
 #include "network_locator.h"
 #include "log4_help.h"
-#include "message_component.h"
-#include "update_component.h"
 #include "component_help.h"
 #include "global.h"
+#include "message_system.h"
+#include "update_component.h"
 
 void NetworkListen::Awake(std::string ip, int port, NetworkType iType)
 {
@@ -21,14 +20,12 @@ void NetworkListen::Awake(std::string ip, int port, NetworkType iType)
     pNetworkLocator->AddListenLocator(this, iType);
 
     // 注册消息处理函数
-    auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkRequestDisconnect, BindFunP1(this, &NetworkListen::HandleDisconnect));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkListenKey, BindFunP1(this, &NetworkListen::HandleListenKey));
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkRequestDisconnect, BindFunP1(this, &NetworkListen::HandleDisconnect));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkListenKey, BindFunP1(this, &NetworkListen::HandleListenKey));
 
     // 帧处理组件
-    auto pUpdateComponent = AddComponent<UpdateComponent>();
-    pUpdateComponent->UpdataFunction = BindFunP0(this, &NetworkListen::Update);
+    AddComponent<UpdateComponent>(BindFunP0(this, &NetworkListen::Update));
 
     // 创建监听socket
     _masterSocket = CreateSocket();
@@ -111,8 +108,7 @@ int NetworkListen::Accept()
         if (socket == INVALID_SOCKET)
             return rs;
 
-        // 如果listen获取到了socket，那就说明已经连接建立成功了
-        if (!CreateConnectObj(socket, ObjectKey(), ConnectStateType::Connected))
+        if (!CreateConnectObj(socket, TagType::None, TagValue{}, ConnectStateType::Connected))
         {
             _sock_close(socket);
             continue;
@@ -135,13 +131,16 @@ uint64 NetworkListen::GetTypeHashCode()
 
 void NetworkListen::CmdShow()
 {
-    LOG_DEBUG("\tsocket size:" << _connects.size());
+    LOG_DEBUG("\tsocket size:" << _sockets.size());
 }
 
 #ifndef EPOLL
 
 void NetworkListen::Update()
 {
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckBegin();
+#endif
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
     FD_ZERO(&exceptfds);
@@ -155,14 +154,20 @@ void NetworkListen::Update()
     // 读写事件处理
     Select();
 
-    // 连接接收
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(std::string(GetNetworkTypeName(_networkType)) + "01");
+#endif
+
     if (FD_ISSET(_masterSocket, &readfds))
     {
         Accept();
     }
 
-    // 发送packet
     Network::OnNetworkUpdate();
+
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(std::string(GetNetworkTypeName(_networkType)) + "02");
+#endif
 }
 
 #else
@@ -177,9 +182,16 @@ void NetworkListen::OnEpoll(SOCKET fd, int index)
 
 void NetworkListen::Update()
 {
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckBegin();
+#endif
     _mainSocketEventIndex = -1;
 
     Epoll();
+
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(std::string(GetNetworkTypeName(_networkType)) + "01");
+#endif
 
     if (_mainSocketEventIndex >= 0)
     {
@@ -187,6 +199,9 @@ void NetworkListen::Update()
     }
 
     Network::OnNetworkUpdate();
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(std::string(GetNetworkTypeName(_networkType)) + "02");
+#endif
 }
 
 #endif
@@ -194,16 +209,16 @@ void NetworkListen::Update()
 void NetworkListen::HandleListenKey(Packet* pPacket)
 {
     const auto socketKey = pPacket->GetSocketKey();
-    if (socketKey.NetType != _networkType)
+    if (socketKey->NetType != _networkType)
         return;
 
-    auto iter = _connects.find(socketKey.Socket);
-    if (iter == _connects.end())
+    const auto socket = socketKey->Socket;
+    if (_sockets.find(socket) == _sockets.end())
     {
         std::cout << "failed to modify connect key. socket not find." << pPacket << std::endl;
         return;
     }
 
-    auto pObj = iter->second;
-    pObj->ModifyConnectKey(pPacket->GetObjectKey());
+    auto pObj = _connects[socket];
+    pObj->GetTagKey()->CopyFrom(pPacket->GetTagKey());
 }

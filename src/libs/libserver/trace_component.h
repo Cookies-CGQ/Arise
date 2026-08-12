@@ -1,19 +1,17 @@
 #pragma once
+
 #include <map>
 #include <set>
 #include "component.h"
 #include "system.h"
 #include "common.h"
 
-#if true
-#define LOG_TRACE_COMPONENT_OPEN 1
-#endif
-
 enum class TraceType
 {
     Packet = 0,       // packet包追踪
     Connector = 1,    // 网络连接追踪
     Player = 2,       // 玩家追踪
+    Time = 3,         // 性能耗时追踪
 };
 
 class TraceDetail

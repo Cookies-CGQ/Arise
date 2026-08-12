@@ -20,6 +20,8 @@ private:
     void HandleLoginByToken(Packet* pPacket);
     // 消息处理 -- Redis 返回 token验证结果
     void HandleGameTokenToRedisRs(Packet* pPacket);
+    // 消息处理 -- 查询玩家角色数据返回
+    void HandleQueryPlayerRs(Packet* pPacket);
 
 private:
     // World ID : 同一 world 的玩家标识

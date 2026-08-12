@@ -6,6 +6,7 @@
 #include "log4_help.h"
 #include "disposable.h"
 
+// 只提供刷新型数据结构的基本语义，如面对并发问题需要外部提供相应方案
 template <class T>
 class CacheRefresh: public IDisposable
 {
@@ -20,7 +21,7 @@ public:
     // 缓冲区数据个数
     int Count();
 
-    // 返回删除的Obj，后续是否有内存回收处理
+    // 进行增删操作，若有回收队列则将删除的对象加入到队列中后续再回收到对象池中，否则直接删除
     void Swap(std::queue<T*>* pRecycleList);
     // 是否状态需要更新
     bool CanSwap();
@@ -30,19 +31,19 @@ public:
     void Dispose() override;
 
 protected:
-    std::map<uint64, T*> _objs; // 读缓冲区
-    std::map<uint64, T*> _adds; // 添加缓冲区
+    std::map<uint64, T*> _objs;  // 读缓冲区
+    std::map<uint64, T*> _adds;  // 添加缓冲区
     std::list<uint64> _removes;  // 删除缓冲区
 };
 
 template <class T>
-inline std::map<uint64, T *> *CacheRefresh<T>::GetReaderCache()
+inline std::map<uint64, T*>* CacheRefresh<T>::GetReaderCache()
 {
     return &_objs;
 }
 
 template <class T>
-inline void CacheRefresh<T>::AddObj(T *pObj)
+inline void CacheRefresh<T>::AddObj(T* pObj)
 {
     _adds.emplace(std::make_pair(pObj->GetSN(), pObj));
 }
@@ -79,11 +80,13 @@ void CacheRefresh<T>::Swap(std::queue<T*>* pRecycleList)
             }
             else
             {
+                // 回收
                 if (pRecycleList != nullptr)
                 {
-                    iter->second->ResetSN(true);
+                    iter->second->SetSN(0);
                     pRecycleList->emplace(iter->second);
                 } 
+                // 不回收，直接删除
                 else
                 {
                     delete iter->second;
@@ -126,8 +129,8 @@ void CacheRefresh<T>::Dispose()
     for (auto iter = _adds.begin(); iter != _adds.end(); ++iter)
     {
         auto pObj = iter->second;
-        pObj->Dispose();
-        delete pObj;
+        pObj->Dispose(); // 先清理内部资源
+        delete pObj;     // 再释放内存
     }
     _adds.clear();
 

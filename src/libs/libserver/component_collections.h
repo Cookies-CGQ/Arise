@@ -6,7 +6,7 @@
 #include "component.h"
 #include "disposable.h"
 
-// 组件集合
+// 组件集合，按组件类型来存储
 class ComponentCollections: public IDisposable
 {
 public:
@@ -21,7 +21,7 @@ public:
     // 指定sn获取相应组件
     IComponent* Get(uint64 sn = 0);
     // 获取组件集合
-    std::map<uint64, IComponent*>& GetAll();
+    std::map<uint64, IComponent*>* GetAll();
 
     // update
     void Swap();

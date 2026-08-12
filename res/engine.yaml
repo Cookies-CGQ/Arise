@@ -1,27 +1,37 @@
+# 进程配置文件
+
 # 所有服务都配置到同一个进程，方便测试
 allinone:
-  thread_logic: 1 # 逻辑线程数
-  thread_mysql: 1 # mysql线程数
+  thread_logic: 2 # 逻辑线程数
+  thread_mysql: 2 # mysql线程数
+  thread_listen: 2 # 网络监听线程数
+  thread_connector: 1 # 网络连接线程数
   ip: 127.0.0.1
-  port: 5401
+  port: 5401          # tcp
+  http_port: 7071     # http
 
 # 服务管理进程配置
 appmgr:
   thread_logic: 2 # 逻辑线程数
+  thread_listen: 2
+  thread_connector: 2
   ip: 127.0.0.1
   port: 5500
+  http_port: 7071
 
 # # 单login服务进程配置
 # login:
 #   thread_logic: 2
-#   url_login: http://192.168.0.120/member_login_t.php # 第三方平台账号验证
+#   url_login: http://192.168.125.132/member_login_t.php # 第三方平台账号验证
 #   ip: 127.0.0.1
 #   port: 5401
 
 # 多login服务进程配置
 login:
   thread_logic: 2
-  url_login: http://192.168.1.120/member_login_t.php # 第三方平台账号验证的URL
+  thread_listen: 1
+  thread_connector: 1
+  url_login: http://192.168.125.132/member_login_t.php # 第三方平台账号验证的URL
   url_method: "get" # HTTP 请求方法
   apps:
     - id: 101
@@ -31,27 +41,53 @@ login:
       ip: 127.0.0.1
       port: 5402
 
+# game服务进程配置
+game:
+  thread_logic: 2
+  thread_listen: 1
+  thread_connector: 1
+  apps:
+    - id: 201
+      ip: 127.0.0.1
+      port: 5601
+    - id: 202
+      ip: 127.0.0.1
+      port: 5602
+
+# space服务进程配置
+space:
+  thread_logic: 2
+  thread_listen: 1
+  thread_connector: 1
+  apps:
+    - id: 301
+      ip: 127.0.0.1
+      port: 5701
+
 # 数据库服务进程配置
 dbmgr:
   thread_logic: 1
-  thread_mysql: 2
+  thread_mysql: 3
+  thread_listen: 1
   ip: 127.0.0.1
   port: 5800
   dbs:
     # redis配置
     - type: redis
-      ip: 192.168.0.120
+      ip: 192.168.125.132
       port: 6379
 
     # mysql配置
     - type: mysql
-      ip: 192.168.0.120
+      ip: 192.168.125.132
       port: 3306
-      user: root
-      password: 123456
+      user: aynami
+      password: 493618
       database_name: e_gamedata
       character_set: utf8
       collation: utf8_general_ci
 
+# robot测试
 robot:
   thread_logic: 10
+  thread_connector: 2

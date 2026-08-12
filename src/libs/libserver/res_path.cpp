@@ -1,5 +1,5 @@
-#include "res_path.h"
 #include <ostream>
+#include "res_path.h"
 #include "common.h"
 #include "util_string.h"
 

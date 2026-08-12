@@ -3,7 +3,7 @@
 #include "packet.h"
 #include "component_help.h"
 
-void AppInfo::Parse(Proto::AppInfoSync proto)
+bool AppInfo::Parse(Proto::AppInfoSync proto)
 {
     auto pYaml = ComponentHelp::GetYaml();
     this->AppId = proto.app_id();
@@ -11,42 +11,77 @@ void AppInfo::Parse(Proto::AppInfoSync proto)
     this->Online = proto.online();
 
     auto pConfig = pYaml->GetIPEndPoint(this->AppType, this->AppId);
+    if (pConfig == nullptr)
+        return false;
+
     this->Ip = pConfig->Ip;
     this->Port = pConfig->Port;
+    return true;
 }
 
-void SyncComponent::AppInfoSyncHandle(Packet* pPacket)
+void SyncComponent::Parse(Proto::AppInfoSync proto, SOCKET socket)
 {
-    auto proto = pPacket->ParseToProto<Proto::AppInfoSync>();
-
     const auto iter = _apps.find(proto.app_id());
-    // 如果不存在则创建
     if (iter == _apps.end())
     {
         AppInfo syncAppInfo;
-        syncAppInfo.Parse(proto);
-        syncAppInfo.Socket = pPacket->GetSocket();
-        _apps[syncAppInfo.AppId] = syncAppInfo;
+        if (syncAppInfo.Parse(proto))
+        {
+            syncAppInfo.Socket = socket;
+            _apps[syncAppInfo.AppId] = syncAppInfo;
+        }
     }
-    // 如果存在则更新Online和Socket字段即可
     else
     {
         const int appId = proto.app_id();
         _apps[appId].Online = proto.online();
-        _apps[appId].Socket = pPacket->GetSocket();
+        _apps[appId].Socket = socket;
     }
 }
 
-bool SyncComponent::GetOneApp(APP_TYPE appType, AppInfo& info)
+void SyncComponent::HandleCmdApp(Packet* pPacket)
 {
-    if (_apps.size() == 0)
+    auto cmdProto = pPacket->ParseToProto<Proto::CmdApp>();
+    auto cmdType = cmdProto.cmd_type();
+    if (cmdType == Proto::CmdApp_CmdType_Info)
+    {
+        CmdShow();
+    }
+}
+
+void SyncComponent::HandleNetworkDisconnect(Packet* pPacket)
+{
+    SOCKET socket = pPacket->GetSocketKey()->Socket;
+    const auto iter = std::find_if(_apps.begin(), _apps.end(), [&socket](auto pair){
+            return pair.second.Socket == socket;
+        });
+
+    if (iter == _apps.end())
+        return;
+
+    _apps.erase(iter);
+
+}
+
+void SyncComponent::AppInfoSyncHandle(Packet* pPacket)
+{
+    const auto proto = pPacket->ParseToProto<Proto::AppInfoSync>();
+    Parse(proto, pPacket->GetSocketKey()->Socket);
+}
+
+bool SyncComponent::GetOneApp(APP_TYPE appType, AppInfo* pInfo)
+{
+    if (_apps.empty())
     {
         LOG_ERROR("GetApp failed. no more. appType:" << GetAppName(appType));
         return false;
     }
 
-    auto iter = std::find_if(_apps.begin(), _apps.end(), [&appType](auto pair){
-            return (pair.second.AppType & appType) != 0;});
+    // 找到第一个同类型数据
+    auto iter = std::find_if(_apps.begin(), _apps.end(), [&appType](auto pair)
+        {
+            return (pair.second.AppType & appType) != 0;
+        });
 
     if (iter == _apps.end())
     {
@@ -54,47 +89,40 @@ bool SyncComponent::GetOneApp(APP_TYPE appType, AppInfo& info)
         return false;
     }
 
-    // 获取最小负载进程的信息
+    // 遍历后面的数据，找到最小值
     auto min = iter->second.Online;
     int appId = iter->first;
-    while (iter != _apps.end())
+    for (; iter != _apps.end(); ++iter)
     {
         if (min == 0)
             break;
 
-        // 不是指定服务的迭代器 -- 跳过
         if ((iter->second.AppType & appType) == 0)
-        {
-            ++iter;
             continue;
-        }
 
-        // 是指定服务的迭代器 -- 更新
         if (iter->second.Online < min)
         {
             min = iter->second.Online;
             appId = iter->first;
         }
-
-        ++iter;
     }
 
-    auto syncInfo = _apps[appId];
-    syncInfo.Online += 1; // 选择该进程，负载+1
-    _apps[appId] = syncInfo;
-
-    info = _apps[appId];
-    
+    // 数据加1,以避免瞬间落在同一个App上，下次同步数据会将其覆盖为真实值
+    _apps[appId].Online += 1;
+    *pInfo = _apps[appId];
     return true;
 }
 
 void SyncComponent::CmdShow()
 {
-    LOG_DEBUG("------------------------------------");
+    std::stringstream os;
+    os << "----" << GetAppName(Global::GetInstance()->GetCurAppType()) << "----\r\n";
     for (auto pair : _apps)
     {
-        LOG_DEBUG("appId:" << std::setw(4) << pair.first <<
+        os << "appId:" << std::setw(4) << pair.first <<
             " type:" << GetAppName(pair.second.AppType) <<
-            " online:" << pair.second.Online);
+            " online:" << pair.second.Online << "\r\n";
     }
+
+    LOG_DEBUG(os.str().c_str());
 }

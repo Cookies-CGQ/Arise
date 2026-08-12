@@ -7,7 +7,7 @@ enum ThreadType
     ConnectThread = 1 << 2, // 主动连接线程
     LogicThread = 1 << 3, // 逻辑线程
     MysqlThread = 1 << 4, // 数据库线程
-    AllThreadType = MainThread | LogicThread | ListenThread | ConnectThread | MysqlThread,
+    AllThreadType = MainThread | LogicThread | ListenThread | ConnectThread | MysqlThread
 };
 
 // 通过线程类型获取线程类型名

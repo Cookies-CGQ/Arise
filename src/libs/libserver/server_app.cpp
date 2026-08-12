@@ -52,7 +52,7 @@ void ServerApp::Initialize()
 
     // 初始化线程管理类
     _pThreadMgr = ThreadMgr::Instance();
-    _pThreadMgr->InitializeGlobalComponent(_appType, _appId);
+    _pThreadMgr->InitializeGlobalComponent(_appType, _appId); // 全局组件创建在主线程
     _pThreadMgr->InitializeThread(); // InitializeThread只创建工作线程
 }
 
@@ -68,7 +68,7 @@ void ServerApp::Signalhandler(const int signalValue)
 
     case SIGTERM:
     case SIGINT:
-        pGlobal->IsStop = true; // 停止线程运行
+        pGlobal->IsStop = true; // 全部停止线程运行
         break;
     }
 
@@ -84,7 +84,7 @@ void ServerApp::Run()
     {
         pGlobal->UpdateTime(); // 更新全局时间
         _pThreadMgr->Update(); // 主线程update
-        DynamicPacketPool::GetInstance()->Update(); // packet对象池更新
+        DynamicPacketPool::GetInstance()->Update(); // 全局packet对象池更新
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 休眠1ms
     }
 

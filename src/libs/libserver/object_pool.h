@@ -1,31 +1,33 @@
 #pragma once
 
+#include <queue>
 #include <iostream>
 #include <sstream>
-#include <queue>
 #include <iomanip>
 #include "sn_object.h"
 #include "object_pool_interface.h"
 #include "cache_refresh.h"
 #include "log4_help.h"
 #include "system_manager.h"
+#include "global.h"
 
+// 对象池模板
 template<typename T>
-class DynamicObjectPool :public IDynamicObjectPool
+class DynamicObjectPool : public IDynamicObjectPool
 {
 public:
     // 释放资源
     void Dispose() override;
 
     // 取出一个对象初始化并返回
-    template<typename ... Targs>
-    T* MallocObject(SystemManager* pSys, Targs... args);
+    template<typename ...Targs>
+    T* MallocObject(SystemManager* pSys, IEntity* pParent, uint64 sn, Targs... args);
     
     // 更新对象池内部状态
     virtual void Update() override;
     // 回收对象
     virtual void FreeObject(IComponent* pObj) override;
-    // 显示对象池状态信息
+    // 显示对象池状态信息 -- 用于运维
     virtual void Show() override;
 
 protected:
@@ -53,48 +55,52 @@ void DynamicObjectPool<T>::Dispose()
     }
 }
 
-template<typename T>
-template<typename ... Targs>
-T* DynamicObjectPool<T>::MallocObject(SystemManager* pSys, Targs... args)
+template <typename T>
+template <typename ... Targs>
+T* DynamicObjectPool<T>::MallocObject(SystemManager* pSys, IEntity* pParent, uint64 sn, Targs... args)
 {
-    // 如果没有空闲对象，则申请空间
     if(_free.empty())
     {
-        // 如果在线程中是单例，那么该线程中该类型的对象池只创建一个即可
+        // 少量增加
         if(T::IsSingle())
         {
             T* pObj = new T();
-            pObj->ResetSN(true);
+            pObj->SetSN(0); // sn == 0标识哨兵值，表示已回收或者未使用
             pObj->SetPool(this);
             _free.push(pObj);
         }
+        // 批量增加
         else
         {
             for(int index = 0; index < 50; index++)
             {
                 T* pObj = new T();
-                pObj->ResetSN(true);
+                pObj->SetSN(0);
                 pObj->SetPool(this);
                 _free.push(pObj);
             }
         }
     }
 #if _DEBUG
-    ++_totalCall;
+    _totalCall++;
 #endif
-    // 取出一个对象
+
     auto pObj = _free.front();
     _free.pop();
 
-    if(pObj->GetSN() != 0)
+    if (pObj->GetSN() != 0)
     {
         LOG_ERROR("failed to create type:" << typeid(T).name() << " sn != 0. sn:" << pObj->GetSN());
     }
 
-    pObj->ResetSN();
+    if (sn == 0)
+        sn = Global::GetInstance()->GenerateSN();
+
+    pObj->SetSN(sn);
     pObj->SetPool(this);
+    pObj->SetParent(pParent);
     pObj->SetSystemManager(pSys);
-    pObj->Awake(std::forward<Targs>(args)...); // 初始化对象
+    pObj->Awake(std::forward<Targs>(args)...);
 
 #if LOG_SYSOBJ_OPEN
     LOG_SYSOBJ("*[pool] awake obj. obj sn:" << pObj->GetSN() << " type:" << pObj->GetTypeName() << " thead id:" << std::this_thread::get_id());

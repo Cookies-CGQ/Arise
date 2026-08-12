@@ -15,10 +15,13 @@ public:
     void BackToPool();
 
 private:
-    // 消息处理函数
+    // 消息处理函数 -- 接收消息统一处理
     void HandleCmdThread(Packet* pPacket);
+    // 消息处理函数 -- 打印线程实体信息
     void HandleCmdThreadEntites(Packet* pPacket);
+    // 消息处理函数 -- 打印线程对象池信息
     void HandleCmdThreadPool(Packet* pPacket);
+    // 消息处理函数 -- 打印线程连接信息
     void HandleCmdThreadConnect(Packet* pPacket);
 
 private:

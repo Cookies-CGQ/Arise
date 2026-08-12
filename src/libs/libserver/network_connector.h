@@ -4,6 +4,7 @@
 #include "network.h"
 #include "connect_obj.h"
 #include "app_type.h"
+#include "socket_object.h"
 
 class Packet;
 
@@ -11,9 +12,10 @@ class Packet;
 struct ConnectDetail: public SnObject, public IDisposable
 {
 public:
-    ConnectDetail(ObjectKey key, std::string ip, int port)
+    ConnectDetail(TagType tagType, TagValue tagValue, std::string ip, int port)
     {
-        Key = std::move(key);
+        TType = tagType;
+        TValue = tagValue;
         Ip = std::move(ip);
         Port = port;
     };
@@ -25,7 +27,9 @@ public:
 
     std::string Ip =  "";
     int Port = 0;
-    ObjectKey Key { ObjectKeyType::None , { 0, ""} };
+
+    TagType TType;
+    TagValue TValue;
 };
 
 
@@ -46,7 +50,7 @@ private:
     // 消息处理 -- 请求连接处理
     void HandleNetworkConnect(Packet* pPacket);
     // 预创建连接，用于连接其他服务
-    void CreateConnector(APP_TYPE appType, int appId);
+    void CreateConnector(APP_TYPE appType, int appId, std::string ip, int port);
     // 对于创建连接，一般有两种：
     //     1、连接其他服务，一般初始化时直接创建连接
     //     2、其他连接，一般通过消息机制通知Connector建立连接，例如：robot

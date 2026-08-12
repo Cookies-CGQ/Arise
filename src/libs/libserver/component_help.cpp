@@ -31,13 +31,13 @@ void ComponentHelp::CatchError(bool bResult)
     if (bResult)
         return;
 
-    void* array[10];
-    size_t size;
+    void* array[15]; // 指针数组，用于存储当前调用栈的返回地址，最多捕获15层栈帧 -- 超过10层的调用会被截断
+    size_t size;     // 实际捕获的帧数（<= 15）
     char** strings;
     size_t i;
 
-    size = backtrace(array, 10);
-    strings = backtrace_symbols(array, size);
+    size = backtrace(array, 15);
+    strings = backtrace_symbols(array, size); // 将地址解析为符号名
 
     std::stringstream ss;
     ss << "Obtained " << size << " stack frames.\n";

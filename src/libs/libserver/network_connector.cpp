@@ -7,8 +7,7 @@
 #include "thread_mgr.h"
 #include "update_component.h"
 #include "component_help.h"
-#include "message_callback.h"
-#include "message_component.h"
+#include "message_system.h"
 
 void NetworkConnector::Awake(int iType, int mixConnectAppType)
 {
@@ -20,16 +19,14 @@ void NetworkConnector::Awake(int iType, int mixConnectAppType)
     pNetworkLocator->AddConnectorLocator(this, _networkType);
 
     // update
-    auto pUpdateComponent = AddComponent<UpdateComponent>();
-    pUpdateComponent->UpdataFunction = BindFunP0(this, &NetworkConnector::Update);
+    AddComponent<UpdateComponent>(BindFunP0(this, &NetworkConnector::Update));
 
     // 注册消息处理
-    auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
     // 请求连接
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkConnect, BindFunP1(this, &NetworkConnector::HandleNetworkConnect));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkConnect, BindFunP1(this, &NetworkConnector::HandleNetworkConnect));
     // 请求断开连接
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_NetworkRequestDisconnect, BindFunP1(this, &NetworkConnector::HandleDisconnect));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkRequestDisconnect, BindFunP1(this, &NetworkConnector::HandleDisconnect));
 
 #ifdef EPOLL
     std::cout << "epoll model. connector:" << GetNetworkTypeName(_networkType) << std::endl;
@@ -37,29 +34,52 @@ void NetworkConnector::Awake(int iType, int mixConnectAppType)
 #else
     std::cout << "select model. connector:" << GetNetworkTypeName(_networkType) << std::endl;
 #endif
+
     // 连接其他服务
     if (_networkType == NetworkType::TcpConnector && mixConnectAppType > 0)
     {
+        const auto pYaml = ComponentHelp::GetYaml();
+        APP_TYPE appType;
         if ((mixConnectAppType & APP_APPMGR) != 0)
         {
-            CreateConnector(APP_APPMGR, 0);
+            appType = APP_APPMGR;
+            const auto pCommonConfig = pYaml->GetIPEndPoint(appType, 0);
+            CreateConnector(appType, 0, pCommonConfig->Ip, pCommonConfig->Port);
         }
 
         if ((mixConnectAppType & APP_DB_MGR) != 0)
         {
-            CreateConnector(APP_DB_MGR, 0);
+            appType = APP_DB_MGR;
+            const auto pCommonConfig = pYaml->GetIPEndPoint(appType, 0);
+            CreateConnector(appType, 0, pCommonConfig->Ip, pCommonConfig->Port);
+        }
+
+        if ((mixConnectAppType & APP_LOGIN) != 0)
+        {
+            appType = APP_LOGIN;
+            auto pLoginConfig = dynamic_cast<LoginConfig*>(pYaml->GetConfig(appType));
+            for (auto one : pLoginConfig->Apps)
+            {
+                CreateConnector(appType, one.Id, one.Ip, one.Port);
+            }
+        }
+
+        if ((mixConnectAppType & APP_SPACE) != 0)
+        {
+            appType = APP_SPACE;
+            auto pLoginConfig = dynamic_cast<SpaceConfig*>(pYaml->GetConfig(appType));
+            for (auto one : pLoginConfig->Apps)
+            {
+                CreateConnector(appType, one.Id, one.Ip, one.Port);
+            }
         }
     }
 }
 
-void NetworkConnector::CreateConnector(APP_TYPE appType, int appId)
+void NetworkConnector::CreateConnector(APP_TYPE appType, int appId, std::string ip, int port)
 {
-    const auto pYaml = ComponentHelp::GetYaml();
-    const auto pCommonConfig = pYaml->GetIPEndPoint(appType, appId);
-    ConnectDetail* pDetail = new ConnectDetail({ ObjectKeyType::App, { GetAppKey(appType, appId), ""} }, pCommonConfig->Ip, pCommonConfig->Port);
-    _connecting.AddObj(pDetail);
+    _connecting.AddObj(new ConnectDetail(TagType::App, TagValue{ "", GetAppKey(appType, appId) }, ip, port));
 }
-
 
 const char* NetworkConnector::GetTypeName()
 {
@@ -87,7 +107,7 @@ bool NetworkConnector::Connect(ConnectDetail* pDetail)
     if (rs == 0)
     {
         // ::connect在这里是异步的，如果建立成功则建立状态为Connected的连接
-        return CreateConnectObj(socket, pDetail->Key, ConnectStateType::Connected);
+        return CreateConnectObj(socket, pDetail->TType, pDetail->TValue, ConnectStateType::Connected);
     }
     else
     {
@@ -102,8 +122,7 @@ bool NetworkConnector::Connect(ConnectDetail* pDetail)
             traceMsg << " network type:" << GetNetworkTypeName(_networkType);
             ComponentHelp::GetTraceComponent()->Trace(TraceType::Connector, socket, traceMsg.str());
 #endif
-            // 创建状态为COnnecting的连接
-            return CreateConnectObj(socket, pDetail->Key, ConnectStateType::Connecting);
+            return CreateConnectObj(socket, pDetail->TType, pDetail->TValue, ConnectStateType::Connecting);
         }
         else
         {
@@ -121,16 +140,20 @@ void NetworkConnector::HandleNetworkConnect(Packet* pPacket)
     if (proto.network_type() != (int)_networkType)
         return;
 
-    ObjectKey key;
-    key.ParseFromProto(proto.key());
-    ConnectDetail* pDetail = new ConnectDetail(key, proto.ip(), proto.port());
-    _connecting.AddObj(pDetail);
+    const auto protoTag = proto.tag();
+    const auto tagValue = protoTag.tag_value();
+    auto tagObj = TagValue{ tagValue.value_str().c_str(), tagValue.value_int64() };
+    const auto pObj = new ConnectDetail((TagType)protoTag.tag_type(), tagObj, proto.ip(), proto.port());
+    _connecting.AddObj(pObj);
 }
 
 #ifdef EPOLL
 
 void NetworkConnector::Update()
 {
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckBegin();
+#endif
     // 有新的连接请求
     if (_connecting.CanSwap())
         _connecting.Swap(nullptr);
@@ -149,12 +172,18 @@ void NetworkConnector::Update()
 
     Epoll();
     OnNetworkUpdate();
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(GetNetworkTypeName(_networkType));
+#endif
 }
 
 #else
 
 void NetworkConnector::Update()
 {
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckBegin();
+#endif
     // 有新的连接请求
     if (_connecting.CanSwap())
         _connecting.Swap(nullptr);
@@ -179,6 +208,9 @@ void NetworkConnector::Update()
 
     Select();
     OnNetworkUpdate();
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint(GetNetworkTypeName(_networkType));
+#endif
 }
 
 #endif

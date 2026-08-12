@@ -2,7 +2,6 @@
 #include "component_collections.h"
 #include "log4_help.h"
 #include "packet.h"
-#include "common.h"
 
 ComponentCollections::ComponentCollections(std::string componentName)
 {
@@ -20,6 +19,7 @@ ComponentCollections::~ComponentCollections()
 
 void ComponentCollections::Add(IComponent* pObj)
 {
+    // 如果有这个组件，就不再加入
     if(_objs.find(pObj->GetSN()) != _objs.end() || _addObjs.find(pObj->GetSN()) != _addObjs.end())
     {
         LOG_ERROR("add component error. Repeat SN. type:" << pObj->GetTypeName() << " sn:" << pObj->GetSN() << " type:" << this->GetClassType().c_str());
@@ -55,9 +55,9 @@ void ComponentCollections::Remove(uint64 sn)
     _removeObjs.emplace_back(sn);
 }
 
-std::map<uint64, IComponent*>& ComponentCollections::GetAll()
+std::map<uint64, IComponent*>* ComponentCollections::GetAll()
 {
-    return _objs;
+    return &_objs;
 }
 
 void ComponentCollections::Swap()
@@ -110,9 +110,10 @@ void ComponentCollections::Dispose()
     for(const auto pair: _addObjs)
     {
         auto pComponent = pair.second;
+        // 归还对象池的对象的sn会被设置为0，如果已经为0了，那就已经归还过了，跳过避免第二次归还
         if(pComponent->GetSN() == 0)
             continue;
-        
+        // 归还对象池
         pComponent->ComponentBackToPool();
     }
     _addObjs.clear();

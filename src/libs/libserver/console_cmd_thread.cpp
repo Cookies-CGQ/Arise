@@ -27,8 +27,10 @@ void ConsoleCmdThread::HandleEntity(std::vector<std::string>& params)
 void ConsoleCmdThread::HandlePool(std::vector<std::string>& params)
 {
     LOG_DEBUG("------------------------------------");
+    // packet pool
     DynamicPacketPool::GetInstance()->Show();
 
+    // 其他 pool
     Proto::CmdThread cmdProto;
     cmdProto.set_cmd_type(Proto::CmdThread_CmdType_Pool);
     MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_CmdThread, cmdProto, nullptr);

@@ -1,6 +1,7 @@
 #include "entity_system.h"
 #include "log4.h"
 #include "console.h"
+#include "message_system.h"
 
 EntitySystem::EntitySystem(SystemManager* pMgr)
 {
@@ -16,7 +17,7 @@ void EntitySystem::RemoveComponent(IComponent* pObj)
     const auto entitySn = pObj->GetSN();
 
     const auto typeHashCode = pObj->GetTypeHashCode();
-    auto iterObj = _objSystems.find(typeHashCode);
+    const auto iterObj = _objSystems.find(typeHashCode);
     if (iterObj == _objSystems.end())
     {
         LOG_WARN("destroy class failed. class's name:" << pObj->GetTypeName() << " . not found class.");
@@ -42,7 +43,7 @@ void EntitySystem::Update()
 void EntitySystem::Dispose()
 {
     // 拆成两次销毁
-    // 1. Dispose
+    // 1. Dispose 释放全部组件时,ComponentCollections有交叉引用
     // 2. delete 
     for (const auto one : _objSystems)
     {

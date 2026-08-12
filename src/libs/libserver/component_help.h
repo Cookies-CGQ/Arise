@@ -5,7 +5,7 @@
 #include "res_path.h"
 #include "trace_component.h"
 
-// 获取组件的便捷方法
+// 全局便捷方法
 class ComponentHelp
 {
 public:
@@ -15,6 +15,7 @@ public:
     static TraceComponent* GetTraceComponent();
 
 #if ENGINE_PLATFORM != PLATFORM_WIN32    
-    static void CatchError(bool bResult); // 打印当前堆栈
+    // 如果bResult为false，则打印当前堆栈
+    static void CatchError(bool bResult); 
 #endif
 };

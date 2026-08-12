@@ -20,14 +20,14 @@ enum class ConnectStateType
     Connected,  // 已连接
 };
 
-class ConnectObj : public Entity<ConnectObj>, public NetworkIdentify, public IAwakeFromPoolSystem<SOCKET, NetworkType, ObjectKey, ConnectStateType>
+class ConnectObj : public Entity<ConnectObj>, public NetIdentify, public IAwakeFromPoolSystem<SOCKET, NetworkType, TagType, TagValue, ConnectStateType>
 {
 public:
     ConnectObj();
     virtual ~ConnectObj();
 
-    // 对象池初始化
-    void Awake(SOCKET socket, NetworkType networkType, ObjectKey key, ConnectStateType state) override;
+    // 初始化
+    void Awake(SOCKET socket, NetworkType networkType, TagType tagType, TagValue tagValue, ConnectStateType state) override;
 	// 归还对象池前资源清理
     virtual void BackToPool() override;
 
@@ -50,8 +50,6 @@ public:
     ConnectStateType GetState() const;
     // 状态转移 -> 已连接
     void ChangeStateToConnected();
-    // 修改ObjectKey
-    void ModifyConnectKey(ObjectKey key);
 
 protected:
     ConnectStateType _state = ConnectStateType::None; // 连接状态

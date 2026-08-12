@@ -1,5 +1,6 @@
-#pragma once s
+#pragma once
 
+// 服务类型
 enum APP_TYPE
 {
     // APP_Global 和 APP_None 值相同， APP_Global 只用于读取配置
@@ -22,6 +23,7 @@ enum APP_TYPE
     // robot服务
     APP_ROBOT = 1 << 6,
 
+    // appmgr服务
     APP_APPMGR = APP_GAME_MGR | APP_SPACE_MGR,
 
     APP_ALLINONE = APP_DB_MGR | APP_GAME_MGR | APP_SPACE_MGR | APP_LOGIN | APP_GAME | APP_SPACE,
@@ -29,6 +31,7 @@ enum APP_TYPE
 
 inline const uint64 GetAppKey(int appType, int appId)
 {
+    // 32位给appType，32位给appId
     return ((uint64)appType << 32) + appId;
 }
 
@@ -47,7 +50,7 @@ inline const APP_TYPE GetTypeFromAppKey(uint64 appKey)
 // 通过key获取服务ID
 inline const int GetIdFromAppKey(uint64 appKey)
 {
-    return (int)(appKey & 0x0000FFFF);
+    return (int)(appKey & 0xFFFFFFFF);
 }
 
 // 通过服务类型获取服务类型名称

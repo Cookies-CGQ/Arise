@@ -3,7 +3,6 @@
 #include "global.h"
 #include "log4_help.h"
 #include "update_component.h"
-#include "util_time.h"
 
 // 用于Timer比较，建立小根堆
 struct CompareTimer
@@ -32,8 +31,7 @@ void TimerComponent::Add(Timer& data)
 void TimerComponent::Awake()
 {
     // 需要帧更新，所以添加UpdateComponent组件
-    auto pUpdateComponent = AddComponent<UpdateComponent>();
-    pUpdateComponent->UpdataFunction = BindFunP0(this, &TimerComponent::Update); // 绑定帧函数
+    AddComponent<UpdateComponent>(BindFunP0(this, &TimerComponent::Update));
 }
 
 void TimerComponent::BackToPool()
@@ -43,6 +41,10 @@ void TimerComponent::BackToPool()
 
 uint64 TimerComponent::Add(const int total, const int durations, const bool immediateDo, const int immediateDoDelaySecond, TimerHandleFunction handler)
 {
+    // durations 执行间隔秒
+    // immediateDo 是否马上执行
+    // immediateDoDelaySecond 首次执行与当前时间的间隔时间
+
     Timer data;
     data.SN = Global::GetInstance()->GenerateSN();
     data.CallCountCur = 0;
@@ -62,19 +64,19 @@ uint64 TimerComponent::Add(const int total, const int durations, const bool imme
 
 void TimerComponent::Remove(std::list<uint64>& timers)
 {
-    for(auto sn: timers)
+    for (auto sn : timers)
     {
         auto iter = std::find_if(_heap.begin(), _heap.end(), [sn](const Timer& one){
-            return one.SN == sn;
-        });
+                return one.SN == sn;
+            });
 
         if(iter == _heap.end())
-            continue;
+            return;
 
         _heap.erase(iter);
     }
 
-    // 重新建堆
+    // 重新建立heap数据
     make_heap(_heap.begin(), _heap.end(), CompareTimer());
 }
 

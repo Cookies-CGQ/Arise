@@ -3,6 +3,7 @@
 #include "component.h"
 #include "disposable.h"
 
+// 对象池接口
 class IDynamicObjectPool:public IDisposable
 {
 public:

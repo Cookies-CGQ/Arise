@@ -13,21 +13,25 @@ fi
 build(){
     for i in `ls -d */`;do 
         cd $i
-        if ${clean};then
-            rm CMakeCache.txt
+        if ${clean};then            
             make clean 
+            rm -f CMakeCache.txt
+            rm -rf CMakeFiles
+            rm -rf Debug
+            rm -f cmake_install.cmake
+            rm -f Makefile
         else
             cmake3 -DCMAKE_BUILD_TYPE=${buildType} ./ 
-            make
+            make -j4
         fi
         cd ..
     done
 }
 
-cd src/libs/
-build
+# cd src/libs/
+# build
 
-cd ../apps/
+cd src/apps/
 build
 
 cd ../tools/

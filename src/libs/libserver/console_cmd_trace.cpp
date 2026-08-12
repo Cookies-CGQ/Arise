@@ -7,7 +7,7 @@ void ConsoleCmdTrace::RegisterHandler()
     OnRegisterHandler("-packet", BindFunP1(this, &ConsoleCmdTrace::HandlePacket));
     OnRegisterHandler("-player", BindFunP1(this, &ConsoleCmdTrace::HandlePlayer));
     OnRegisterHandler("-account", BindFunP1(this, &ConsoleCmdTrace::HandleAccount));
-
+    OnRegisterHandler("-time", BindFunP1(this, &ConsoleCmdTrace::HandleTime));
     OnRegisterHandler("-clean", BindFunP1(this, &ConsoleCmdTrace::HandleClean));
 }
 
@@ -17,6 +17,7 @@ void ConsoleCmdTrace::HandleHelp()
     std::cout << "\t-packet socket.  \t\tall trace of packet related socket." << std::endl;
     std::cout << "\t-player socket.  \t\tall trace of player related socket." << std::endl;
     std::cout << "\t-account account.  \t\tall trace of account." << std::endl;
+    std::cout << "\t-time.  \t\tview performance bottleneck data recorded during server operation." << std::endl;
     std::cout << "\t-clean.  \t\tclean all data." << std::endl;
 }
 
@@ -58,6 +59,12 @@ void ConsoleCmdTrace::HandleAccount(std::vector<std::string>& params)
     auto account = params[0];
     auto pTraceComponent = ComponentHelp::GetTraceComponent();
     pTraceComponent->ShowAccount(account);
+}
+
+void ConsoleCmdTrace::HandleTime(std::vector<std::string>& params)
+{
+    auto pTraceComponent = ComponentHelp::GetTraceComponent();
+    pTraceComponent->Show(TraceType::Time, 0);
 }
 
 void ConsoleCmdTrace::HandleClean(std::vector<std::string>& params)

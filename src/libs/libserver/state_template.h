@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include "log4_help.h"
 
 // 状态机模板
 
@@ -66,6 +67,13 @@ public:
     // 状态切换
     void ChangeState(enumType stateType)
     {
+        // 状态相同，不处理
+        if (_pState != nullptr && _pState->GetState() == stateType)
+        {
+            LOG_ERROR("ChangeState: same state type:" << GetRobotStateTypeShortName(stateType));
+            return;
+        }
+        
         StateClass *pNewState = CreateStateObj(stateType);
         if (pNewState == nullptr)
         {

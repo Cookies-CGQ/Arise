@@ -17,6 +17,7 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket)
     }
     else
     {
+        // 轮询
         auto objs = _threads.GetReaderCache();
         auto iter = objs->find(_nextThreadSn);
         if (iter == objs->end()) 

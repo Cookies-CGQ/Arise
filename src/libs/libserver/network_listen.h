@@ -2,7 +2,7 @@
 
 #include "network.h"
 
-class NetworkListen :public Network, public IAwakeSystem<std::string, int>, public IAwakeSystem<int, int>
+class NetworkListen :public Network, virtual public IAwakeSystem<std::string, int>, virtual public IAwakeSystem<int, int>
 {
 public:
     // 初始化 -- 用于开启HTTP Listen
@@ -21,8 +21,6 @@ public:
     // 用于控制台命令显示具体信息
     void CmdShow();
 
-    static bool IsSingle() { return true; }
-
 private:
     void HandleListenKey(Packet* pPacket);
 
@@ -35,7 +33,7 @@ protected:
 private:
 
 #ifdef EPOLL
-    int _mainSocketEventIndex{ -1 };   
+    int _mainSocketEventIndex = -1;   
 #endif
 
     SOCKET _masterSocket = INVALID_SOCKET;    

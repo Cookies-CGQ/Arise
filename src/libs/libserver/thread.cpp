@@ -2,8 +2,7 @@
 #include "thread.h"
 #include "global.h"
 #include "entity_system.h"
-#include "log4.h"
-#include "component_help.h"
+#include "efficiency_thread_component.h"
 
 Thread::Thread(ThreadType threadType)
 {
@@ -18,28 +17,34 @@ Thread::~Thread()
 
 void Thread::Start()
 {
-    if(_state == ThreadState::Run)
-        return;
-    
     _thread = std::thread([this](){
-            // 给每个线程添加必须的组件
-            InitComponent(_threadType);
-            // 改变状态
-            _state = ThreadState::Run;
+        InitComponent(_threadType);
+        _state = ThreadState::Run;
+        const auto pGlobal = Global::GetInstance();
 
-            auto pGlobal = Global::GetInstance();
-            while (!pGlobal->IsStop)
-            {
-                // 驱动
-                Update();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
+#if LOG_EFFICIENCY_COMPONENT_OPEN
+        auto pObj = this->GetEntitySystem()->AddComponent<EfficiencyThreadComponent>(_threadType, _thread.get_id());
+        timeutil::Time start = 0;
+#endif
+        while (!pGlobal->IsStop)
+        {
 
-            Dispose();
-            log4cplus::threadCleanup();
-            _state = ThreadState::Stop;
+#if LOG_EFFICIENCY_COMPONENT_OPEN
+            start = pGlobal->TimeTick;
+#endif
+
+            Update();
+
+#if LOG_EFFICIENCY_COMPONENT_OPEN
+            pObj->UpdateTime(pGlobal->TimeTick - start);
+#endif
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-    );
+
+        Dispose();
+        log4cplus::threadCleanup();
+        _state = ThreadState::Stop;
+    });
 }
 
 bool Thread::IsStop() const

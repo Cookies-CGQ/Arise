@@ -11,7 +11,7 @@ class SystemManager;
 
 using TimerHandleFunction = std::function<void(void)>;
 
-class IComponent: virtual public SnObject
+class IComponent: public SnObject
 {
 public:
     friend class EntitySystem;
@@ -46,7 +46,7 @@ public:
 protected:
     // 添加定时器
     void AddTimer(const int total, const int durations, const bool immediateDo, const int immediateDoDelaySecond, TimerHandleFunction handler);
-    std::list<uint64> _timers; // 定时器列表
+    std::list<uint64> _timers; // 定时任务列表
 
     IEntity* _parent = nullptr;                 // 关联的实体
     SystemManager* _pSystemManager = nullptr;   // 关联的系统管理

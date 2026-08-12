@@ -51,7 +51,7 @@ public:
     // 帧函数 -- 执行命令
 	void Update();
 
-    // 注册命令
+    // 注册命令，模板参数为一级命令类名
 	template<class T>
 	void Register(std::string cmd);
 

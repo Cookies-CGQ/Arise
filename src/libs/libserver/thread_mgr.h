@@ -41,13 +41,23 @@ public:
     // 释放资源
     void Dispose() override;
 
+    // 创建系统
+    template<class T, typename ...TArgs>
+    void CreateSystem(TArgs... args);
+
     // 创建组件
     template<class T, typename ...TArgs>
     void CreateComponent(TArgs... args);
+
+    // 创建组件
+    template<class T, typename ...TArgs>
+    void CreateComponentWithSn(uint64 sn, TArgs... args);
     
+    // 创建组件
     template<class T, typename ...TArgs>
     void CreateComponent(bool isToAllThread, TArgs... args);
 
+    // 创建组件
     template<class T, typename ...TArgs>
     void CreateComponent(ThreadType iType, bool isToAllThread, TArgs... args);
 
@@ -55,14 +65,19 @@ public:
     void DispatchPacket(Packet* pPacket);
 
 private:
+    template<class T, typename ...TArgs>
+    void CreateComponentWithSn(ThreadType iType, uint64 sn, bool isToAllThead, TArgs... args);
+
     // 给Proto::CreateComponent添加参数
     template <typename...Args>
     void AnalyseParam(Proto::CreateComponent& proto, int value, Args...args);
     template <typename...Args>
     void AnalyseParam(Proto::CreateComponent& proto, std::string value, Args...args);
+    template <typename...Args>
+    void AnalyseParam(Proto::CreateComponent& proto, uint64 value, Args...args);
+
     void AnalyseParam(Proto::CreateComponent& proto)
     {
-
     }
 
 private:
@@ -77,10 +92,34 @@ private:
     CacheSwap<Packet> _packets;
 };
 
+template <class T, typename ... TArgs>
+void ThreadMgr::CreateSystem(TArgs... args)
+{
+    const std::string className = typeid(T).name();
+    if (!ComponentFactory<TArgs...>::GetInstance()->IsRegisted(className))
+    {
+        RegistObject<T, TArgs...>();
+    }
+
+    Proto::CreateSystem proto;
+    proto.set_system_name(className.c_str());
+    proto.set_thread_type((int)LogicThread);
+
+    auto pCreatePacket = MessageSystemHelp::CreatePacket(Proto::MsgId::MI_CreateSystem, nullptr);
+    pCreatePacket->SerializeToBuffer(proto);
+    DispatchPacket(pCreatePacket);
+}
+
 template<class T, typename ...TArgs>
 void ThreadMgr::CreateComponent(TArgs ...args)
 {
     CreateComponent<T>(LogicThread, false, std::forward<TArgs>(args)...);
+}
+
+template <class T, typename ... TArgs>
+void ThreadMgr::CreateComponentWithSn(uint64 sn, TArgs... args)
+{
+    CreateComponentWithSn<T>(LogicThread, sn, false, std::forward<TArgs>(args)...);
 }
 
 template<class T, typename ...TArgs>
@@ -92,6 +131,12 @@ void ThreadMgr::CreateComponent(bool isToAllThead, TArgs ...args)
 template<class T, typename ...TArgs>
 void ThreadMgr::CreateComponent(ThreadType iType, bool isToAllThead, TArgs ...args)
 {
+    CreateComponentWithSn<T>(iType, static_cast<uint64>(0), isToAllThead, std::forward<TArgs>(args)...);
+}
+
+template <class T, typename ... TArgs>
+void ThreadMgr::CreateComponentWithSn(ThreadType iType, uint64 sn, bool isToAllThead, TArgs... args)
+{
     std::lock_guard<std::mutex> guard(_create_lock);
 
     const std::string className = typeid(T).name();
@@ -102,6 +147,7 @@ void ThreadMgr::CreateComponent(ThreadType iType, bool isToAllThead, TArgs ...ar
 
     Proto::CreateComponent proto;
     proto.set_thread_type((int)iType);
+    proto.set_sn(sn);
     proto.set_class_name(className.c_str());
     proto.set_is_to_all_thread(isToAllThead);
     AnalyseParam(proto, std::forward<TArgs>(args)...);
@@ -126,5 +172,14 @@ void ThreadMgr::AnalyseParam(Proto::CreateComponent& proto, std::string value, A
     auto pProtoParam = proto.mutable_params()->Add();
     pProtoParam->set_type(Proto::CreateComponentParam::String);
     pProtoParam->set_string_param(value.c_str());
+    AnalyseParam(proto, std::forward<Args>(args)...);
+}
+
+template <typename ... Args>
+void ThreadMgr::AnalyseParam(Proto::CreateComponent& proto, uint64 value, Args... args)
+{
+    auto pProtoParam = proto.mutable_params()->Add();
+    pProtoParam->set_type(Proto::CreateComponentParam::UInt64);
+    pProtoParam->set_uint64_param(value);
     AnalyseParam(proto, std::forward<Args>(args)...);
 }

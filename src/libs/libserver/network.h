@@ -6,8 +6,12 @@
 #include "cache_swap.h"
 #include "network_help.h"
 #include "connect_obj.h"
+#include "trace_component.h"
 
 #if ENGINE_PLATFORM != PLATFORM_WIN32
+
+#define MAX_CLIENT  5120
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -30,14 +34,18 @@
 #define _sock_exit( )
 #define _sock_err( )	errno
 #define _sock_close( sockfd ) ::close( sockfd ) 
+//#define _sock_close( sockfd ) ::shutdown(sockfd, SHUT_RDWR);
 #define _sock_is_blocked()	(errno == EAGAIN || errno == 0)
 
-#define RemoveConnectObj(iter) \
-    iter->second->ComponentBackToPool( ); \
-    DeleteEvent(_epfd, iter->first); \
-    iter = _connects.erase( iter ); 
+#define RemoveConnectObj(socket) \
+    _connects[socket]->ComponentBackToPool( ); \
+    _connects[socket] = nullptr; \
+    DeleteEvent(_epfd, socket); \
+    _sockets.erase(socket); 
 
 #else
+
+#define MAX_CLIENT  10000
 
 #define _sock_init( )	{ WSADATA wsaData; WSAStartup( MAKEWORD(2, 2), &wsaData ); }
 #define _sock_nonblock( sockfd )	{ unsigned long param = 1; ioctlsocket(sockfd, FIONBIO, (unsigned long *)&param); }
@@ -46,9 +54,15 @@
 #define _sock_close( sockfd ) ::closesocket( sockfd )
 #define _sock_is_blocked()	(WSAGetLastError() == WSAEWOULDBLOCK)
 
-#define RemoveConnectObj(iter) \
-    iter->second->ComponentBackToPool( ); \
-    iter = _connects.erase( iter ); 
+#define RemoveConnectObj(socket) \
+    _connects[socket]->ComponentBackToPool( ); \
+    _connects[socket] = nullptr; \
+    _sockets.erase(socket); 
+
+#define RemoveConnectObjByItem(iter) \
+    _connects[*iter]->ComponentBackToPool(); \
+    _connects[*iter] = nullptr; \
+    iter = _sockets.erase(iter);
 
 #endif
 
@@ -61,6 +75,9 @@
 class Packet;
 
 class Network : public Entity<Network>, public INetwork
+#if LOG_TRACE_COMPONENT_OPEN
+    , public CheckTimeComponent
+#endif
 {
 public:
     // 归还对象池前的资源清理
@@ -81,7 +98,7 @@ protected:
     // 检查socket是否有误，有误则断开socket连接
     bool CheckSocket(SOCKET socket);
     // 创建连接
-    bool CreateConnectObj(SOCKET socket, ObjectKey key, ConnectStateType iState);
+    bool CreateConnectObj(SOCKET socket, TagType tagType, TagValue tagValue, ConnectStateType iState);
     // 消息处理 -- 断开连接
     void HandleDisconnect(Packet* pPacket);
 
@@ -107,13 +124,15 @@ protected:
     void OnNetworkUpdate();
 
 protected:  
-    std::map<SOCKET, ConnectObj*> _connects;  // 连接集合
+    // std::map<SOCKET, ConnectObj*> _connects;  // 连接集合
+    // 连接集合
+    ConnectObj* _connects[MAX_CLIENT]{};
+    std::set<SOCKET> _sockets;
 
 #ifdef EPOLL
-#define MAX_CLIENT  5120
 #define MAX_EVENT   5120
     struct epoll_event _events[MAX_EVENT];
-    int _epfd;
+    int _epfd = -1;
 #else // selete
     SOCKET _fdMax = INVALID_SOCKET;
     fd_set readfds, writefds, exceptfds;

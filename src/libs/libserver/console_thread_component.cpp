@@ -1,12 +1,12 @@
 #include <thread>
 #include "console_thread_component.h"
-#include "message_component.h"
 #include "create_component.h"
 #include "update_component.h"
 #include "entity_system.h"
 #include "network_listen.h"
 #include "util_string.h"
 #include "timer_component.h"
+#include "packet.h"
 
 std::mutex ConsoleThreadComponent::_show_lock;
 
@@ -14,9 +14,8 @@ void ConsoleThreadComponent::Awake(ThreadType iType)
 {
     _threadType = iType;
 
-    auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);
-    pMsgCallBack->RegisterFunction(Proto::MsgId::MI_CmdThread, BindFunP1(this, &ConsoleThreadComponent::HandleCmdThread));
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_CmdThread, BindFunP1(this, &ConsoleThreadComponent::HandleCmdThread));
 }
 
 void ConsoleThreadComponent::BackToPool()
@@ -64,8 +63,8 @@ void ConsoleThreadComponent::HandleCmdThreadEntites(Packet* pPacket)
 {
     std::lock_guard<std::mutex> guard(_show_lock);
 
+    // 不需要获取信息的组件的名单
     std::list<uint64> excludes;
-    excludes.push_back(typeid(MessageComponent).hash_code());
     excludes.push_back(typeid(CreateComponentC).hash_code());
     excludes.push_back(typeid(UpdateComponent).hash_code());
     excludes.push_back(typeid(ConsoleThreadComponent).hash_code());
@@ -85,7 +84,7 @@ void ConsoleThreadComponent::HandleCmdThreadEntites(Packet* pPacket)
             continue;
 
         auto pCollect = one.second;
-        const auto size = pCollect->GetAll().size();
+        const auto size = pCollect->GetAll()->size();
         if (size <= 0)
             continue;
 

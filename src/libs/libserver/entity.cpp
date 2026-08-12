@@ -6,6 +6,7 @@ void IEntity::ComponentBackToPool()
     auto pSystemManager = GetSystemManager();
     for(auto pair : _components)
     {
+        // 由 EntitySystem 去销毁
         if(pSystemManager != nullptr)
             pSystemManager->GetEntitySystem()->RemoveComponent(pair.second);
         else
@@ -26,6 +27,7 @@ void IEntity::RemoveComponent(IComponent* pComponent)
     }
     else
     {
+        // 由 EntitySystem 去销毁
         pSystemManager->GetEntitySystem()->RemoveComponent(pComponent);
     }
 }

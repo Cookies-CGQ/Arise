@@ -13,8 +13,12 @@ public:
     // 更新全局时间
     void UpdateTime();
 
+    // 实体sn获取服务ID
+    static int GetAppIdFromSN(uint64 sn);
     // 获取SN，SN = 时间 + 服务器ID + ticket，共64位
     uint64 GenerateSN();
+    // 生成UUID
+    static std::string GenerateUUID();
 
     // 当前服务类型
     APP_TYPE GetCurAppType() const;
@@ -32,7 +36,6 @@ public:
 private:
     std::mutex _mtx;
     unsigned int _snTicket = 1;  // 全局SN生成递增序列
-    unsigned int _serverId = 0;  // 用于唯一编号生成的服务器编号
     APP_TYPE _appType;           // 当前进程服务类型
     int _appId = 0;              // 同类服务ID
 };

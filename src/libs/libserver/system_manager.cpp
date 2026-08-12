@@ -12,10 +12,8 @@ SystemManager::SystemManager()
 {
     _pEntitySystem = new EntitySystem(this);
     _pMessageSystem = new MessageSystem(this);
-
-    //_systems.emplace_back(new DependenceSystem());
-    //_systems.emplace_back(new StartSystem());
-    _systems.emplace_back(new UpdateSystem());
+    _pUpdateSystem = new UpdateSystem();
+    _systems.emplace_back(_pUpdateSystem);
 
     // gen random seed 根据线程ID生成随机种子
     std::stringstream strStream;
@@ -37,14 +35,32 @@ void SystemManager::InitComponent(ThreadType threadType)
 
 void SystemManager::Update()
 {
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckBegin();
+#endif
+
     _pPoolCollector->Update();
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint("pool");
+#endif
 
     _pEntitySystem->Update();
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint("entity");
+#endif
+
     _pMessageSystem->Update(_pEntitySystem);
+#if LOG_TRACE_COMPONENT_OPEN
+    CheckPoint("message");
+#endif
 
     for (auto iter = _systems.begin(); iter != _systems.end(); ++iter)
     {
-        (*iter)->Update(_pEntitySystem);
+        auto pSys = (*iter);
+        pSys->Update(_pEntitySystem);
+#if LOG_TRACE_COMPONENT_OPEN
+        CheckPoint(pSys->GetTypeName());
+#endif
     }
 }
 
@@ -80,6 +96,26 @@ std::default_random_engine* SystemManager::GetRandomEngine() const
     return _pRandomEngine;
 }
 
+void SystemManager::AddSystem(const std::string& name)
+{
+    auto pObj = ComponentFactory<>::GetInstance()->Create(nullptr, name, 0);
+    if (pObj == nullptr)
+    {
+        LOG_ERROR("failed to create system.");
+        return;
+    }
+
+    System* pSystem = static_cast<System*>(pObj);
+    if (pSystem == nullptr)
+    {
+        LOG_ERROR("failed to create system.");
+        return;
+    }
+
+    LOG_DEBUG("create system. name:" << name.c_str() << " thread id:" << std::this_thread::get_id());
+    _systems.emplace_back(pSystem);
+}
+
 MessageSystem* SystemManager::GetMessageSystem() const
 {
     return _pMessageSystem;
@@ -88,6 +124,11 @@ MessageSystem* SystemManager::GetMessageSystem() const
 EntitySystem* SystemManager::GetEntitySystem() const
 {
     return _pEntitySystem;
+}
+
+UpdateSystem* SystemManager::GetUpdateSystem() const
+{
+    return _pUpdateSystem;
 }
 
 DynamicObjectPoolCollector* SystemManager::GetPoolCollector() const

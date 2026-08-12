@@ -11,6 +11,7 @@ public:
     void Awake();
     void BackToPool();
     
+    // 资源路径拼接
     std::string FindResPath(const std::string& res);
     std::string FindResPath(const char* res);
 

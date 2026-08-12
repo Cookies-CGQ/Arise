@@ -11,6 +11,7 @@
 
 class Packet;
 
+// 实体/组件管理 -- 每个线程一个
 class EntitySystem: public IDisposable
 {
 public:
@@ -19,14 +20,19 @@ public:
     EntitySystem(SystemManager* pMgr);
     virtual ~EntitySystem();
 
-    // 添加组件，这里添加的组件是无上级实体的；另一种添加组件的方式是在实体下创建添加组件
-    template<class T, typename ... TArgs>
+    // 添加组件，这里添加的组件是无上级实体的
+    template <class T, typename... TArgs>
     T* AddComponent(TArgs... args);
 
-    // 添加组件，通过类名动态创建组件
-    template<typename ... TArgs>
-    IComponent* AddComponentByName(std::string className, TArgs ... args);
+    // 添加组件，这里添加的组件是指定父类实体的
+    template <class T, typename... TArgs>
+    T* AddComponentWithParent(IEntity* pParent, uint64 sn, TArgs... args);
 
+    // 添加组件，通过类名动态创建组件
+    template <typename... TArgs>
+    IComponent* AddComponentByName(std::string className, uint64 sn, TArgs... args);
+
+    // 对于单例性质的组件，通过调用这个函数可以直接获取到这个组件
     template<class T>
     T* GetComponent();
 
@@ -75,29 +81,34 @@ inline void EntitySystem::AddComponent(T* pComponent)
     pComponent->SetSystemManager(_systemManager);
 }
 
-template<class T, typename ... TArgs>
-T* EntitySystem::AddComponent(TArgs ... args)
+template <class T, typename ... TArgs>
+T* EntitySystem::AddComponent(TArgs... args)
 {
-    // 从对象池获取组件
+    return AddComponentWithParent<T>(nullptr, 0, std::forward<TArgs>(args)...);
+}
+
+template <class T, typename ... TArgs>
+T* EntitySystem::AddComponentWithParent(IEntity* pParent, uint64 sn, TArgs... args)
+{
     auto pCollector = _systemManager->GetPoolCollector();
-    auto pPool = (DynamicObjectPool<T>*)pCollector->GetPool<T>();
-    T* pComponent = pPool->MallocObject(_systemManager, std::forward<TArgs>(args)...);
-    if(pComponent == nullptr)
+    auto pPool = dynamic_cast<DynamicObjectPool<T>*>(pCollector->GetPool<T>());
+    T* pComponent = pPool->MallocObject(_systemManager, pParent, sn, std::forward<TArgs>(args)...);
+    if (pComponent == nullptr)
         return nullptr;
+
     AddComponent(pComponent);
-    
     return pComponent;
 }
 
-template<typename ... TArgs>
-inline IComponent* EntitySystem::AddComponentByName(std::string className, TArgs ... args)
+template<typename ...TArgs>
+inline IComponent* EntitySystem::AddComponentByName(std::string className, uint64 sn, TArgs ...args)
 {
-    auto pComponent = ComponentFactory<TArgs...>::GetInstance()->Create(_systemManager, className, std::forward<TArgs>(args)...);
-    if(pComponent == nullptr)
+    auto pObj = ComponentFactory<TArgs...>::GetInstance()->Create(_systemManager, className, sn, std::forward<TArgs>(args)...);
+    if (pObj == nullptr)
         return nullptr;
 
+    IComponent* pComponent = static_cast<IComponent*>(pObj);
     AddComponent(pComponent);
-    
     return pComponent;
 }
 

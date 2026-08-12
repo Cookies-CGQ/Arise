@@ -3,17 +3,19 @@ syntax = "proto3";
 import "db.proto";
 package Proto;
 
-// 向某个线程发送内部命令
+/////////////////// 线程/进程命令 ///////////////////
+// 线程级命令
 message CmdThread{
     enum CmdType{
         Entity = 0;
         Pool = 1;
 		Connect = 2;
     }
-
+	// 命令类型
     CmdType cmd_type = 1;
 }
 
+// 应用/进程级命令
 message CmdApp {
     enum CmdType {
         Info = 0;
@@ -22,76 +24,111 @@ message CmdApp {
     CmdType cmd_type = 1;
 }
 
-// 进程同步消息
+// 效率监控数据，记录线程类型、线程ID和耗时
+message Efficiency {
+	int32 thread_type = 1;
+	string thread_id = 2;
+	double time = 3; 
+}
+
+/////////////////// 应用注册与同步 ///////////////////
+// 应用注册
+message AppRegister {
+	int32 type = 1; // app_type
+	int32 id = 2;
+}
+
+// 单个应用信息同步
 message AppInfoSync {
 	int32 app_id = 1;
 	int32 app_type = 2;
-	int32 online = 3;
+	int32 online = 3;    // 在线/负载数量
 }
 
-// 网络连接断开（底层->上层）
+// 批量同步所有应用信息
+message AppInfoListSync {
+    repeated AppInfoSync apps = 1;
+}
+
+/////////////////// 网络连接/断开 ///////////////////
+// 网络断开通知
 message NetworkDisconnect {
     int32 network_type = 1;
     int32 socket = 2;
 }
 
-enum NetworkObjectKeyType {
-	ObjectKeyTypeNone = 0;
-	ObjectKeyTypeAccount = 1;
-	ObjectKeyTypeApp = 2;    
+enum TagType { 
+	TagTypeNone = 0;    // 无类型
+	TagTypeAccount = 1; // 账号标签
+	TagTypeApp = 2;     // 应用标签
+	TagTypeEntity = 3;  // 实体标签
+	TagTypeToWorld = 4; // 发送到World（all-in-one模式）
+	TagTypePlayer = 5;  // 玩家标签
 }
 
-message NetworkObjectKeyValue {
-	int64 key_int64 = 1;
-	string key_str = 2;
+message TagValue {
+	uint64 value_int64 = 1;
+	string value_str = 2;
 }
 
-// ObjectKey标识
-message NetworkObjectKey {
-	NetworkObjectKeyType key_type = 1;
-	NetworkObjectKeyValue key_value = 2;
+// Tag标签，用于路由/标识网络连接
+message Tag {
+	TagType tag_type = 1;
+	TagValue tag_value = 2;
 }
 
-// 发起网络连接
+// 网络连接请求，携带网络类型、Tag 标签、IP和端口
 message NetworkConnect {
     int32 network_type = 1;
-    NetworkObjectKey key = 2;
+    Tag tag = 2;
     string ip = 3;
     int32 port = 4;
 }
 
-// Http 响应
+/////////////////// HTTP消息 ///////////////////
+// Http 请求/响应
 message Http {
-	string body = 1;
+	string body = 1;    
 	int32 status_code = 2;
 }
 
-// 创建组件时传入的一个构造参数
-message CreateComponentParam{
-    enum ParamType{
-        Int = 0;
-        String = 1;
-    }
+/////////////////// 组件/系统管理 ///////////////////
+// 创建组件时传入的一个构造参数，支持三种类型
+message CreateComponentParam {
+	enum ParamType {
+		Int = 0;
+		String = 1;
+        UInt64 = 2;
+	}
 
-    ParamType type = 1;
-    int32 int_param = 2;
-    string string_param = 3;
+	ParamType type = 1;
+	int32 int_param = 2;
+	string string_param = 3;
+    uint64 uint64_param = 4;
 }
 
-// 创建一个组件
+// 创建组件请求
 message CreateComponent{
     int32 thread_type = 1; // 组件所在线程类型
     string class_name = 2; // 要创建的组件类名
 	bool is_to_all_thread = 3; // 是否同类线程全部创建
 	repeated CreateComponentParam params = 4; // 创建组件时的参数列表
+	uint64 sn = 5; // 指定sn（可选）
 }
 
-// 删除组件
+// 通过sn移除组件
 message RemoveComponent{
     uint64 sn = 1;
 }
 
-// 账号验证协议
+// 创建系统（ECS中的System），指定线程类型和系统名称
+message CreateSystem {
+	int32 thread_type = 1;
+	string system_name = 2;
+}
+
+/////////////////// 账号认证 ///////////////////
+// 账号验证请求
 message AccountCheck{
     string account = 1;  // 账号
     string password = 2; // 密码
@@ -119,24 +156,34 @@ enum LoginHttpReturnCode {
     LHRC_NOTFOUND = 2; // 没有Login进程
 }
 
-message RobotState{
+/////////////////// Robot相关 ///////////////////
+message RobotState {
+	string account = 1;
+	int32 state = 2;
+}
+
+message RobotSyncState {
+	repeated RobotState states = 1;
+}
+
+message RobotCreate {
     string account = 1;
-    int32 state = 2;
 }
 
-message RobotSyncState{
-    repeated RobotState states = 1;
-}
-
-// 玩家精减信息
+/////////////////// 玩家/角色 ///////////////////
+// 角色精减信息
 message PlayerLittle {
 	uint64 sn = 1;
 	string name = 2;
 	Gender gender = 3;
 	int32 level = 4;
+
+	// 用于登录Game服务
+	LastWorld last_world = 5;	// 公共地图
+	LastWorld last_dungeon = 6;	// 副本地图
 }
 
-// 玩家角色列表
+// 玩家账号下的角色列表
 message PlayerList{
 	string account = 1;
 	repeated PlayerLittle player = 2;
@@ -147,7 +194,7 @@ message QueryPlayerList {
 	string account = 1;
 }
 
-// 查询角色
+// 查询角色信息
 message QueryPlayer {
 	uint64 player_sn = 1;
 }
@@ -158,49 +205,272 @@ message QueryPlayerRs {
 	Player player = 2;
 }
 
-// 创建角色
+// 创建角色（名字+性别）
 message CreatePlayer {
 	string name = 1;
 	Gender gender = 2; 
 }
 
+// 创建角色结果
 enum CreatePlayerReturnCode {
-	CPR_Create_OK = 0;
-	CPR_Unkonwn = 1;
-	CPR_Rename = 2; 
+	CPR_Create_OK = 0; // 成功
+	CPR_Unkonwn = 1;   // 未知错误
+	CPR_Rename = 2;    // 重名
 }
 
+// 返回创建角色结果
 message CreatePlayerRs {
 	CreatePlayerReturnCode return_code = 2;
 }
 
-// 创建角色持久化到数据库
+// 向DB写入玩家数据
 message CreatePlayerToDB {
 	string account = 2;
 	Player player = 3;
 }
 
+// 返回写入DB结果
 message CreatePlayerToDBRs {
 	string account = 1;
 	CreatePlayerReturnCode return_code = 2;
 }
 
-// 选择角色
+/////////////////// 选择角色/保存角色 ///////////////////
+// 选择角色进入游戏
 message SelectPlayer {
 	uint64 player_sn = 1;
 }
 
+// 返回选择角色的结果
 message SelectPlayerRs {
 	enum SelectPlayerReturnCode {
-		SPRC_OK = 0;
-		SPRC_NotFound = 1;
+		SPRC_OK = 0;          // 选择成功
+		SPRC_NotFound = 1;    // 选择不存在
 	}
 
 	SelectPlayerReturnCode return_code = 1;
 }
 
-// 持久化角色信息
+// 持久化角色信息（完整的Player对象）
 message SavePlayer {
 	uint64 player_sn = 1;
 	Player player = 2;
+}
+
+/////////////////// World世界管理 ///////////////////
+// World向Gather组件同步状态
+message WorldSyncToGather {
+	uint64 world_sn = 1;
+	int32 world_id = 2;
+	int32 online = 3;    // 在线人数
+}
+
+// WorldProxy向Gather组件同步
+message WorldProxySyncToGather {
+	uint64 world_sn = 1;
+	bool is_remove = 2;
+	int32 world_id = 3;
+	int32 online = 4;
+}
+
+// 创建世界实例
+message CreateWorld {
+	int32 world_id = 1;
+	uint64 last_world_sn = 2;	
+	int32 game_app_id = 3;
+}
+
+// 广播世界创建事件
+message BroadcastCreateWorld {
+	int32 world_id = 1;
+	uint64 world_sn = 2;
+	uint64 last_world_sn = 3;
+}
+
+// 查询世界是否存在
+message QueryWorld {
+	uint64 world_sn = 1;
+	uint64 last_world_sn = 2;
+}
+
+// 返回查询世界是否存在的结果
+message QueryWorldRs {
+	enum ReturnCode {
+		QueryWorld_OK = 0;
+		QueryWorld_Failed = 1;
+	}
+
+	uint64 world_sn = 1;
+	ReturnCode return_code = 2;
+}
+
+// 角色进入世界
+message EnterWorld {
+	int32 world_id = 1;   // 进入的世界id
+	Vector3 position = 2; // 初始位置
+}
+
+// 请求进入某个世界
+message RequestWorld {
+	int32 world_id = 1;
+} 
+
+/////////////////// 令牌相关 ///////////////////
+// 返回给客户端的token + game服务IP + game服务port
+message GameToken {
+	enum ReturnCode{
+		GameToken_OK = 0;
+		GameToken_NO_GAME = 1;
+	}
+
+	ReturnCode return_code = 1;
+	string token = 2;
+	string ip = 3;
+	int32 port = 4;	
+}
+
+// 客户端用token登录到game服务
+message LoginByToken {
+	string account = 1;
+	string token = 2;
+}
+
+// 返回客户端用token登录到game服务的结果
+message LoginByTokenRs {
+	enum ReturnCode {
+		LGRC_OK = 0;
+		LGRC_UNKONWN = 1;
+		LGRC_NOT_FOUND_ACCOUNT = 2;
+		LGRC_TOKEN_WRONG = 3;		
+	}
+
+	ReturnCode return_code = 1;
+}
+
+// 向Redis查询登录token
+message LoginTokenToRedis {
+	string account = 1;
+	uint64 player_sn = 2;
+}
+
+// 返回向Redis查询登录token的结果
+message LoginTokenToRedisRs {
+	string account = 1;
+	string token = 2;
+}
+
+// 向Redis查询game token信息
+message GameTokenToRedis {
+	string account = 1;
+}
+
+message TokenInfo
+{
+	string token = 1;
+	uint64 player_sn = 2;
+}
+
+// 返回向Redis查询game token信息的信息
+message GameTokenToRedisRs {
+	string account = 1;
+	TokenInfo token_info = 2;
+}
+
+// 向redis查询账号在login服务是否在线
+message AccountQueryOnlineToRedis {
+	string account = 1;
+}
+
+// 返回向redis查询账号在login服务是否在线的结果
+message AccountQueryOnlineToRedisRs {
+	enum ReturnCode {
+		SOTR_Offline = 0;
+		SOTR_Online = 1;
+	}
+
+	string account = 1;
+	ReturnCode return_code = 2;
+}
+
+// 向redis维持账号在login服务的在线状态
+message AccountSyncOnlineToRedis {
+	string account = 1;
+}
+
+// 向redis删除账号在login服务的在线状态
+message AccountDeleteOnlineToRedis {
+	string account = 1;
+}
+
+// 向redis维持账号在game服务的在线状态
+message PlayerSyncOnlineToRedis {
+	string account = 1;
+	int32 version = 2;
+}
+
+// 向redis删除账号在game服务的在线状态
+message PlayerDeleteOnlineToRedis {
+	string account = 1;
+	int32 version = 2;
+}
+
+/////////////////// 场景内功能 ///////////////////
+// 向某个App同步玩家角色完整数据
+message SyncPlayer {
+	int32 app_id = 1;
+	string account = 2;
+	Player player = 3;
+}
+
+// 传送玩家到另一个世界（携带完整Player数据）
+message Teleport {
+	uint64 last_world_sn = 1;
+	uint64 player_sn = 2;
+	string account = 3;
+	Player player = 4;
+}
+
+// 传送完成后的确认
+message TeleportAfter {
+	uint64 player_sn = 1;
+}
+
+// 从当前世界移除玩家
+message RemovePlayer {
+	uint64 player_sn = 1;
+}
+
+// 请求同步玩家数据
+message RequestSyncPlayer {
+	uint64 player_sn = 1;
+}
+
+// 角色的基础信息
+message Role {
+	string name = 1;
+	uint64 sn = 2;
+	Gender gender = 3;
+	Vector3 position = 4;
+}
+
+// 有角色进入视野（可批量）
+message RoleAppear {
+	repeated Role role = 1;
+}
+
+// 有角色离开视野
+message RoleDisAppear {
+	uint64 sn = 1;
+}
+
+// 角色移动，携带玩家sn和路径点列表
+message Move {
+	uint64 player_sn = 1;
+	repeated Vector3 position = 2;
+}
+
+// 广播WorldProxy创建成功
+message BroadcastCreateWorldProxy {
+	int32 world_id = 1;
+	uint64 world_sn = 2;
 }
