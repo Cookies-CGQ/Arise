@@ -1,11 +1,14 @@
 #include "app_sync_component.h"
 #include "libserver/message_system_help.h"
 #include "libserver/message_system.h"
+#include "libserver/network_help.h"
 
 void AppSyncComponent::Awake()
 {
+    // 定时任务 -- 定时向Login服务推送Game服务列表
     AddTimer(0, 2, false, 0, BindFunP0(this, &AppSyncComponent::SyncGameInfoToLogin));
 
+    // 初始化序列器
     Json::StreamWriterBuilder jsonBuilder;
     _jsonWriter = jsonBuilder.newStreamWriter();
 
@@ -20,6 +23,9 @@ void AppSyncComponent::Awake()
 
     // cmd
     pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_CmdApp, BindFunP1(this, &AppSyncComponent::HandleCmdApp));
+    
+    // 断线处理
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_NetworkDisconnect, BindFunP1(this, &AppSyncComponent::HandleNetworkDisconnect));
 }
 
 void AppSyncComponent::BackToPool()
@@ -28,23 +34,13 @@ void AppSyncComponent::BackToPool()
     _apps.clear();
 }
 
-void AppSyncComponent::HandleCmdApp(Packet* pPacket)
-{
-    auto cmdProto = pPacket->ParseToProto<Proto::CmdApp>();
-    auto cmdType = cmdProto.cmd_type();
-    if (cmdType == Proto::CmdApp_CmdType_Info)
-    {
-        CmdShow();
-    }
-}
-
 void AppSyncComponent::HandleHttpRequestLogin(Packet* pPacket)
 {
     Json::Value responseObj;
     AppInfo info;
     if (!GetOneApp(APP_LOGIN, &info))
     {
-        responseObj["returncode"] = (int)Proto::LoginHttpReturnCode::LHRC_TIMEOUT;
+        responseObj["returncode"] = (int)Proto::LoginHttpReturnCode::LHRC_NOTFOUND;
         responseObj["ip"] = "";
         responseObj["port"] = 0;
     }
@@ -66,6 +62,17 @@ void AppSyncComponent::HandleAppInfoSync(Packet* pPacket)
     AppInfoSyncHandle(pPacket);
 }
 
+void AppSyncComponent::HandleNetworkDisconnect(Packet* pPacket)
+{
+    if (!NetworkHelp::IsTcp(pPacket->GetSocketKey()->NetType))
+        return;
+
+    SyncComponent::HandleNetworkDisconnect(pPacket);
+
+    // 有连接断开了，重新向Login发送Game信息
+    SyncGameInfoToLogin();
+}
+
 void AppSyncComponent::SyncGameInfoToLogin()
 {
     Proto::AppInfoListSync proto;
@@ -82,5 +89,8 @@ void AppSyncComponent::SyncGameInfoToLogin()
     }
 
     // 发送给所有login进程
-    MessageSystemHelp::SendPacketToAllApp(Proto::MsgId::MI_AppInfoListSync, proto, APP_LOGIN);
+    if (proto.apps_size() > 0)
+    {
+        MessageSystemHelp::SendPacketToAllApp(Proto::MsgId::MI_AppInfoListSync, proto, APP_LOGIN);
+    }
 }

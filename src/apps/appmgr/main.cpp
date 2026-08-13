@@ -3,6 +3,7 @@
 #include "libserver/component_help.h"
 #include "libserver/app_type.h"
 #include "libserver/global.h"
+#include "libresource/resource_manager.h"
 #include "appmgr.h"
 
 int main(int argc, char *argv[])
@@ -11,18 +12,19 @@ int main(int argc, char *argv[])
     ServerApp app(curAppType, argc, argv);
     app.Initialize();
 
-    // 初始化appMgr服务需要的组件
     auto pThreadMgr = ThreadMgr::GetInstance();
+    pThreadMgr->GetEntitySystem()->AddComponent<ResourceManager>();
+
     InitializeComponentAppMgr(pThreadMgr);
 
-    // tcp listen
+    // tcp listen，接收其他服务的连接
     const auto pGlobal = Global::GetInstance();
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), (int)pGlobal->GetCurAppId());
 
-    // http listen
+    // http listen，接收客户端的连接
     const auto pYaml = ComponentHelp::GetYaml();
     const auto pCommonConfig = pYaml->GetIPEndPoint(pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, pCommonConfig->Ip, pCommonConfig->HttpPort);
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, pCommonConfig->Ip, (int)pCommonConfig->HttpPort);
 
     app.Run();
     app.Dispose();

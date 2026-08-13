@@ -17,6 +17,7 @@ aux_source_directory(. SRCS)
 aux_source_directory(../../libs/libserver SRCS)
 aux_source_directory(../../libs/libserver/protobuf SRCS)
 aux_source_directory(../../libs/libserver/mongoose SRCS)
+aux_source_directory(../../libs/libresource SRCS)
 
 include_directories(../../libs)
 include_directories(../../../../include/common)
