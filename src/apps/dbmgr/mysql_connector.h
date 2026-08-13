@@ -3,21 +3,18 @@
 #include <mysql/mysql.h>
 #include <vector>
 #include "libserver/common.h"
-#include "libserver/yaml.h"
-#include "libserver/util_time.h"
 #include "libserver/entity.h"
 #include "libserver/system.h"
 #include "libserver/socket_object.h"
 #include "mysql_base.h"
 
-
 class Packet;
 
 // 数据库预编译语句键值枚举
-enum DatabaseStmtKey
+enum class DatabaseStmtKey
 {
-	StmtCreate,
-	StmtSave,
+	Create,
+	Save,
 };
 
 // 数据库预编译语句结构体

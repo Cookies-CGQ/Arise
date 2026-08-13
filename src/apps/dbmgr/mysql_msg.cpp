@@ -1,18 +1,17 @@
 #include "mysql_connector.h"
 #include "libserver/log4_help.h"
-#include "libserver/message_component.h"
 #include "libserver/message_system_help.h"
+#include "libserver/message_system.h"
 
 void MysqlConnector::InitMessageComponent()
 {
-    auto pMsgCallBack = new MessageCallBackFunction();
-    AddComponent<MessageComponent>(pMsgCallBack);
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
 
-    pMsgCallBack->RegisterFunction(Proto::MsgId::L2DB_QueryPlayerList, BindFunP1(this, &MysqlConnector::HandleQueryPlayerList));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::L2DB_CreatePlayer, BindFunP1(this, &MysqlConnector::HandleCreatePlayer));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::L2DB_QueryPlayerList, BindFunP1(this, &MysqlConnector::HandleQueryPlayerList));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::L2DB_CreatePlayer, BindFunP1(this, &MysqlConnector::HandleCreatePlayer));
 
-    pMsgCallBack->RegisterFunction(Proto::MsgId::G2DB_SavePlayer, BindFunP1(this, &MysqlConnector::HandleSavePlayer));
-    pMsgCallBack->RegisterFunction(Proto::MsgId::G2DB_QueryPlayer, BindFunP1(this, &MysqlConnector::HandleQueryPlayer));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::G2DB_SavePlayer, BindFunP1(this, &MysqlConnector::HandleSavePlayer));
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::G2DB_QueryPlayer, BindFunP1(this, &MysqlConnector::HandleQueryPlayer));
 }
 
 void MysqlConnector::HandleQueryPlayerList(Packet* pPacket)
@@ -21,7 +20,7 @@ void MysqlConnector::HandleQueryPlayerList(Packet* pPacket)
     QueryPlayerList(protoQuery.account(), pPacket);
 }
 
-void MysqlConnector::QueryPlayerList(std::string account, NetworkIdentify* pIdentify)
+void MysqlConnector::QueryPlayerList(std::string account, NetIdentify* pIdentify)
 {
     my_ulonglong affected_rows;
     std::string sql = strutil::format("select sn, name, base, item, misc from player where account = '%s'", account.c_str());
@@ -35,6 +34,7 @@ void MysqlConnector::QueryPlayerList(std::string account, NetworkIdentify* pIden
     protoRs.set_account(account.c_str());
 
     Proto::PlayerBase protoBase;
+    Proto::PlayerMisc protoMisc;
     if (affected_rows > 0)
     {
         std::string tempStr;
@@ -49,11 +49,25 @@ void MysqlConnector::QueryPlayerList(std::string account, NetworkIdentify* pIden
             protoBase.ParseFromString(tempStr);
             pProtoPlayer->set_level(protoBase.level());
             pProtoPlayer->set_gender(protoBase.gender());
+
+            GetBlob(row, 4, tempStr);
+            protoMisc.ParseFromString(tempStr);
+            if (protoMisc.has_last_world()) {
+                auto pLastWorld = pProtoPlayer->mutable_last_world();
+                pLastWorld->CopyFrom(protoMisc.last_world());
+            }
+
+            if (protoMisc.has_last_dungeon()) {
+                auto pLastDungeon = pProtoPlayer->mutable_last_dungeon();
+                pLastDungeon->CopyFrom(protoMisc.last_dungeon());
+            }
         }
     }
 
+    //LOG_DEBUG("player list. account:" << account.c_str() << " player list size:" << protoRs.player_size() << " socket:" << socket);
+
     // 没有找到也需要返回pResultPacket
-    MessageSystemHelp::SendPacket(Proto::MsgId::L2DB_QueryPlayerListRs, pIdentify, protoRs);
+    MessageSystemHelp::SendPacket(Proto::MsgId::L2DB_QueryPlayerListRs, protoRs, pIdentify);
 }
 
 void MysqlConnector::HandleQueryPlayer(Packet* pPacket)
@@ -88,7 +102,8 @@ void MysqlConnector::HandleQueryPlayer(Packet* pPacket)
         }
     }
 
-    MessageSystemHelp::SendPacket(Proto::MsgId::G2DB_QueryPlayerRs, pPacket, protoRs);
+    //LOG_DEBUG("player  account:" << protoQuery.account().c_str() << " player list size:" << protoRs.player_size() << " socket:" << pPacket->GetSocketKey());
+    MessageSystemHelp::SendPacket(Proto::MsgId::G2DB_QueryPlayerRs, protoRs, pPacket);
 }
 
 void MysqlConnector::HandleCreatePlayer(Packet* pPacket)
@@ -96,7 +111,11 @@ void MysqlConnector::HandleCreatePlayer(Packet* pPacket)
     auto protoCreate = pPacket->ParseToProto<Proto::CreatePlayerToDB>();
     auto protoPlayer = protoCreate.player();
 
-    DatabaseStmt* stmt = GetStmt(DatabaseStmtKey::StmtCreate);
+    const auto stmt = GetStmt(DatabaseStmtKey::Create);
+    if (stmt == nullptr)
+        return;
+
+    const auto stmtSave = GetStmt(DatabaseStmtKey::Save);
     if (stmt == nullptr)
         return;
 
@@ -115,6 +134,8 @@ void MysqlConnector::HandleCreatePlayer(Packet* pPacket)
     if (ExecuteStmt(stmt))
     {
         protoRs.set_return_code(Proto::CreatePlayerReturnCode::CPR_Create_OK);
+        // save 初始化数据
+        OnSavePlayer(stmtSave, protoPlayer);
     }
 
     // 如果创建成功，将player list发送到客户端
@@ -125,14 +146,14 @@ void MysqlConnector::HandleCreatePlayer(Packet* pPacket)
     }
     else
     {
-        MessageSystemHelp::SendPacket(Proto::MsgId::L2DB_CreatePlayerRs, pPacket, protoRs);
+        MessageSystemHelp::SendPacket(Proto::MsgId::L2DB_CreatePlayerRs, protoRs, pPacket);
     }
 }
 
 void MysqlConnector::HandleSavePlayer(Packet* pPacket)
 {
     auto proto = pPacket->ParseToProto<Proto::SavePlayer>();
-    DatabaseStmt* stmt = GetStmt(DatabaseStmtKey::StmtSave);
+    DatabaseStmt* stmt = GetStmt(DatabaseStmtKey::Save);
     if (stmt == nullptr)
         return;
 

@@ -5,8 +5,6 @@ bool MysqlBase::ConnectInit()
 {
     Disconnect();
 
-    // 由mysql库自行new出Mysql对象的方式
-    _pMysql = new MYSQL();
     _pMysql = mysql_init(_pMysql);
     if (_pMysql == nullptr)
     {

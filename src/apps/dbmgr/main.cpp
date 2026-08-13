@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
     // tcp listen
     const auto pGlobal = Global::GetInstance();
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), (int)pGlobal->GetCurAppId());    
     
     app.Run();
     app.Dispose();
