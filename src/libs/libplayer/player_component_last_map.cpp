@@ -96,15 +96,18 @@ void PlayerComponentLastMap::EnterWorld(const int worldId, const uint64 worldSn)
 	auto pResMgr = ResourceHelp::GetResourceManager();
 	const auto pWorldRes = pResMgr->Worlds->GetResource(worldId);
 	_curWorldId = worldId;
+    // 如果进入的地图是公共地图
 	if (pWorldRes->IsType(ResourceWorldType::Public))
 	{
 		auto pLastMap = GetLastPublicMap();
+        // 进入的地图还是上次那张公共地图 -> 只更新WorldSN，保留Position即回到上次位置
 		if (pLastMap->WorldId == worldId)
 		{
 			// 上次的位置
 			pLastMap->WorldId = worldId;
 			pLastMap->WorldSn = worldSn;
 		}
+        // 换了一张公共地图 -> 坐标重置为配置表中的默认出生点
 		else
 		{
 			pLastMap->WorldId = worldId;
@@ -112,6 +115,7 @@ void PlayerComponentLastMap::EnterWorld(const int worldId, const uint64 worldSn)
 			pLastMap->Position = pWorldRes->GetInitPosition();
 		}
 	}
+    // 如果进入的地图是副本地图
 	else
 	{
 		EnterDungeon(worldId, worldSn, pWorldRes->GetInitPosition());
