@@ -1,7 +1,5 @@
 #include "libserver/common.h"
 #include "libserver/server_app.h"
-#include "libserver/console.h"
-#include "libserver/log4.h"
 #include "libserver/component_help.h"
 #include "login/login.h"
 #include "dbmgr/dbmgr.h"
@@ -12,6 +10,8 @@
 #include "libserver/thread_type.h"
 #include "libserver/global.h"
 #include "libserver/network_connector.h"
+#include "libserver/message_system.h"
+#include "libresource/resource_manager.h"
 
 int main(int argc, char *argv[])
 {
@@ -23,6 +23,9 @@ int main(int argc, char *argv[])
     app.Initialize();
 
     auto pThreadMgr = ThreadMgr::GetInstance();
+
+    // 全局单例组件 -- 加载策划配置文件
+    pThreadMgr->GetEntitySystem()->AddComponent<ResourceManager>();
 
 	// appmgr
 	InitializeComponentAppMgr(pThreadMgr);
@@ -39,17 +42,17 @@ int main(int argc, char *argv[])
     // space
     InitializeComponentSpace(pThreadMgr);
 
-	// listen
+    // listen
     const auto pGlobal = Global::GetInstance();
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, static_cast<int>(pGlobal->GetCurAppType()), static_cast<int>(pGlobal->GetCurAppId()));
 
     // http listen
     const auto pYaml = ComponentHelp::GetYaml();
     const auto pCommonConfig = pYaml->GetIPEndPoint(pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, pCommonConfig->Ip, pCommonConfig->HttpPort);
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, pCommonConfig->Ip, static_cast<int>(pCommonConfig->HttpPort));
 
     // for http connector
-    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, (int)NetworkType::HttpConnector, 0);
+    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, static_cast<int>(NetworkType::HttpConnector), static_cast<int>(0));
 
 	app.Run();
 	app.Dispose();
