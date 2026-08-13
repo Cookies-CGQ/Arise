@@ -27,7 +27,7 @@ private:
     // 处理断线
     void HandleNetworkDisconnect(Packet* pPacket);
     // 多个账号同时登录，主动关闭socket连接
-    void SocketDisconnect(std::string account, NetworkIdentify* pIdentify);
+    void SocketDisconnect(std::string account, NetIdentify* pIdentify);
     // 第三方 -> 登录服：账号验证结构返回
     void HandleHttpOuterResponse(Packet* pPacket);
     // 客户端 -> 登录服：账号验证

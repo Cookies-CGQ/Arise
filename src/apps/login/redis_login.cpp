@@ -54,7 +54,7 @@ void RedisLogin::HandleLoginTokenToRedis(Packet* pPacket)
     const int timeoue = RedisKeyAccountTokeyTimeout;
 
     // 为什么这里设置到redis的value不是纯token，还绑定了player_sn，这样是为了当游戏服验证token能确定token是为了哪一个角色签发的，防止token被用于登录其他的角色
-    if (!Setex(key, tokenString, timeoue)) 
+    if (!Setex(key, tokenString, timeoue))
     {
         token = "";
         LOG_ERROR("account:" << account.c_str() << ". failed to set token.");

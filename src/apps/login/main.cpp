@@ -4,6 +4,7 @@
 #include "libserver/network_connector.h"
 #include "libserver/global.h"
 #include "login.h"
+#include "libresource/resource_manager.h"
 
 int main(int argc, char* argv[])
 {
@@ -17,13 +18,15 @@ int main(int argc, char* argv[])
     auto pThreadMgr = ThreadMgr::GetInstance();
     InitializeComponentLogin(pThreadMgr);
 
+    pThreadMgr->GetEntitySystem()->AddComponent<ResourceManager>();
+
     // tcp listen -- 用于客户端连接
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), (int)pGlobal->GetCurAppId());
 
     // tcp connector -- 用于连接appmgr服务和db服务
     pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, (int)NetworkType::TcpConnector, (int)(APP_APPMGR|APP_DB_MGR));
     // http connector -- 用于连接第三方平台
-    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, (int)NetworkType::HttpConnector, 0);
+    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, (int)NetworkType::HttpConnector, (int)0);
 
     app.Run();
     app.Dispose();
