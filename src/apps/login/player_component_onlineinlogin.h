@@ -3,7 +3,7 @@
 #include "libserver/message_system.h"
 #include "libserver/component.h"
 
-// 玩家在线管理组件：用于在login服务中维护玩家在Redis中的在线标志。它通过定时心跳和对象池回收清理两个机制来管理在线状态。
+// 玩家login在线管理组件：用于在login服务中维护玩家在Redis中的在线标志。它通过定时心跳和对象池回收清理两个机制来管理在线状态。
 class PlayerComponentOnlineInLogin :public Component<PlayerComponentOnlineInLogin>, public IAwakeFromPoolSystem<std::string>
 {
 public:

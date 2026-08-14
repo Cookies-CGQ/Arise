@@ -80,14 +80,21 @@ void RedisLogin::HandleAccountQueryOnline(Packet* pPacket)
     protoRs.set_account(account.c_str());
     protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Offline);
 
-    // 是否正在登录
-    if (!SetnxExpire(RedisKeyAccountOnlineLogin + proto.account(), Global::GetInstance()->GetCurAppId(), RedisKeyAccountOnlineLoginTimeout))
-        protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Online);
+    // // 是否正在登录
+    // if (!SetnxExpire(RedisKeyAccountOnlineLogin + proto.account(), Global::GetInstance()->GetCurAppId(), RedisKeyAccountOnlineLoginTimeout))
+    //     protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Online);
 
-    // 是否 Game 在线
+    // 1、是否 Game 在线
     if (GetInt(RedisKeyAccountOnlineGame + proto.account()) != 0)
         protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Online);
 
+    // 2、是否处于交接窗口（已签发token，尚未被Game消费）
+    if (!GetString(RedisKeyAccountTokey + account).empty())
+        protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Online);
+
+    // 3、最后才抢占 login 锁（这一步不能在前面，要不然被拒者也会强到login key留下来6分钟残留锁）
+    if (protoRs.return_code() == Proto::AccountQueryOnlineToRedisRs::SOTR_Offline && !SetnxExpire(RedisKeyAccountOnlineLogin + account, Global::GetInstance()->GetCurAppId(), RedisKeyAccountOnlineLoginTimeout))
+        protoRs.set_return_code(Proto::AccountQueryOnlineToRedisRs::SOTR_Online);
 
     MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_AccountQueryOnlineToRedisRs, protoRs, nullptr);
 }

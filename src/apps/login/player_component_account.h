@@ -3,7 +3,7 @@
 #include "libserver/component.h"
 #include "libserver/system.h"
 
-// 玩家账号组件：负责管理登陆服玩家对象的账号相关状态
+// 玩家组件：负责管理登陆服玩家对象的账号相关状态
 class PlayerComponentAccount :public Component<PlayerComponentAccount>, public IAwakeFromPoolSystem<std::string>
 {
 public:

@@ -41,6 +41,13 @@ void Lobby::HandleLoginByToken(Packet* pPacket)
     auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
 
     auto proto = pPacket->ParseToProto<Proto::LoginByToken>();
+    // 同账号已在本进程在线 -> 拒绝
+    if (pPlayerCollector->GetPlayerByAccount(proto.account()) != nullptr)
+    {
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPacket);
+        return;
+    }
+    
     // 添加Player
     auto pPlayer = pPlayerCollector->AddPlayer(pPacket, proto.account());
     if (pPlayer == nullptr)

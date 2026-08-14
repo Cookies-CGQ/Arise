@@ -25,6 +25,8 @@ void RedisGame::HandlePlayerSyncOnlineToRedis(Packet* pPacket)
         return;
 
     Setex(key, curValue, RedisKeyAccountOnlineGameTimeout);
+    // 完成login key -> game key的交接，此时才消费一次性token
+    Delete(RedisKeyAccountTokey + proto.account());
 }
 
 void RedisGame::HandlePlayerDeleteOnlineToRedis(Packet* pPacket)
@@ -52,8 +54,8 @@ void RedisGame::HandleGameTokenToRedis(Packet* pPacket)
     const std::string tokenValue = GetString(RedisKeyAccountTokey + protoToken.account());
     protoRs.mutable_token_info()->ParseFromString(tokenValue);
 
-    // 删除token（一次性消费）
-    Delete(RedisKeyAccountTokey + protoToken.account());
+    // token延后删除，使token存在周期覆盖login key -> game key的交接窗口
+    // Delete(RedisKeyAccountTokey + protoToken.account());
 
     // 发送消息，后续进行token验证
     MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_GameTokenToRedisRs, protoRs, nullptr);

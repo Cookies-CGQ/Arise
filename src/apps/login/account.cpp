@@ -15,6 +15,7 @@
 
 void Account::Awake()
 {
+    // 用于管理正在登录的账号
     AddComponent<PlayerCollectorComponent>();
 
     // http
@@ -154,7 +155,7 @@ void Account::HandleAccountCheck(Packet* pPacket)
     auto protoCheck = pPacket->ParseToProto<Proto::AccountCheck>();
     auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
 
-    // 相同账号正在登录（同进程检测是否账号已经在线）
+    // 相同账号正在登录（同进程检测是否账号已经在线，但是无法检测其他进程的Login是否已经在线，所以需要查redis）
     auto pPlayer = pPlayerCollector->GetPlayerByAccount(protoCheck.account());
     if (pPlayer != nullptr)
     {
@@ -192,6 +193,7 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
     if (pPlayer == nullptr)
         return;
 
+    // 如果redis检测账号正在登录
     if (protoRs.return_code() != Proto::AccountQueryOnlineToRedisRs::SOTR_Offline)
     {
         //LOG_WARN("check [3/3]. account is online. " << protoRs.account().c_str());
@@ -200,6 +202,8 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
         Proto::AccountCheckRs protoResult;
         protoResult.set_return_code(Proto::AccountCheckReturnCode::ARC_ONLINE);
         MessageSystemHelp::SendPacket(Proto::MsgId::C2L_AccountCheckRs, protoResult, pPlayer);
+        // 关闭网络
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPlayer);
         return;
     }
 
@@ -313,7 +317,7 @@ void Account::HandleSelectPlayer(Packet* pPacket)
         if (pSubCompoent == nullptr)
         {
             protoRs.set_return_code(Proto::SelectPlayerRs::SPRC_NotFound);
-            LOG_ERROR("HandleSelectPlayer. pPlayer == nullptr. " << pPacket);
+            LOG_ERROR("HandleSelectPlayer. pSubCompoent == nullptr. " << pPacket);
             break;
         }
 
@@ -397,7 +401,7 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
     // 不论成功，关闭http连接
     MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPacket);
 
-    //通知客户端进入lobby地图
+    //通知客户端进入lobby地图(大厅)
     auto pResMsg = ResourceHelp::GetResourceManager();
     auto pRolesMap = pResMsg->Worlds->GetRolesMap();
     if (pRolesMap != nullptr)
