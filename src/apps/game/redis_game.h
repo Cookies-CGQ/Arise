@@ -10,7 +10,7 @@ private:
 	// 消息处理注册
 	void RegisterMsgFunction() override;
 
-	// 消息处理 -- 定时续期在线心跳
+	// 消息处理 -- 定时续期在线心跳，并完成token真正的消费
 	void HandlePlayerSyncOnlineToRedis(Packet* pPacket);
 	// 消息处理 -- 玩家离线时删除在线标志
 	void HandlePlayerDeleteOnlineToRedis(Packet* pPacket);

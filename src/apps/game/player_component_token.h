@@ -2,6 +2,7 @@
 #include "libserver/component.h"
 #include "libserver/system.h"
 
+// 挂载在player下，用于缓存和验证token是否一致
 class PlayerComponentToken :public Component<PlayerComponentToken>, public IAwakeFromPoolSystem<std::string>
 {
 public:

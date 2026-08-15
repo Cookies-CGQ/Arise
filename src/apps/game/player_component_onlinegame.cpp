@@ -8,7 +8,7 @@ void PlayerComponentOnlineInGame::Awake(const std::string account, int version)
 {
 	_account = account;
 	_onlineVersion = version;
-	_isReadFromeDB = false;
+	_isReadFromDB = false;
 	AddTimer(0, (int)(RedisKeyAccountOnlineGameTimeout*0.5), true, 0, BindFunP0(this, &PlayerComponentOnlineInGame::SetOnlineFlag));
 }
 
@@ -16,7 +16,7 @@ void PlayerComponentOnlineInGame::Awake(const std::string account)
 {
 	_account = account;
 	_onlineVersion = 0;
-	_isReadFromeDB = true;
+	_isReadFromDB = true;
 
 	Player* pPlayer = static_cast<Player*>(_parent);
 	ParserFromProto(pPlayer->GetPlayerProto());
@@ -44,7 +44,7 @@ void PlayerComponentOnlineInGame::SetOnlineFlag() const
 
 void PlayerComponentOnlineInGame::ParserFromProto(const Proto::Player& proto)
 {
-	if (!_isReadFromeDB)
+	if (!_isReadFromDB)
 		return;
 
 	const auto version = proto.misc().online_version();

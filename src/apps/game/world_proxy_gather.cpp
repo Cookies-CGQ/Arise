@@ -1,18 +1,16 @@
+#include <numeric>
 #include "world_proxy_gather.h"
-
 #include "libserver/message_system_help.h"
 #include "libserver/thread_mgr.h"
 #include "libserver/message_system.h"
 #include "libserver/global.h"
-
-#include <numeric>
+#include "libresource/resource_help.h"
 
 void WorldProxyGather::Awake()
 {
     AddTimer(0, 10, true, 2, BindFunP0(this, &WorldProxyGather::SyncGameInfo));
 
     auto pMsgSystem = GetSystemManager()->GetMessageSystem();
-    
     pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_WorldProxySyncToGather, BindFunP1(this, &WorldProxyGather::HandleWorldProxySyncToGather));
     pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_CmdWorldProxy, BindFunP1(this, &WorldProxyGather::HandleCmdWorldProxy));
 }
@@ -41,11 +39,16 @@ void WorldProxyGather::HandleCmdWorldProxy(Packet* pPacket)
 {
     LOG_DEBUG("------------------------------------");
     LOG_DEBUG("**** world proxy gather ****");
+
+    const auto pResMgr = ResourceHelp::GetResourceManager();
     for (auto one : _maps)
     {
+        const auto pWorldRes = pResMgr->Worlds->GetResource(one.second.WorldId);
         LOG_DEBUG("sn:" << one.first
-            << " proxy sn:" << one.second.WorldProxySn
-            << " online:" << one.second.Online);
+            << " proxy sn:" << one.second.WorldSn
+            << " online:" << one.second.Online
+            << " online:" << one.second.Online
+            << " name:" << pWorldRes->GetName().c_str());
     }
 }
 
@@ -54,21 +57,26 @@ void WorldProxyGather::HandleWorldProxySyncToGather(Packet* pPacket)
     auto proto = pPacket->ParseToProto<Proto::WorldProxySyncToGather>();
     const uint64 worldSn = proto.world_sn();
     const int worldId = proto.world_id();
-    const int online = proto.online();
-    const auto proxySn = proto.world_proxy_sn();
+    const auto isRemove = proto.is_remove();
 
-    auto iter = _maps.find(worldSn);
-    if (iter == _maps.end())
+    // 如果是汇报存活
+    if (!isRemove)
     {
-        _maps[worldSn] = WorldProxyInfo();
-        _maps[worldSn].WorldId = worldId;
-        _maps[worldSn].WorldProxySn = proxySn;
-    }
+        const int online = proto.online();
 
-    if (proxySn != _maps[worldSn].WorldProxySn)
+        auto iter = _maps.find(worldSn);
+        if (iter == _maps.end())
+        {
+            _maps[worldSn] = WorldProxyInfo();
+            _maps[worldSn].WorldId = worldId;
+            _maps[worldSn].WorldSn = worldSn;
+        }
+
+        _maps[worldSn].Online = online;
+    }
+    // 否则是注销移除
+    else
     {
-        LOG_WARN("error. sync proxy info. proxySn != _maps[worldSn].WorldProxySn");
+        _maps.erase(worldSn);
     }
-
-    _maps[worldSn].Online = online;
 }

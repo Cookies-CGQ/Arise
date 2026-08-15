@@ -96,7 +96,7 @@ ResourceWorld* ResourceWorldMgr::GetInitMap()
 ResourceWorld* ResourceWorldMgr::GetRolesMap()
 {
     if (_rolesMapId > 0)
-        return GetResource(_rolesMapId);
+        return GetResource(_rolesMapId); // 大厅
 
     return nullptr;
 }

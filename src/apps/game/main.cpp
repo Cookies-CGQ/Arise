@@ -1,9 +1,11 @@
 #include "libserver/common.h"
 #include "libserver/server_app.h"
+#include "game.h"
 #include "libserver/global.h"
 #include "libserver/network_listen.h"
 #include "libserver/network_connector.h"
-#include "game.h"
+#include "libresource/resource_manager.h"
+#include "libserver/message_system.h"
 
 int main(int argc, char* argv[])
 {
@@ -14,11 +16,13 @@ int main(int argc, char* argv[])
     auto pThreadMgr = ThreadMgr::GetInstance();
     InitializeComponentGame(pThreadMgr);
 
+    pThreadMgr->GetEntitySystem()->AddComponent<ResourceManager>();
+
     // TCP 监听
     const auto pGlobal = Global::GetInstance();
-    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), pGlobal->GetCurAppId());
+    pThreadMgr->CreateComponent<NetworkListen>(ListenThread, false, (int)pGlobal->GetCurAppType(), (int)pGlobal->GetCurAppId());
     // TCP 连接，连接 appmgr服务、db服务、space服务
-    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false, (int)NetworkType::TcpConnector, (int)(APP_APPMGR | APP_DB_MGR | APP_SPACE));
+    pThreadMgr->CreateComponent<NetworkConnector>(ConnectThread, false,(int)NetworkType::TcpConnector, (int)(APP_APPMGR | APP_DB_MGR | APP_SPACE));
 
     app.Run();
     app.Dispose();

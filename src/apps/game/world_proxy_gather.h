@@ -7,12 +7,12 @@ class Packet;
 
 struct WorldProxyInfo
 {
-	uint64 WorldProxySn;  // 代理的序列号
-	int WorldId;          // world ID
-	int Online;           // 在线人数
+	uint64 WorldSn;  // 地图sn
+	int WorldId;     // 地图id
+	int Online;      // 代理负载
 };
 
-// world代理信息汇总
+// world代理信息汇总，定期向AppMgr服务同步本进程所有代理信息
 class WorldProxyGather :public Entity<WorldProxyGather>, public IAwakeSystem<>
 {
 public:
@@ -28,5 +28,5 @@ private:
 	void HandleCmdWorldProxy(Packet* pPacket);
 
 private:
-	std::map<uint64, WorldProxyInfo> _maps;
+	std::map<uint64, WorldProxyInfo> _maps; // worldSN : WorldProxyInfo
 };
