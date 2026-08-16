@@ -40,7 +40,6 @@ void MysqlBase::Disconnect()
     if (_pMysql != nullptr)
     {
         mysql_close(_pMysql);
-        delete _pMysql;
         _pMysql = nullptr;
     }
 }

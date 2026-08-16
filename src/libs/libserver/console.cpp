@@ -73,8 +73,7 @@ void Console::Awake()
         } while (_isRun); 
     });
 
-    auto pUpdateComponent = AddComponent<UpdateComponent>();
-    pUpdateComponent->UpdataFunction = BindFunP0(this, &Console::Update);
+    AddComponent<UpdateComponent>(BindFunP0(this, &Console::Update));
 }
 
 void Console::BackToPool()

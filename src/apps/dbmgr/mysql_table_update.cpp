@@ -63,8 +63,20 @@ void MysqlTableUpdate::Check()
     // 检查版本，自动更新
     if (!UpdateToVersion())
     {
-        LOG_ERROR("!!!Failed. Mysql update. UpdateToVersion");
-        return;
+        // 数据库已存在但缺少表结构（例如手动创建过空库），自动补齐表结构
+        LOG_DEBUG("Mysql. version table is missing, try create tables. database:" << _pDbCfg->DatabaseName.c_str());
+        if (!CreateDatabaseIfNotExist())
+        {
+            LOG_ERROR("!!!Failed. Mysql update. CreateDatabaseIfNotExist");
+            Disconnect();
+            return;
+        }
+
+        if (!UpdateToVersion())
+        {
+            LOG_ERROR("!!!Failed. Mysql update. UpdateToVersion");
+            return;
+        }
     }
 
     mysql_ping(_pMysql);
@@ -143,8 +155,8 @@ bool MysqlTableUpdate::CreateDatabaseIfNotExist()
         return false;
     }
 
-    // 最后创建完了，修改 version表的中version 字段，设为初始的0号版本
-    cmd = "insert into `version` VALUES ('0')";
+    // 最后创建完了，修改 version表的中version 字段，设为初始的0号版本（幂等，避免重复执行时主键冲突）
+    cmd = "insert into `version` select '0' where not exists(select * from `version`)";
     if (!Query(cmd.c_str(), affected_rows)) {
         LOG_ERROR("!!! Failed. MysqlConnector::CreateTable." << LOG4CPLUS_STRING_TO_TSTRING(cmd));
         return false;

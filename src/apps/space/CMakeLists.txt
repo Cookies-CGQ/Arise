@@ -26,7 +26,7 @@ include_directories(/usr/local/include)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "../../../bin")
 
-set(CMAKE_CXX_FLAGS "-Wall -std=c++14 -pthread -lprotobuf -lyaml-cpp -llog4cplus -lhiredis -luuid -DEPOLL -Wno-unknown-pragmas")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++14 -pthread -DEPOLL -Wno-unknown-pragmas")
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -O0 -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
@@ -34,4 +34,5 @@ link_directories(${CMAKE_BINARY_DIR}/../../../libs)
 link_directories(${CMAKE_BINARY_DIR}/../../../../libs/linux)
 
 add_executable(${MyProjectName} ${SRCS})
+target_link_libraries(${MyProjectName} protobuf yaml-cpp log4cplus hiredis uuid)
 #target_link_libraries(${MyProjectName} libserverd.a)

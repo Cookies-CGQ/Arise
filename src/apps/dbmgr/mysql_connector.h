@@ -97,7 +97,7 @@ private:
 
 	// 协议处理函数 -- 处理“查询玩家角色列表”协议
 	void HandleQueryPlayerList(Packet* pPacket);
-    void QueryPlayerList(std::string account, NetworkIdentify* pIdentify);
+    void QueryPlayerList(std::string account, NetIdentify* pIdentify);
 
     // 协议处理函数 -- 处理“查询单个玩家详情”协议
 	void HandleQueryPlayer(Packet* pPacket);

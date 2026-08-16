@@ -7,7 +7,7 @@ class IMessageCallBack : public Component<IMessageCallBack>
 {
 public:
     virtual ~IMessageCallBack() = default;
-    virtual void ProcessPacket(Packet* packet) = 0;
+    virtual bool ProcessPacket(Packet* packet) = 0;
 };
 
 using MsgCallbackFun = std::function<void(Packet*)>;
@@ -18,7 +18,7 @@ class MessageCallBack :public IMessageCallBack, public IAwakeFromPoolSystem<MsgC
 public:
     void Awake(MsgCallbackFun fun) override;
     void BackToPool() override;
-    virtual void ProcessPacket(Packet* pPacket) override;
+    virtual bool ProcessPacket(Packet* pPacket) override;
 
 private:
     MsgCallbackFun _handleFunction;
@@ -37,12 +37,12 @@ public:
         GetFilterObj = nullptr;
     }
 
-    virtual void ProcessPacket(Packet* pPacket) override
+    virtual bool ProcessPacket(Packet* pPacket) override
     {
         auto pObj = GetFilterObj(pPacket);
         // 被过滤
         if (pObj == nullptr)
-            return;
+            return false;
 
 #ifdef LOG_TRACE_COMPONENT_OPEN
         const google::protobuf::EnumDescriptor* descriptor = Proto::MsgId_descriptor();
@@ -55,8 +55,9 @@ public:
 #endif
 
         HandleFunction(pObj, pPacket);
+        return true;
     }
 
     std::function<void(T*, Packet*)> HandleFunction = nullptr;       // 消息处理函数
-    std::function<T*(NetworkIdentify*)> GetFilterObj = nullptr;    // 过滤器
+    std::function<T*(NetIdentify*)> GetFilterObj = nullptr;    // 过滤器
 };

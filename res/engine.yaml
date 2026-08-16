@@ -31,7 +31,7 @@ login:
   thread_logic: 2
   thread_listen: 1
   thread_connector: 1
-  url_login: http://192.168.125.132/member_login_t.php # 第三方平台账号验证的URL
+  url_login: http://127.0.0.1:8080/member_login_t.php # 第三方平台账号验证的URL
   url_method: "get" # HTTP 请求方法
   apps:
     - id: 101
@@ -74,14 +74,14 @@ dbmgr:
   dbs:
     # redis配置
     - type: redis
-      ip: 192.168.125.132
+      ip: 127.0.0.1
       port: 6379
 
     # mysql配置
     - type: mysql
-      ip: 192.168.125.132
+      ip: 127.0.0.1
       port: 3306
-      user: aynami
+      user: ayanami
       password: 493618
       database_name: e_gamedata
       character_set: utf8

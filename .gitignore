@@ -1,0 +1,13 @@
+# CMake in-tree build artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+!CMakeLists.txt
+
+# Build outputs
+/bin/*
+!/bin/gen_png.sh
+
+# Editor
+*.swp

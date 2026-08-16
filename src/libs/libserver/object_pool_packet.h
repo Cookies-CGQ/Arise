@@ -14,7 +14,7 @@ class DynamicPacketPool: public DynamicObjectPool<Packet>, public Singleton<Dyna
 {
 public:
     // 从packet对象池获取并初始化一个packet返回
-    Packet* MallocPacket(Proto::MsgId msgId, NetworkIdentify* pIdentify);
+    Packet* MallocPacket(Proto::MsgId msgId, NetIdentify* pIdentify);
     // 检测Packet的引用情况并回收到对象池
     virtual void Update() override;
     // 回收packet对象

@@ -16,7 +16,7 @@ struct AppInfo
     SOCKET Socket;    // socket
 
     // proto -> AppInfo，从协议消息填充到自身
-    void Parse(Proto::AppInfoSync proto);
+    bool Parse(Proto::AppInfoSync proto);
 };
 
 // 用于记录分布式服务器集群中各节点之间同步应用信息

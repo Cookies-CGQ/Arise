@@ -18,7 +18,7 @@ void PlayerComponentOnlineInGame::Awake(const std::string account)
 	_onlineVersion = 0;
 	_isReadFromDB = true;
 
-	Player* pPlayer = static_cast<Player*>(_parent);
+	Player* pPlayer = dynamic_cast<Player*>(_parent);
 	ParserFromProto(pPlayer->GetPlayerProto());
 	_onlineVersion++; // 再次登录，版本号+1
 

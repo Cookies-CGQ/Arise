@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "libserver/log4_help.h"
 #include "libserver/res_path.h"
@@ -19,7 +19,7 @@ public:
     {
         for(auto& one : _refs)
         {
-            delete one->second;
+            delete one.second;
         }
 
         _refs.clear();

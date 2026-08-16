@@ -11,7 +11,7 @@ struct SocketKey
 {
     SocketKey(SOCKET socket, NetworkType netType);
 	// 清除
-    void Clean();
+    void Clear();
     // 拷贝指定数据
     void CopyFrom(SocketKey* pSocketKey);
 

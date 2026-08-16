@@ -42,7 +42,7 @@ public:
     void SendPacket(Packet* pPacket) const;
 
 	// 发送
-    bool Send() const;
+    bool Send();
     
     void Close();
     

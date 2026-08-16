@@ -9,8 +9,8 @@ Packet::Packet()
 
     _ref = 0;
     _isRefOpen = false;
-    _socketKey.Clean();
-    _objKey.Clean();
+    _socketKey.Clear();
+    _tagKey.Clear();
 }
 
 Packet::~Packet()

@@ -21,7 +21,7 @@ build(){
             rm -f cmake_install.cmake
             rm -f Makefile
         else
-            cmake3 -DCMAKE_BUILD_TYPE=${buildType} ./ 
+            cmake -DCMAKE_BUILD_TYPE=${buildType} ./ 
             make -j4
         fi
         cd ..

@@ -197,7 +197,7 @@ void ConnectObj::SendPacket(Packet* pPacket) const
     DynamicPacketPool::GetInstance()->FreeObject(pPacket);
 }
 
-bool ConnectObj::Send() const
+bool ConnectObj::Send()
 {
     // 对于网络连接，如果可写，表示连接建立成功了，状态转移：正在连接->已连接
     if (_state == ConnectStateType::Connecting)

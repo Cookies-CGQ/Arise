@@ -101,6 +101,6 @@ private:
     Proto::MsgId _msgId; // 这个包的消息类型
 
 private:
-    std::atomic<int> _ref = 0; // 由于同一个packet包可能存在多个线程中处理，所以packet采用引用计数
+    std::atomic<int> _ref{0}; // 由于同一个packet包可能存在多个线程中处理，所以packet采用引用计数
     bool _isRefOpen = false;   
 };
