@@ -153,6 +153,60 @@ void Network::HandleDisconnect(Packet* pPacket)
     RemoveConnectObj(socket);
 }
 
+void Network::RemoveConnectObj(SOCKET socket)
+{
+    auto pObj = _connects[socket];
+    if (pObj == nullptr)
+        return;
+
+    pObj->ComponentBackToPool();
+    _connects[socket] = nullptr;
+
+#ifdef EPOLL
+    DeleteEvent(_epfd, socket);
+#endif
+    _sockets.erase(socket);
+
+    // socket 关闭后 fd 可能被新连接立即复用，必须清掉队列里指向该 socket 的旧包，
+    // 否则旧包会配对到新连接（标签不匹配）被丢弃，导致对端永久等待
+    PurgeSendList(socket);
+}
+
+void Network::RemoveConnectObjByItem(std::set<SOCKET>::iterator& iter)
+{
+    auto socket = *iter;
+    auto pObj = _connects[socket];
+    if (pObj == nullptr)
+        return;
+
+    pObj->ComponentBackToPool();
+    _connects[socket] = nullptr;
+    iter = _sockets.erase(iter);
+
+    PurgeSendList(socket);
+}
+
+void Network::PurgeSendList(SOCKET socket)
+{
+    std::lock_guard<std::mutex> guard(_sendMsgMutex);
+    auto pLists = { _sendMsgList.GetReaderCache(), _sendMsgList.GetWriterCache() };
+    for (auto pList : pLists)
+    {
+        for (auto iter = pList->begin(); iter != pList->end(); )
+        {
+            if ((*iter)->GetSocketKey()->Socket == socket)
+            {
+                DynamicPacketPool::GetInstance()->FreeObject(*iter);
+                iter = pList->erase(iter);
+            }
+            else
+            {
+                ++iter;
+            }
+        }
+    }
+}
+
 #ifdef EPOLL
 
 void Network::AddEvent(int epollfd, int fd, int flag)

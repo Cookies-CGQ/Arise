@@ -36,6 +36,9 @@ void Account::Awake()
     // 定时向appmgr服务同步本login服务的信息
     AddTimer(0, 10, true, 2, BindFunP0(this, &Account::SyncAppInfoToAppMgr));
 
+    // 第三方验证超时保护：每秒检查一次
+    AddTimer(0, 1, false, 1, BindFunP0(this, &Account::CheckHttpTimeout));
+
     // 注册消息处理
     auto pMsgSystem = GetSystemManager()->GetMessageSystem();
 
@@ -212,6 +215,7 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
 
     // 验证账号，发起一个Http请求
     TagValue tagValue{ pPlayer->GetAccount(), 0 };
+    _httpChecks[pPlayer->GetAccount()] = 10; // 10秒超时保护（批量压测时第三方服务可能排队）
     MessageSystemHelp::CreateConnect(NetworkType::HttpConnector, TagType::Account, tagValue, _httpIp.c_str(), _httpPort);
 }
 
@@ -364,6 +368,9 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
 
     auto account = pTagValue->KeyStr;
 
+    // 验证结果已返回，移除超时保护
+    _httpChecks.erase(account);
+
     auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
     auto pPlayer = pPlayerCollector->GetPlayerByAccount(account);
     if (pPlayer == nullptr)
@@ -427,6 +434,45 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
         Proto::AccountCheckRs protoResult;
         protoResult.set_return_code(rsCode);
         MessageSystemHelp::SendPacket(Proto::MsgId::C2L_AccountCheckRs, protoResult, pPlayer);
+    }
+}
+
+void Account::CheckHttpTimeout()
+{
+    if (_httpChecks.empty())
+        return;
+
+    auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+    for (auto iter = _httpChecks.begin(); iter != _httpChecks.end(); )
+    {
+        const auto account = iter->first;
+        if (--(iter->second) > 0)
+        {
+            ++iter;
+            continue;
+        }
+
+        LOG_ERROR("account http verify timeout. account:" << account.c_str());
+
+        auto pPlayer = pPlayerCollector->GetPlayerByAccount(account);
+        if (pPlayer != nullptr)
+        {
+            // 通知客户端超时并断开，客户端（机器人）断线后会自动重试
+            Proto::AccountCheckRs protoResult;
+            protoResult.set_return_code(Proto::AccountCheckReturnCode::ARC_TIMEOUT);
+            MessageSystemHelp::SendPacket(Proto::MsgId::C2L_AccountCheckRs, protoResult, pPlayer);
+            MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPlayer);
+
+            // 移除卡住的玩家对象，否则重试时会命中"同账号正在登录"
+            pPlayerCollector->RemovePlayerBySocket(pPlayer->GetSocketKey()->Socket);
+
+            // 显式删除登录锁，防止残留锁导致重试时被误判"账号在线"
+            Proto::AccountDeleteOnlineToRedis protoDel;
+            protoDel.set_account(account.c_str());
+            MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_AccountDeleteOnlineToRedis, protoDel, nullptr);
+        }
+
+        iter = _httpChecks.erase(iter);
     }
 }
 

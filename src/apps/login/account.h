@@ -46,6 +46,8 @@ private:
     void RequestToken(Player* pPlayer) const;
     // Redis 返回 Token，客户端可以连接Game服务了，完成整个登录流程
     void HandleTokenToRedisRs(Packet* pPacket);
+    // 第三方验证超时保护：定时检查并踢出卡在验证流程的账号（自愈）
+    void CheckHttpTimeout();
 
 private:
     Proto::AccountCheckReturnCode ProcessMsg(Json::Value value) const;
@@ -55,4 +57,7 @@ private:
     std::string _method = ""; // HTTP请求方法
     std::string _httpIp = ""; // 第三方账号验证服务的IP
     int _httpPort = 0;        // 第三方账号验证服务的端口
+
+    // 正在等待第三方验证的账号 -> 剩余超时秒数
+    std::map<std::string, int> _httpChecks;
 };

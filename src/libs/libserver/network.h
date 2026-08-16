@@ -37,12 +37,6 @@
 //#define _sock_close( sockfd ) ::shutdown(sockfd, SHUT_RDWR);
 #define _sock_is_blocked()	(errno == EAGAIN || errno == 0)
 
-#define RemoveConnectObj(socket) \
-    _connects[socket]->ComponentBackToPool( ); \
-    _connects[socket] = nullptr; \
-    DeleteEvent(_epfd, socket); \
-    _sockets.erase(socket); 
-
 #else
 
 #define MAX_CLIENT  10000
@@ -53,16 +47,6 @@
 #define _sock_err( )	WSAGetLastError()
 #define _sock_close( sockfd ) ::closesocket( sockfd )
 #define _sock_is_blocked()	(WSAGetLastError() == WSAEWOULDBLOCK)
-
-#define RemoveConnectObj(socket) \
-    _connects[socket]->ComponentBackToPool( ); \
-    _connects[socket] = nullptr; \
-    _sockets.erase(socket); 
-
-#define RemoveConnectObjByItem(iter) \
-    _connects[*iter]->ComponentBackToPool(); \
-    _connects[*iter] = nullptr; \
-    iter = _sockets.erase(iter);
 
 #endif
 
@@ -101,6 +85,12 @@ protected:
     bool CreateConnectObj(SOCKET socket, TagType tagType, TagValue tagValue, ConnectStateType iState);
     // 消息处理 -- 断开连接
     void HandleDisconnect(Packet* pPacket);
+    // 移除连接对象（销毁ConnectObj并关闭socket，同时清理待发送队列，避免fd复用导致串包）
+    void RemoveConnectObj(SOCKET socket);
+    // 移除连接对象（select模型的迭代器版本）
+    void RemoveConnectObjByItem(std::set<SOCKET>::iterator& iter);
+    // 清理发送队列中指向指定socket的packet
+    void PurgeSendList(SOCKET socket);
 
 #ifdef EPOLL
     // 初始化Epoll

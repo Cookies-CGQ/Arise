@@ -56,8 +56,8 @@ void RobotConsoleLogin::HandleLoginEx(std::vector<std::string>& params) const
     auto threadCnt = pAppConfig->LogicThreadNum;
     threadCnt = threadCnt <= 0 ? 1 : threadCnt;
 
-    // 每个线程中robot数量
-    int perThreadRobotCnt = static_cast<int>(std::ceil(count / threadCnt));
+    // 每个线程中robot数量（注意整数除法，需先转 double 再 ceil，否则非整倍数时数量会少）
+    int perThreadRobotCnt = static_cast<int>(std::ceil(static_cast<double>(count) / threadCnt));
     perThreadRobotCnt = perThreadRobotCnt < 1 ? 1 : perThreadRobotCnt;
 
     for (int i = 0; i < threadCnt; i++)
