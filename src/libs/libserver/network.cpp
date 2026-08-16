@@ -204,12 +204,7 @@ void Network::Epoll()
         if (pObj == nullptr)
             continue;
 
-        if (_events[index].events & EPOLLRDHUP || _events[index].events & EPOLLERR || _events[index].events & EPOLLHUP)
-        {
-            RemoveConnectObj(socket);
-            continue;
-        }
-
+        // 先处理 EPOLLIN，保证连接关闭前把带数据读完（Connection: close 的响应）
         if (_events[index].events & EPOLLIN)
         {
             if (!pObj->Recv())
@@ -217,6 +212,12 @@ void Network::Epoll()
                 RemoveConnectObj(socket);
                 continue;
             }
+        }
+
+        if (_events[index].events & EPOLLRDHUP || _events[index].events & EPOLLERR || _events[index].events & EPOLLHUP)
+        {
+            RemoveConnectObj(socket);
+            continue;
         }
 
         if (_events[index].events & EPOLLOUT)
