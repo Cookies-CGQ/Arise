@@ -275,9 +275,9 @@ message WorldProxySyncToGather {
 
 // 创建世界实例
 message CreateWorld {
-	int32 world_id = 1;
-	uint64 last_world_sn = 2;	
-	int32 game_app_id = 3;
+	int32 world_id = 1;         // 地图配置ID
+	uint64 last_world_sn = 2;	// 传送链上的“上一个世界”的SN，副本必填
+	int32 game_app_id = 3;      // 指定game进程；0 = 不指定（所有game）
 }
 
 // 广播世界创建事件
