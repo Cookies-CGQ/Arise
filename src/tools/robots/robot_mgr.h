@@ -1,27 +1,25 @@
 #pragma once
 
-#include "libserver/util_time.h"
 #include "libserver/robot_state_type.h"
-#include "libserver/network_connector.h"
+#include "libserver/entity.h"
 
-class RobotMgr : public NetworkConnector, public IAwakeFromPoolSystem<>
+class RobotMgr : public Entity<RobotMgr>, public IAwakeSystem<>
 {
 public:
     void Awake() override;
-    // 状态统计
+    void BackToPool() override;
+
     void ShowInfo();
 
-    // 是否为单例组件
-    static bool IsSingle() { return true; }
-
 private:
-    // 消息处理函数 -- 接收状态同步
     void HandleRobotState(Packet* pPacket);
-    // 判断能否进入下一阶段
-    void NofityServer(RobotStateType maxType);
+    void NotifyServer();
 
 private:
-    bool _isChange = false;  // 标记是否更新
+    std::chrono::system_clock::time_point _start;
+    bool _isChange{ false };
+    RobotStateType _curType{ RobotStateType::Http_Connecting };
+
     // <account, RobotStateType>
     std::map<std::string, RobotStateType> _robots;
 };
