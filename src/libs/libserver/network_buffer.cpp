@@ -243,6 +243,16 @@ Packet* RecvNetworkBuffer::GetHttpPacket()
 
         bodyLen = _endIndex - _beginIndex - headerLen;
     }
+    else if (mgBody == nullptr && isConnector)
+    {
+        // 响应既没有 Content-Length 也没有 chunked（Connection: close 场景），
+        // 缓冲区中 header 之后的所有数据都是 body；body 未到齐则等待下一轮读取
+        // 注意：只对响应生效，GET 等无 body 的请求不能走这个分支
+        if (recvBufLength <= headerLen)
+            return nullptr;
+
+        bodyLen = recvBufLength - headerLen;
+    }
 
 #ifdef LOG_HTTP_OPEN
     std::stringstream allBuffer;
