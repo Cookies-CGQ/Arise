@@ -131,4 +131,6 @@ protected:
     std::mutex _sendMsgMutex;
     CacheSwap<Packet> _sendMsgList; // 待发送packet
     NetworkType _networkType = NetworkType::TcpListen; // 该网络连接的网络类型
+
+    uint32 _nextEpoch = 1; // 连接代次计数器，每次创建连接 +1，用于识别 fd 复用
 };

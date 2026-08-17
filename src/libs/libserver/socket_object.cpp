@@ -2,22 +2,25 @@
 
 SocketKey SocketKey::None = SocketKey(INVALID_SOCKET, NetworkType::None);
 
-SocketKey::SocketKey(SOCKET socket, NetworkType netType)
+SocketKey::SocketKey(SOCKET socket, NetworkType netType, uint32 epoch)
 {
     Socket = socket;
     NetType = netType;
+    Epoch = epoch;
 }
 
 void SocketKey::Clear()
 {
     Socket = INVALID_SOCKET;
     NetType = NetworkType::None;
+    Epoch = 0;
 }
 
 void SocketKey::CopyFrom(SocketKey* pSocketKey)
 {
     Socket = pSocketKey->Socket;
     NetType = pSocketKey->NetType;
+    Epoch = pSocketKey->Epoch;
 }
 
 void TagKey::Clear()

@@ -9,7 +9,7 @@
 
 struct SocketKey
 {
-    SocketKey(SOCKET socket, NetworkType netType);
+    SocketKey(SOCKET socket, NetworkType netType, uint32 epoch = 0);
 	// 清除
     void Clear();
     // 拷贝指定数据
@@ -18,17 +18,18 @@ struct SocketKey
 	// !=重载
     bool operator != (const SocketKey other) const
     {
-        return (Socket != other.Socket) || (NetType != other.NetType);
+        return (Socket != other.Socket) || (NetType != other.NetType) || (Epoch != other.Epoch);
     };
 
 	// ==重载
     bool operator == (const SocketKey other)
     {
-        return (Socket == other.Socket) && (NetType == other.NetType);
+        return (Socket == other.Socket) && (NetType == other.NetType) && (Epoch == other.Epoch);
     };
 
 	SOCKET Socket;          // socket
     NetworkType NetType;    // 网络类型
+    uint32 Epoch;           // 连接代次：fd被新连接复用后仍能区分新旧连接，防止串包
 
     static SocketKey None;  // 静态空哨兵
 };

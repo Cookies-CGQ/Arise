@@ -51,7 +51,7 @@ void ConnectObj::BackToPool()
     ComponentHelp::GetTraceComponent()->Trace(TraceType::Connector, _socketKey.Socket, traceMsg);
 #endif
 
-    // 底层网络断开，通知上次逻辑
+    // 底层网络断开，通知上层逻辑
     MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkDisconnect, this);    
 
     if (_socketKey.Socket != INVALID_SOCKET)

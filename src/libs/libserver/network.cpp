@@ -122,6 +122,9 @@ bool Network::CreateConnectObj(SOCKET socket, TagType tagType, TagValue tagValue
     ConnectObj* pConnectObj = pPool->MallocObject(_pSystemManager, nullptr, 0, socket, _networkType, tagType, tagValue, iState);
     pConnectObj->SetParent(this);
 
+    // 分配连接代次：fd 被复用后，携带旧代次的包会被识别为过期包丢弃，防止串包
+    pConnectObj->GetSocketKey()->Epoch = _nextEpoch++;
+
     _connects[socket] = pConnectObj;
     _sockets.emplace(socket);
 
@@ -377,6 +380,14 @@ void Network::OnNetworkUpdate()
             continue;
         }
 
+        // 连接代次校验：fd 被新连接复用后，旧连接的过期包直接丢弃（上层超时自愈）
+        if (pObj->GetSocketKey()->Epoch != pPacket->GetSocketKey()->Epoch)
+        {
+            LOG_ERROR("failed to send packet. connection epoch is different (fd reused). msgId:" << Log4Help::GetMsgIdName(pPacket->GetMsgId()).c_str() << " packet[" << pPacket << "] connect:[" << pObj << "]");
+            DynamicPacketPool::GetInstance()->FreeObject(pPacket);
+            continue;
+        }
+
         // check
         if (!pObj->GetTagKey()->CompareTags(pPacket->GetTagKey()))
         {
@@ -401,6 +412,17 @@ void Network::SendPacket(Packet*& pPacket)
     if (pPacket->GetSocketKey()->NetType != _networkType)
     {
         LOG_ERROR("failed to send packet. network type is different. msgId:" << Log4Help::GetMsgIdName(pPacket->GetMsgId()).c_str() << pPacket);
+        return;
+    }
+
+    // 入队时校验连接代次：若目标连接已关闭且 fd 被新连接复用，则本包已过期，
+    // 直接丢弃（由上层超时机制重试），避免过期包串到新连接上
+    const auto socket = pPacket->GetSocketKey()->Socket;
+    const auto pObj = _connects[socket];
+    if (pObj == nullptr || pObj->GetSocketKey()->Epoch != pPacket->GetSocketKey()->Epoch)
+    {
+        LOG_ERROR("failed to send packet. connection gone or epoch changed. msgId:" << Log4Help::GetMsgIdName(pPacket->GetMsgId()).c_str() << pPacket);
+        DynamicPacketPool::GetInstance()->FreeObject(pPacket);
         return;
     }
 
