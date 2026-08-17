@@ -213,10 +213,12 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
     // 在线组件
     pPlayer->AddComponent<PlayerComponentOnlineInLogin>(pPlayer->GetAccount());
 
-    // 验证账号，发起一个Http请求
-    TagValue tagValue{ pPlayer->GetAccount(), 0 };
-    _httpChecks[pPlayer->GetAccount()] = 5; // 5秒超时保护（PHP 4进程并行，验证请求处理 < 3 秒，5 秒足够）
-    MessageSystemHelp::CreateConnect(NetworkType::HttpConnector, TagType::Account, tagValue, _httpIp.c_str(), _httpPort);
+    // 验证账号，向第三方验证连接池发起请求（池复用长连接，不再每账号建连）
+    _httpChecks[pPlayer->GetAccount()] = 5; // 5秒超时保护（自愈兜底）
+    Proto::HttpVerifyRequest protoVerify;
+    protoVerify.set_account(pPlayer->GetAccount().c_str());
+    protoVerify.set_password(pPlayer->GetComponent<PlayerComponentAccount>()->GetPassword().c_str());
+    MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_HttpVerifyRequest, protoVerify, nullptr);
 }
 
 void Account::HandleQueryPlayerListRs(Packet* pPacket)
@@ -405,8 +407,7 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
         delete jsonReader;
     }
 
-    // 不论成功，关闭http连接
-    MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkRequestDisconnect, pPacket);
+    // 连接池模式下连接由 HttpVerifyPool 管理，不再关闭连接
 
     //通知客户端进入lobby地图(大厅)
     auto pResMsg = ResourceHelp::GetResourceManager();

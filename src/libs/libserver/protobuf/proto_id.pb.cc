@@ -29,7 +29,7 @@ static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_proto_5fid_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\016proto_id.proto\022\005Proto*\373\016\n\005MsgId\022\010\n\004Non"
+  "\n\016proto_id.proto\022\005Proto*\226\017\n\005MsgId\022\010\n\004Non"
   "e\020\000\022\025\n\021MI_NetworkConnect\020\001\022\027\n\023MI_Network"
   "Connected\020\002\022\024\n\020MI_NetworkListen\020\003\022\027\n\023MI_"
   "NetworkListenKey\020\004\022\030\n\024MI_NetworkDisconne"
@@ -73,15 +73,16 @@ const char descriptor_table_protodef_proto_5fid_2eproto[] PROTOBUF_SECTION_VARIA
   "pBegin\020\220N\022\031\n\024MI_HttpInnerResponse\020\221N\022\026\n\021"
   "MI_HttpRequestBad\020\222N\022\030\n\023MI_HttpRequestLo"
   "gin\020\223N\022\017\n\nMI_HttpEnd\020\203R\022\030\n\023MI_HttpOuterR"
-  "equest\020\204R\022\031\n\024MI_HttpOuterResponse\020\205R\022\022\n\014"
-  "MI_CmdThread\020\241\234\001\022\017\n\tMI_CmdApp\020\242\234\001\022\026\n\020MI_"
-  "CmdWorldProxy\020\243\234\001\022\021\n\013MI_CmdWorld\020\244\234\001\022\022\n\014"
-  "MI_CmdCreate\020\245\234\001\022\026\n\020MI_CmdEfficiency\020\246\234\001"
-  "\022\023\n\rMI_Efficiency\020\247\234\001b\006proto3"
+  "equest\020\204R\022\031\n\024MI_HttpOuterResponse\020\205R\022\031\n\024"
+  "MI_HttpVerifyRequest\020\206R\022\022\n\014MI_CmdThread\020"
+  "\241\234\001\022\017\n\tMI_CmdApp\020\242\234\001\022\026\n\020MI_CmdWorldProxy"
+  "\020\243\234\001\022\021\n\013MI_CmdWorld\020\244\234\001\022\022\n\014MI_CmdCreate\020"
+  "\245\234\001\022\026\n\020MI_CmdEfficiency\020\246\234\001\022\023\n\rMI_Effici"
+  "ency\020\247\234\001b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_proto_5fid_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_proto_5fid_2eproto = {
-    false, false, 1949, descriptor_table_protodef_proto_5fid_2eproto,
+    false, false, 1976, descriptor_table_protodef_proto_5fid_2eproto,
     "proto_id.proto",
     &descriptor_table_proto_5fid_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_proto_5fid_2eproto::offsets,
@@ -173,6 +174,7 @@ bool MsgId_IsValid(int value) {
     case 10499:
     case 10500:
     case 10501:
+    case 10502:
     case 20001:
     case 20002:
     case 20003:

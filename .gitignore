@@ -9,5 +9,10 @@ Makefile
 /bin/*
 !/bin/gen_png.sh
 
+# nginx / php-fpm 运行时产物
+/deploy/*.pid
+/deploy/*.sock
+/deploy/*.log
+
 # Editor
 *.swp

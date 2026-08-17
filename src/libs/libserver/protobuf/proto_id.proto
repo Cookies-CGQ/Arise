@@ -128,6 +128,7 @@ enum MsgId {
 	// http connector 的消息（内部请求，外部返回）
 	MI_HttpOuterRequest      = 10500; // 内部向外请求
 	MI_HttpOuterResponse     = 10501; // 外部响应数据
+	MI_HttpVerifyRequest     = 10502; // 第三方账号验证请求（登录服 -> 验证连接池）
 
 	// cmd
 	MI_CmdThread        = 20001;

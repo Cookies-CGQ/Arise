@@ -16,11 +16,14 @@ for sfx in d ""; do
     done
 done
 
-# php 验证服务
-if pgrep -f "php -S 127.0.0.1:8080" > /dev/null; then
-    pkill -f "php -S 127.0.0.1:8080"
-    echo "[stop] php 账号验证服务"
+# nginx + php-fpm 验证服务（只停本项目的实例，不动系统自带的）
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -f "$ROOT/deploy/nginx.pid" ]; then
+    nginx -c "$ROOT/deploy/nginx.conf" -s quit 2>/dev/null || pkill -f "$ROOT/deploy/nginx.conf"
+    echo "[stop] nginx (项目实例)"
 fi
+pkill -f "$ROOT/deploy/php-fpm.conf" 2>/dev/null && echo "[stop] php-fpm (项目实例)" || true
+rm -f "$ROOT/deploy/php-fpm.sock"
 
 sleep 15
 

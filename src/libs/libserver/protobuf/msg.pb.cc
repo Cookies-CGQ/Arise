@@ -47,6 +47,20 @@ struct CmdAppDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 CmdAppDefaultTypeInternal _CmdApp_default_instance_;
+PROTOBUF_CONSTEXPR HttpVerifyRequest::HttpVerifyRequest(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.account_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.password_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct HttpVerifyRequestDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR HttpVerifyRequestDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~HttpVerifyRequestDefaultTypeInternal() {}
+  union {
+    HttpVerifyRequest _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 HttpVerifyRequestDefaultTypeInternal _HttpVerifyRequest_default_instance_;
 PROTOBUF_CONSTEXPR Efficiency::Efficiency(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.thread_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
@@ -920,7 +934,7 @@ struct BroadcastCreateWorldProxyDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 BroadcastCreateWorldProxyDefaultTypeInternal _BroadcastCreateWorldProxy_default_instance_;
 }  // namespace Proto
-static ::_pb::Metadata file_level_metadata_msg_2eproto[64];
+static ::_pb::Metadata file_level_metadata_msg_2eproto[65];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_msg_2eproto[12];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_msg_2eproto = nullptr;
 
@@ -939,6 +953,14 @@ const uint32_t TableStruct_msg_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(prot
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Proto::CmdApp, _impl_.cmd_type_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Proto::HttpVerifyRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Proto::HttpVerifyRequest, _impl_.account_),
+  PROTOBUF_FIELD_OFFSET(::Proto::HttpVerifyRequest, _impl_.password_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Proto::Efficiency, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1443,73 +1465,75 @@ const uint32_t TableStruct_msg_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(prot
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::Proto::CmdThread)},
   { 7, -1, -1, sizeof(::Proto::CmdApp)},
-  { 14, -1, -1, sizeof(::Proto::Efficiency)},
-  { 23, -1, -1, sizeof(::Proto::AppRegister)},
-  { 31, -1, -1, sizeof(::Proto::AppInfoSync)},
-  { 40, -1, -1, sizeof(::Proto::AppInfoListSync)},
-  { 47, -1, -1, sizeof(::Proto::NetworkDisconnect)},
-  { 55, -1, -1, sizeof(::Proto::TagValue)},
-  { 63, -1, -1, sizeof(::Proto::Tag)},
-  { 71, -1, -1, sizeof(::Proto::NetworkConnect)},
-  { 81, -1, -1, sizeof(::Proto::Http)},
-  { 89, -1, -1, sizeof(::Proto::CreateComponentParam)},
-  { 99, -1, -1, sizeof(::Proto::CreateComponent)},
-  { 110, -1, -1, sizeof(::Proto::RemoveComponent)},
-  { 117, -1, -1, sizeof(::Proto::CreateSystem)},
-  { 125, -1, -1, sizeof(::Proto::AccountCheck)},
-  { 133, -1, -1, sizeof(::Proto::AccountCheckRs)},
-  { 140, -1, -1, sizeof(::Proto::RobotState)},
-  { 148, -1, -1, sizeof(::Proto::RobotSyncState)},
-  { 155, -1, -1, sizeof(::Proto::RobotCreate)},
-  { 162, -1, -1, sizeof(::Proto::PlayerLittle)},
-  { 174, -1, -1, sizeof(::Proto::PlayerList)},
-  { 182, -1, -1, sizeof(::Proto::QueryPlayerList)},
-  { 189, -1, -1, sizeof(::Proto::QueryPlayer)},
-  { 196, -1, -1, sizeof(::Proto::QueryPlayerRs)},
-  { 204, -1, -1, sizeof(::Proto::CreatePlayer)},
-  { 212, -1, -1, sizeof(::Proto::CreatePlayerRs)},
-  { 219, -1, -1, sizeof(::Proto::CreatePlayerToDB)},
-  { 227, -1, -1, sizeof(::Proto::CreatePlayerToDBRs)},
-  { 235, -1, -1, sizeof(::Proto::SelectPlayer)},
-  { 242, -1, -1, sizeof(::Proto::SelectPlayerRs)},
-  { 249, -1, -1, sizeof(::Proto::SavePlayer)},
-  { 257, -1, -1, sizeof(::Proto::WorldSyncToGather)},
-  { 266, -1, -1, sizeof(::Proto::WorldProxySyncToGather)},
-  { 276, -1, -1, sizeof(::Proto::CreateWorld)},
-  { 285, -1, -1, sizeof(::Proto::BroadcastCreateWorld)},
-  { 294, -1, -1, sizeof(::Proto::QueryWorld)},
-  { 302, -1, -1, sizeof(::Proto::QueryWorldRs)},
-  { 310, -1, -1, sizeof(::Proto::EnterWorld)},
-  { 318, -1, -1, sizeof(::Proto::RequestWorld)},
-  { 325, -1, -1, sizeof(::Proto::GameToken)},
-  { 335, -1, -1, sizeof(::Proto::LoginByToken)},
-  { 343, -1, -1, sizeof(::Proto::LoginByTokenRs)},
-  { 350, -1, -1, sizeof(::Proto::LoginTokenToRedis)},
-  { 358, -1, -1, sizeof(::Proto::LoginTokenToRedisRs)},
-  { 366, -1, -1, sizeof(::Proto::GameTokenToRedis)},
-  { 373, -1, -1, sizeof(::Proto::TokenInfo)},
-  { 381, -1, -1, sizeof(::Proto::GameTokenToRedisRs)},
-  { 389, -1, -1, sizeof(::Proto::AccountQueryOnlineToRedis)},
-  { 396, -1, -1, sizeof(::Proto::AccountQueryOnlineToRedisRs)},
-  { 404, -1, -1, sizeof(::Proto::AccountSyncOnlineToRedis)},
-  { 411, -1, -1, sizeof(::Proto::AccountDeleteOnlineToRedis)},
-  { 418, -1, -1, sizeof(::Proto::PlayerSyncOnlineToRedis)},
-  { 426, -1, -1, sizeof(::Proto::PlayerDeleteOnlineToRedis)},
-  { 434, -1, -1, sizeof(::Proto::SyncPlayer)},
-  { 443, -1, -1, sizeof(::Proto::Teleport)},
-  { 453, -1, -1, sizeof(::Proto::TeleportAfter)},
-  { 460, -1, -1, sizeof(::Proto::RemovePlayer)},
-  { 467, -1, -1, sizeof(::Proto::RequestSyncPlayer)},
-  { 474, -1, -1, sizeof(::Proto::Role)},
-  { 484, -1, -1, sizeof(::Proto::RoleAppear)},
-  { 491, -1, -1, sizeof(::Proto::RoleDisAppear)},
-  { 498, -1, -1, sizeof(::Proto::Move)},
-  { 506, -1, -1, sizeof(::Proto::BroadcastCreateWorldProxy)},
+  { 14, -1, -1, sizeof(::Proto::HttpVerifyRequest)},
+  { 22, -1, -1, sizeof(::Proto::Efficiency)},
+  { 31, -1, -1, sizeof(::Proto::AppRegister)},
+  { 39, -1, -1, sizeof(::Proto::AppInfoSync)},
+  { 48, -1, -1, sizeof(::Proto::AppInfoListSync)},
+  { 55, -1, -1, sizeof(::Proto::NetworkDisconnect)},
+  { 63, -1, -1, sizeof(::Proto::TagValue)},
+  { 71, -1, -1, sizeof(::Proto::Tag)},
+  { 79, -1, -1, sizeof(::Proto::NetworkConnect)},
+  { 89, -1, -1, sizeof(::Proto::Http)},
+  { 97, -1, -1, sizeof(::Proto::CreateComponentParam)},
+  { 107, -1, -1, sizeof(::Proto::CreateComponent)},
+  { 118, -1, -1, sizeof(::Proto::RemoveComponent)},
+  { 125, -1, -1, sizeof(::Proto::CreateSystem)},
+  { 133, -1, -1, sizeof(::Proto::AccountCheck)},
+  { 141, -1, -1, sizeof(::Proto::AccountCheckRs)},
+  { 148, -1, -1, sizeof(::Proto::RobotState)},
+  { 156, -1, -1, sizeof(::Proto::RobotSyncState)},
+  { 163, -1, -1, sizeof(::Proto::RobotCreate)},
+  { 170, -1, -1, sizeof(::Proto::PlayerLittle)},
+  { 182, -1, -1, sizeof(::Proto::PlayerList)},
+  { 190, -1, -1, sizeof(::Proto::QueryPlayerList)},
+  { 197, -1, -1, sizeof(::Proto::QueryPlayer)},
+  { 204, -1, -1, sizeof(::Proto::QueryPlayerRs)},
+  { 212, -1, -1, sizeof(::Proto::CreatePlayer)},
+  { 220, -1, -1, sizeof(::Proto::CreatePlayerRs)},
+  { 227, -1, -1, sizeof(::Proto::CreatePlayerToDB)},
+  { 235, -1, -1, sizeof(::Proto::CreatePlayerToDBRs)},
+  { 243, -1, -1, sizeof(::Proto::SelectPlayer)},
+  { 250, -1, -1, sizeof(::Proto::SelectPlayerRs)},
+  { 257, -1, -1, sizeof(::Proto::SavePlayer)},
+  { 265, -1, -1, sizeof(::Proto::WorldSyncToGather)},
+  { 274, -1, -1, sizeof(::Proto::WorldProxySyncToGather)},
+  { 284, -1, -1, sizeof(::Proto::CreateWorld)},
+  { 293, -1, -1, sizeof(::Proto::BroadcastCreateWorld)},
+  { 302, -1, -1, sizeof(::Proto::QueryWorld)},
+  { 310, -1, -1, sizeof(::Proto::QueryWorldRs)},
+  { 318, -1, -1, sizeof(::Proto::EnterWorld)},
+  { 326, -1, -1, sizeof(::Proto::RequestWorld)},
+  { 333, -1, -1, sizeof(::Proto::GameToken)},
+  { 343, -1, -1, sizeof(::Proto::LoginByToken)},
+  { 351, -1, -1, sizeof(::Proto::LoginByTokenRs)},
+  { 358, -1, -1, sizeof(::Proto::LoginTokenToRedis)},
+  { 366, -1, -1, sizeof(::Proto::LoginTokenToRedisRs)},
+  { 374, -1, -1, sizeof(::Proto::GameTokenToRedis)},
+  { 381, -1, -1, sizeof(::Proto::TokenInfo)},
+  { 389, -1, -1, sizeof(::Proto::GameTokenToRedisRs)},
+  { 397, -1, -1, sizeof(::Proto::AccountQueryOnlineToRedis)},
+  { 404, -1, -1, sizeof(::Proto::AccountQueryOnlineToRedisRs)},
+  { 412, -1, -1, sizeof(::Proto::AccountSyncOnlineToRedis)},
+  { 419, -1, -1, sizeof(::Proto::AccountDeleteOnlineToRedis)},
+  { 426, -1, -1, sizeof(::Proto::PlayerSyncOnlineToRedis)},
+  { 434, -1, -1, sizeof(::Proto::PlayerDeleteOnlineToRedis)},
+  { 442, -1, -1, sizeof(::Proto::SyncPlayer)},
+  { 451, -1, -1, sizeof(::Proto::Teleport)},
+  { 461, -1, -1, sizeof(::Proto::TeleportAfter)},
+  { 468, -1, -1, sizeof(::Proto::RemovePlayer)},
+  { 475, -1, -1, sizeof(::Proto::RequestSyncPlayer)},
+  { 482, -1, -1, sizeof(::Proto::Role)},
+  { 492, -1, -1, sizeof(::Proto::RoleAppear)},
+  { 499, -1, -1, sizeof(::Proto::RoleDisAppear)},
+  { 506, -1, -1, sizeof(::Proto::Move)},
+  { 514, -1, -1, sizeof(::Proto::BroadcastCreateWorldProxy)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
   &::Proto::_CmdThread_default_instance_._instance,
   &::Proto::_CmdApp_default_instance_._instance,
+  &::Proto::_HttpVerifyRequest_default_instance_._instance,
   &::Proto::_Efficiency_default_instance_._instance,
   &::Proto::_AppRegister_default_instance_._instance,
   &::Proto::_AppInfoSync_default_instance_._instance,
@@ -1580,137 +1604,138 @@ const char descriptor_table_protodef_msg_2eproto[] PROTOBUF_SECTION_VARIABLE(pro
   "dType\",\n\007CmdType\022\n\n\006Entity\020\000\022\010\n\004Pool\020\001\022\013"
   "\n\007Connect\020\002\"F\n\006CmdApp\022\'\n\010cmd_type\030\001 \001(\0162"
   "\025.Proto.CmdApp.CmdType\"\023\n\007CmdType\022\010\n\004Inf"
-  "o\020\000\"B\n\nEfficiency\022\023\n\013thread_type\030\001 \001(\005\022\021"
-  "\n\tthread_id\030\002 \001(\t\022\014\n\004time\030\003 \001(\001\"\'\n\013AppRe"
-  "gister\022\014\n\004type\030\001 \001(\005\022\n\n\002id\030\002 \001(\005\"\?\n\013AppI"
-  "nfoSync\022\016\n\006app_id\030\001 \001(\005\022\020\n\010app_type\030\002 \001("
-  "\005\022\016\n\006online\030\003 \001(\005\"3\n\017AppInfoListSync\022 \n\004"
-  "apps\030\001 \003(\0132\022.Proto.AppInfoSync\"9\n\021Networ"
-  "kDisconnect\022\024\n\014network_type\030\001 \001(\005\022\016\n\006soc"
-  "ket\030\002 \001(\005\"2\n\010TagValue\022\023\n\013value_int64\030\001 \001"
-  "(\004\022\021\n\tvalue_str\030\002 \001(\t\"K\n\003Tag\022 \n\010tag_type"
-  "\030\001 \001(\0162\016.Proto.TagType\022\"\n\ttag_value\030\002 \001("
-  "\0132\017.Proto.TagValue\"Y\n\016NetworkConnect\022\024\n\014"
-  "network_type\030\001 \001(\005\022\027\n\003tag\030\002 \001(\0132\n.Proto."
-  "Tag\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\")\n\004Http\022\014\n"
-  "\004body\030\001 \001(\t\022\023\n\013status_code\030\002 \001(\005\"\270\001\n\024Cre"
-  "ateComponentParam\0223\n\004type\030\001 \001(\0162%.Proto."
-  "CreateComponentParam.ParamType\022\021\n\tint_pa"
-  "ram\030\002 \001(\005\022\024\n\014string_param\030\003 \001(\t\022\024\n\014uint6"
-  "4_param\030\004 \001(\004\",\n\tParamType\022\007\n\003Int\020\000\022\n\n\006S"
-  "tring\020\001\022\n\n\006UInt64\020\002\"\215\001\n\017CreateComponent\022"
-  "\023\n\013thread_type\030\001 \001(\005\022\022\n\nclass_name\030\002 \001(\t"
-  "\022\030\n\020is_to_all_thread\030\003 \001(\010\022+\n\006params\030\004 \003"
-  "(\0132\033.Proto.CreateComponentParam\022\n\n\002sn\030\005 "
-  "\001(\004\"\035\n\017RemoveComponent\022\n\n\002sn\030\001 \001(\004\"8\n\014Cr"
-  "eateSystem\022\023\n\013thread_type\030\001 \001(\005\022\023\n\013syste"
-  "m_name\030\002 \001(\t\"1\n\014AccountCheck\022\017\n\007account\030"
-  "\001 \001(\t\022\020\n\010password\030\002 \001(\t\"D\n\016AccountCheckR"
-  "s\0222\n\013return_code\030\001 \001(\0162\035.Proto.AccountCh"
-  "eckReturnCode\",\n\nRobotState\022\017\n\007account\030\001"
-  " \001(\t\022\r\n\005state\030\002 \001(\005\"3\n\016RobotSyncState\022!\n"
-  "\006states\030\001 \003(\0132\021.Proto.RobotState\"\036\n\013Robo"
-  "tCreate\022\017\n\007account\030\001 \001(\t\"\244\001\n\014PlayerLittl"
-  "e\022\n\n\002sn\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\022\035\n\006gender\030\003 "
-  "\001(\0162\r.Proto.Gender\022\r\n\005level\030\004 \001(\005\022$\n\nlas"
-  "t_world\030\005 \001(\0132\020.Proto.LastWorld\022&\n\014last_"
-  "dungeon\030\006 \001(\0132\020.Proto.LastWorld\"B\n\nPlaye"
-  "rList\022\017\n\007account\030\001 \001(\t\022#\n\006player\030\002 \003(\0132\023"
-  ".Proto.PlayerLittle\"\"\n\017QueryPlayerList\022\017"
-  "\n\007account\030\001 \001(\t\" \n\013QueryPlayer\022\021\n\tplayer"
-  "_sn\030\001 \001(\004\"\?\n\rQueryPlayerRs\022\017\n\007account\030\001 "
-  "\001(\t\022\035\n\006player\030\002 \001(\0132\r.Proto.Player\";\n\014Cr"
-  "eatePlayer\022\014\n\004name\030\001 \001(\t\022\035\n\006gender\030\002 \001(\016"
-  "2\r.Proto.Gender\"D\n\016CreatePlayerRs\0222\n\013ret"
-  "urn_code\030\002 \001(\0162\035.Proto.CreatePlayerRetur"
-  "nCode\"B\n\020CreatePlayerToDB\022\017\n\007account\030\002 \001"
-  "(\t\022\035\n\006player\030\003 \001(\0132\r.Proto.Player\"Y\n\022Cre"
-  "atePlayerToDBRs\022\017\n\007account\030\001 \001(\t\0222\n\013retu"
-  "rn_code\030\002 \001(\0162\035.Proto.CreatePlayerReturn"
-  "Code\"!\n\014SelectPlayer\022\021\n\tplayer_sn\030\001 \001(\004\""
-  "\215\001\n\016SelectPlayerRs\022A\n\013return_code\030\001 \001(\0162"
-  ",.Proto.SelectPlayerRs.SelectPlayerRetur"
-  "nCode\"8\n\026SelectPlayerReturnCode\022\013\n\007SPRC_"
-  "OK\020\000\022\021\n\rSPRC_NotFound\020\001\">\n\nSavePlayer\022\021\n"
-  "\tplayer_sn\030\001 \001(\004\022\035\n\006player\030\002 \001(\0132\r.Proto"
-  ".Player\"G\n\021WorldSyncToGather\022\020\n\010world_sn"
-  "\030\001 \001(\004\022\020\n\010world_id\030\002 \001(\005\022\016\n\006online\030\003 \001(\005"
-  "\"_\n\026WorldProxySyncToGather\022\020\n\010world_sn\030\001"
-  " \001(\004\022\021\n\tis_remove\030\002 \001(\010\022\020\n\010world_id\030\003 \001("
-  "\005\022\016\n\006online\030\004 \001(\005\"K\n\013CreateWorld\022\020\n\010worl"
-  "d_id\030\001 \001(\005\022\025\n\rlast_world_sn\030\002 \001(\004\022\023\n\013gam"
-  "e_app_id\030\003 \001(\005\"Q\n\024BroadcastCreateWorld\022\020"
-  "\n\010world_id\030\001 \001(\005\022\020\n\010world_sn\030\002 \001(\004\022\025\n\rla"
-  "st_world_sn\030\003 \001(\004\"5\n\nQueryWorld\022\020\n\010world"
-  "_sn\030\001 \001(\004\022\025\n\rlast_world_sn\030\002 \001(\004\"\215\001\n\014Que"
-  "ryWorldRs\022\020\n\010world_sn\030\001 \001(\004\0223\n\013return_co"
-  "de\030\002 \001(\0162\036.Proto.QueryWorldRs.ReturnCode"
-  "\"6\n\nReturnCode\022\021\n\rQueryWorld_OK\020\000\022\025\n\021Que"
-  "ryWorld_Failed\020\001\"@\n\nEnterWorld\022\020\n\010world_"
-  "id\030\001 \001(\005\022 \n\010position\030\002 \001(\0132\016.Proto.Vecto"
-  "r3\" \n\014RequestWorld\022\020\n\010world_id\030\001 \001(\005\"\235\001\n"
-  "\tGameToken\0220\n\013return_code\030\001 \001(\0162\033.Proto."
-  "GameToken.ReturnCode\022\r\n\005token\030\002 \001(\t\022\n\n\002i"
-  "p\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\"5\n\nReturnCode\022\020\n\014G"
-  "ameToken_OK\020\000\022\025\n\021GameToken_NO_GAME\020\001\".\n\014"
-  "LoginByToken\022\017\n\007account\030\001 \001(\t\022\r\n\005token\030\002"
-  " \001(\t\"\246\001\n\016LoginByTokenRs\0225\n\013return_code\030\001"
-  " \001(\0162 .Proto.LoginByTokenRs.ReturnCode\"]"
-  "\n\nReturnCode\022\013\n\007LGRC_OK\020\000\022\020\n\014LGRC_UNKONW"
-  "N\020\001\022\032\n\026LGRC_NOT_FOUND_ACCOUNT\020\002\022\024\n\020LGRC_"
-  "TOKEN_WRONG\020\003\"7\n\021LoginTokenToRedis\022\017\n\007ac"
-  "count\030\001 \001(\t\022\021\n\tplayer_sn\030\002 \001(\004\"5\n\023LoginT"
-  "okenToRedisRs\022\017\n\007account\030\001 \001(\t\022\r\n\005token\030"
-  "\002 \001(\t\"#\n\020GameTokenToRedis\022\017\n\007account\030\001 \001"
-  "(\t\"-\n\tTokenInfo\022\r\n\005token\030\001 \001(\t\022\021\n\tplayer"
-  "_sn\030\002 \001(\004\"K\n\022GameTokenToRedisRs\022\017\n\007accou"
-  "nt\030\001 \001(\t\022$\n\ntoken_info\030\002 \001(\0132\020.Proto.Tok"
-  "enInfo\",\n\031AccountQueryOnlineToRedis\022\017\n\007a"
-  "ccount\030\001 \001(\t\"\243\001\n\033AccountQueryOnlineToRed"
-  "isRs\022\017\n\007account\030\001 \001(\t\022B\n\013return_code\030\002 \001"
-  "(\0162-.Proto.AccountQueryOnlineToRedisRs.R"
-  "eturnCode\"/\n\nReturnCode\022\020\n\014SOTR_Offline\020"
-  "\000\022\017\n\013SOTR_Online\020\001\"+\n\030AccountSyncOnlineT"
-  "oRedis\022\017\n\007account\030\001 \001(\t\"-\n\032AccountDelete"
-  "OnlineToRedis\022\017\n\007account\030\001 \001(\t\";\n\027Player"
-  "SyncOnlineToRedis\022\017\n\007account\030\001 \001(\t\022\017\n\007ve"
-  "rsion\030\002 \001(\005\"=\n\031PlayerDeleteOnlineToRedis"
-  "\022\017\n\007account\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\"L\n\nSy"
-  "ncPlayer\022\016\n\006app_id\030\001 \001(\005\022\017\n\007account\030\002 \001("
-  "\t\022\035\n\006player\030\003 \001(\0132\r.Proto.Player\"d\n\010Tele"
-  "port\022\025\n\rlast_world_sn\030\001 \001(\004\022\021\n\tplayer_sn"
-  "\030\002 \001(\004\022\017\n\007account\030\003 \001(\t\022\035\n\006player\030\004 \001(\0132"
-  "\r.Proto.Player\"\"\n\rTeleportAfter\022\021\n\tplaye"
-  "r_sn\030\001 \001(\004\"!\n\014RemovePlayer\022\021\n\tplayer_sn\030"
-  "\001 \001(\004\"&\n\021RequestSyncPlayer\022\021\n\tplayer_sn\030"
-  "\001 \001(\004\"a\n\004Role\022\014\n\004name\030\001 \001(\t\022\n\n\002sn\030\002 \001(\004\022"
-  "\035\n\006gender\030\003 \001(\0162\r.Proto.Gender\022 \n\010positi"
-  "on\030\004 \001(\0132\016.Proto.Vector3\"\'\n\nRoleAppear\022\031"
-  "\n\004role\030\001 \003(\0132\013.Proto.Role\"\033\n\rRoleDisAppe"
-  "ar\022\n\n\002sn\030\001 \001(\004\";\n\004Move\022\021\n\tplayer_sn\030\001 \001("
-  "\004\022 \n\010position\030\002 \003(\0132\016.Proto.Vector3\"\?\n\031B"
-  "roadcastCreateWorldProxy\022\020\n\010world_id\030\001 \001"
-  "(\005\022\020\n\010world_sn\030\002 \001(\004*x\n\007TagType\022\017\n\013TagTy"
-  "peNone\020\000\022\022\n\016TagTypeAccount\020\001\022\016\n\nTagTypeA"
-  "pp\020\002\022\021\n\rTagTypeEntity\020\003\022\022\n\016TagTypeToWorl"
-  "d\020\004\022\021\n\rTagTypePlayer\020\005*\232\001\n\026AccountCheckR"
-  "eturnCode\022\n\n\006ARC_OK\020\000\022\017\n\013ARC_UNKONWN\020\001\022\031"
-  "\n\025ARC_NOT_FOUND_ACCOUNT\020\002\022\026\n\022ARC_PASSWOR"
-  "D_WRONG\020\003\022\017\n\013ARC_LOGGING\020\004\022\017\n\013ARC_TIMEOU"
-  "T\020\005\022\016\n\nARC_ONLINE\020\006*G\n\023LoginHttpReturnCo"
-  "de\022\013\n\007LHRC_OK\020\000\022\020\n\014LHRC_TIMEOUT\020\001\022\021\n\rLHR"
-  "C_NOTFOUND\020\002*L\n\026CreatePlayerReturnCode\022\021"
-  "\n\rCPR_Create_OK\020\000\022\017\n\013CPR_Unkonwn\020\001\022\016\n\nCP"
-  "R_Rename\020\002b\006proto3"
+  "o\020\000\"6\n\021HttpVerifyRequest\022\017\n\007account\030\001 \001("
+  "\t\022\020\n\010password\030\002 \001(\t\"B\n\nEfficiency\022\023\n\013thr"
+  "ead_type\030\001 \001(\005\022\021\n\tthread_id\030\002 \001(\t\022\014\n\004tim"
+  "e\030\003 \001(\001\"\'\n\013AppRegister\022\014\n\004type\030\001 \001(\005\022\n\n\002"
+  "id\030\002 \001(\005\"\?\n\013AppInfoSync\022\016\n\006app_id\030\001 \001(\005\022"
+  "\020\n\010app_type\030\002 \001(\005\022\016\n\006online\030\003 \001(\005\"3\n\017App"
+  "InfoListSync\022 \n\004apps\030\001 \003(\0132\022.Proto.AppIn"
+  "foSync\"9\n\021NetworkDisconnect\022\024\n\014network_t"
+  "ype\030\001 \001(\005\022\016\n\006socket\030\002 \001(\005\"2\n\010TagValue\022\023\n"
+  "\013value_int64\030\001 \001(\004\022\021\n\tvalue_str\030\002 \001(\t\"K\n"
+  "\003Tag\022 \n\010tag_type\030\001 \001(\0162\016.Proto.TagType\022\""
+  "\n\ttag_value\030\002 \001(\0132\017.Proto.TagValue\"Y\n\016Ne"
+  "tworkConnect\022\024\n\014network_type\030\001 \001(\005\022\027\n\003ta"
+  "g\030\002 \001(\0132\n.Proto.Tag\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030"
+  "\004 \001(\005\")\n\004Http\022\014\n\004body\030\001 \001(\t\022\023\n\013status_co"
+  "de\030\002 \001(\005\"\270\001\n\024CreateComponentParam\0223\n\004typ"
+  "e\030\001 \001(\0162%.Proto.CreateComponentParam.Par"
+  "amType\022\021\n\tint_param\030\002 \001(\005\022\024\n\014string_para"
+  "m\030\003 \001(\t\022\024\n\014uint64_param\030\004 \001(\004\",\n\tParamTy"
+  "pe\022\007\n\003Int\020\000\022\n\n\006String\020\001\022\n\n\006UInt64\020\002\"\215\001\n\017"
+  "CreateComponent\022\023\n\013thread_type\030\001 \001(\005\022\022\n\n"
+  "class_name\030\002 \001(\t\022\030\n\020is_to_all_thread\030\003 \001"
+  "(\010\022+\n\006params\030\004 \003(\0132\033.Proto.CreateCompone"
+  "ntParam\022\n\n\002sn\030\005 \001(\004\"\035\n\017RemoveComponent\022\n"
+  "\n\002sn\030\001 \001(\004\"8\n\014CreateSystem\022\023\n\013thread_typ"
+  "e\030\001 \001(\005\022\023\n\013system_name\030\002 \001(\t\"1\n\014AccountC"
+  "heck\022\017\n\007account\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\""
+  "D\n\016AccountCheckRs\0222\n\013return_code\030\001 \001(\0162\035"
+  ".Proto.AccountCheckReturnCode\",\n\nRobotSt"
+  "ate\022\017\n\007account\030\001 \001(\t\022\r\n\005state\030\002 \001(\005\"3\n\016R"
+  "obotSyncState\022!\n\006states\030\001 \003(\0132\021.Proto.Ro"
+  "botState\"\036\n\013RobotCreate\022\017\n\007account\030\001 \001(\t"
+  "\"\244\001\n\014PlayerLittle\022\n\n\002sn\030\001 \001(\004\022\014\n\004name\030\002 "
+  "\001(\t\022\035\n\006gender\030\003 \001(\0162\r.Proto.Gender\022\r\n\005le"
+  "vel\030\004 \001(\005\022$\n\nlast_world\030\005 \001(\0132\020.Proto.La"
+  "stWorld\022&\n\014last_dungeon\030\006 \001(\0132\020.Proto.La"
+  "stWorld\"B\n\nPlayerList\022\017\n\007account\030\001 \001(\t\022#"
+  "\n\006player\030\002 \003(\0132\023.Proto.PlayerLittle\"\"\n\017Q"
+  "ueryPlayerList\022\017\n\007account\030\001 \001(\t\" \n\013Query"
+  "Player\022\021\n\tplayer_sn\030\001 \001(\004\"\?\n\rQueryPlayer"
+  "Rs\022\017\n\007account\030\001 \001(\t\022\035\n\006player\030\002 \001(\0132\r.Pr"
+  "oto.Player\";\n\014CreatePlayer\022\014\n\004name\030\001 \001(\t"
+  "\022\035\n\006gender\030\002 \001(\0162\r.Proto.Gender\"D\n\016Creat"
+  "ePlayerRs\0222\n\013return_code\030\002 \001(\0162\035.Proto.C"
+  "reatePlayerReturnCode\"B\n\020CreatePlayerToD"
+  "B\022\017\n\007account\030\002 \001(\t\022\035\n\006player\030\003 \001(\0132\r.Pro"
+  "to.Player\"Y\n\022CreatePlayerToDBRs\022\017\n\007accou"
+  "nt\030\001 \001(\t\0222\n\013return_code\030\002 \001(\0162\035.Proto.Cr"
+  "eatePlayerReturnCode\"!\n\014SelectPlayer\022\021\n\t"
+  "player_sn\030\001 \001(\004\"\215\001\n\016SelectPlayerRs\022A\n\013re"
+  "turn_code\030\001 \001(\0162,.Proto.SelectPlayerRs.S"
+  "electPlayerReturnCode\"8\n\026SelectPlayerRet"
+  "urnCode\022\013\n\007SPRC_OK\020\000\022\021\n\rSPRC_NotFound\020\001\""
+  ">\n\nSavePlayer\022\021\n\tplayer_sn\030\001 \001(\004\022\035\n\006play"
+  "er\030\002 \001(\0132\r.Proto.Player\"G\n\021WorldSyncToGa"
+  "ther\022\020\n\010world_sn\030\001 \001(\004\022\020\n\010world_id\030\002 \001(\005"
+  "\022\016\n\006online\030\003 \001(\005\"_\n\026WorldProxySyncToGath"
+  "er\022\020\n\010world_sn\030\001 \001(\004\022\021\n\tis_remove\030\002 \001(\010\022"
+  "\020\n\010world_id\030\003 \001(\005\022\016\n\006online\030\004 \001(\005\"K\n\013Cre"
+  "ateWorld\022\020\n\010world_id\030\001 \001(\005\022\025\n\rlast_world"
+  "_sn\030\002 \001(\004\022\023\n\013game_app_id\030\003 \001(\005\"Q\n\024Broadc"
+  "astCreateWorld\022\020\n\010world_id\030\001 \001(\005\022\020\n\010worl"
+  "d_sn\030\002 \001(\004\022\025\n\rlast_world_sn\030\003 \001(\004\"5\n\nQue"
+  "ryWorld\022\020\n\010world_sn\030\001 \001(\004\022\025\n\rlast_world_"
+  "sn\030\002 \001(\004\"\215\001\n\014QueryWorldRs\022\020\n\010world_sn\030\001 "
+  "\001(\004\0223\n\013return_code\030\002 \001(\0162\036.Proto.QueryWo"
+  "rldRs.ReturnCode\"6\n\nReturnCode\022\021\n\rQueryW"
+  "orld_OK\020\000\022\025\n\021QueryWorld_Failed\020\001\"@\n\nEnte"
+  "rWorld\022\020\n\010world_id\030\001 \001(\005\022 \n\010position\030\002 \001"
+  "(\0132\016.Proto.Vector3\" \n\014RequestWorld\022\020\n\010wo"
+  "rld_id\030\001 \001(\005\"\235\001\n\tGameToken\0220\n\013return_cod"
+  "e\030\001 \001(\0162\033.Proto.GameToken.ReturnCode\022\r\n\005"
+  "token\030\002 \001(\t\022\n\n\002ip\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\"5\n"
+  "\nReturnCode\022\020\n\014GameToken_OK\020\000\022\025\n\021GameTok"
+  "en_NO_GAME\020\001\".\n\014LoginByToken\022\017\n\007account\030"
+  "\001 \001(\t\022\r\n\005token\030\002 \001(\t\"\246\001\n\016LoginByTokenRs\022"
+  "5\n\013return_code\030\001 \001(\0162 .Proto.LoginByToke"
+  "nRs.ReturnCode\"]\n\nReturnCode\022\013\n\007LGRC_OK\020"
+  "\000\022\020\n\014LGRC_UNKONWN\020\001\022\032\n\026LGRC_NOT_FOUND_AC"
+  "COUNT\020\002\022\024\n\020LGRC_TOKEN_WRONG\020\003\"7\n\021LoginTo"
+  "kenToRedis\022\017\n\007account\030\001 \001(\t\022\021\n\tplayer_sn"
+  "\030\002 \001(\004\"5\n\023LoginTokenToRedisRs\022\017\n\007account"
+  "\030\001 \001(\t\022\r\n\005token\030\002 \001(\t\"#\n\020GameTokenToRedi"
+  "s\022\017\n\007account\030\001 \001(\t\"-\n\tTokenInfo\022\r\n\005token"
+  "\030\001 \001(\t\022\021\n\tplayer_sn\030\002 \001(\004\"K\n\022GameTokenTo"
+  "RedisRs\022\017\n\007account\030\001 \001(\t\022$\n\ntoken_info\030\002"
+  " \001(\0132\020.Proto.TokenInfo\",\n\031AccountQueryOn"
+  "lineToRedis\022\017\n\007account\030\001 \001(\t\"\243\001\n\033Account"
+  "QueryOnlineToRedisRs\022\017\n\007account\030\001 \001(\t\022B\n"
+  "\013return_code\030\002 \001(\0162-.Proto.AccountQueryO"
+  "nlineToRedisRs.ReturnCode\"/\n\nReturnCode\022"
+  "\020\n\014SOTR_Offline\020\000\022\017\n\013SOTR_Online\020\001\"+\n\030Ac"
+  "countSyncOnlineToRedis\022\017\n\007account\030\001 \001(\t\""
+  "-\n\032AccountDeleteOnlineToRedis\022\017\n\007account"
+  "\030\001 \001(\t\";\n\027PlayerSyncOnlineToRedis\022\017\n\007acc"
+  "ount\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\"=\n\031PlayerDel"
+  "eteOnlineToRedis\022\017\n\007account\030\001 \001(\t\022\017\n\007ver"
+  "sion\030\002 \001(\005\"L\n\nSyncPlayer\022\016\n\006app_id\030\001 \001(\005"
+  "\022\017\n\007account\030\002 \001(\t\022\035\n\006player\030\003 \001(\0132\r.Prot"
+  "o.Player\"d\n\010Teleport\022\025\n\rlast_world_sn\030\001 "
+  "\001(\004\022\021\n\tplayer_sn\030\002 \001(\004\022\017\n\007account\030\003 \001(\t\022"
+  "\035\n\006player\030\004 \001(\0132\r.Proto.Player\"\"\n\rTelepo"
+  "rtAfter\022\021\n\tplayer_sn\030\001 \001(\004\"!\n\014RemovePlay"
+  "er\022\021\n\tplayer_sn\030\001 \001(\004\"&\n\021RequestSyncPlay"
+  "er\022\021\n\tplayer_sn\030\001 \001(\004\"a\n\004Role\022\014\n\004name\030\001 "
+  "\001(\t\022\n\n\002sn\030\002 \001(\004\022\035\n\006gender\030\003 \001(\0162\r.Proto."
+  "Gender\022 \n\010position\030\004 \001(\0132\016.Proto.Vector3"
+  "\"\'\n\nRoleAppear\022\031\n\004role\030\001 \003(\0132\013.Proto.Rol"
+  "e\"\033\n\rRoleDisAppear\022\n\n\002sn\030\001 \001(\004\";\n\004Move\022\021"
+  "\n\tplayer_sn\030\001 \001(\004\022 \n\010position\030\002 \003(\0132\016.Pr"
+  "oto.Vector3\"\?\n\031BroadcastCreateWorldProxy"
+  "\022\020\n\010world_id\030\001 \001(\005\022\020\n\010world_sn\030\002 \001(\004*x\n\007"
+  "TagType\022\017\n\013TagTypeNone\020\000\022\022\n\016TagTypeAccou"
+  "nt\020\001\022\016\n\nTagTypeApp\020\002\022\021\n\rTagTypeEntity\020\003\022"
+  "\022\n\016TagTypeToWorld\020\004\022\021\n\rTagTypePlayer\020\005*\232"
+  "\001\n\026AccountCheckReturnCode\022\n\n\006ARC_OK\020\000\022\017\n"
+  "\013ARC_UNKONWN\020\001\022\031\n\025ARC_NOT_FOUND_ACCOUNT\020"
+  "\002\022\026\n\022ARC_PASSWORD_WRONG\020\003\022\017\n\013ARC_LOGGING"
+  "\020\004\022\017\n\013ARC_TIMEOUT\020\005\022\016\n\nARC_ONLINE\020\006*G\n\023L"
+  "oginHttpReturnCode\022\013\n\007LHRC_OK\020\000\022\020\n\014LHRC_"
+  "TIMEOUT\020\001\022\021\n\rLHRC_NOTFOUND\020\002*L\n\026CreatePl"
+  "ayerReturnCode\022\021\n\rCPR_Create_OK\020\000\022\017\n\013CPR"
+  "_Unkonwn\020\001\022\016\n\nCPR_Rename\020\002b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_msg_2eproto_deps[1] = {
   &::descriptor_table_db_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_msg_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_msg_2eproto = {
-    false, false, 5058, descriptor_table_protodef_msg_2eproto,
+    false, false, 5114, descriptor_table_protodef_msg_2eproto,
     "msg.proto",
-    &descriptor_table_msg_2eproto_once, descriptor_table_msg_2eproto_deps, 1, 64,
+    &descriptor_table_msg_2eproto_once, descriptor_table_msg_2eproto_deps, 1, 65,
     schemas, file_default_instances, TableStruct_msg_2eproto::offsets,
     file_level_metadata_msg_2eproto, file_level_enum_descriptors_msg_2eproto,
     file_level_service_descriptors_msg_2eproto,
@@ -2328,6 +2353,259 @@ void CmdApp::InternalSwap(CmdApp* other) {
 
 // ===================================================================
 
+class HttpVerifyRequest::_Internal {
+ public:
+};
+
+HttpVerifyRequest::HttpVerifyRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:Proto.HttpVerifyRequest)
+}
+HttpVerifyRequest::HttpVerifyRequest(const HttpVerifyRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  HttpVerifyRequest* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.account_){}
+    , decltype(_impl_.password_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.account_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.account_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_account().empty()) {
+    _this->_impl_.account_.Set(from._internal_account(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.password_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.password_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_password().empty()) {
+    _this->_impl_.password_.Set(from._internal_password(), 
+      _this->GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(copy_constructor:Proto.HttpVerifyRequest)
+}
+
+inline void HttpVerifyRequest::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.account_){}
+    , decltype(_impl_.password_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.account_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.account_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.password_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.password_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+HttpVerifyRequest::~HttpVerifyRequest() {
+  // @@protoc_insertion_point(destructor:Proto.HttpVerifyRequest)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void HttpVerifyRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.account_.Destroy();
+  _impl_.password_.Destroy();
+}
+
+void HttpVerifyRequest::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void HttpVerifyRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:Proto.HttpVerifyRequest)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.account_.ClearToEmpty();
+  _impl_.password_.ClearToEmpty();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* HttpVerifyRequest::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // string account = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_account();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "Proto.HttpVerifyRequest.account"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string password = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_password();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "Proto.HttpVerifyRequest.password"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* HttpVerifyRequest::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Proto.HttpVerifyRequest)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string account = 1;
+  if (!this->_internal_account().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_account().data(), static_cast<int>(this->_internal_account().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "Proto.HttpVerifyRequest.account");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_account(), target);
+  }
+
+  // string password = 2;
+  if (!this->_internal_password().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_password().data(), static_cast<int>(this->_internal_password().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "Proto.HttpVerifyRequest.password");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_password(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Proto.HttpVerifyRequest)
+  return target;
+}
+
+size_t HttpVerifyRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Proto.HttpVerifyRequest)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string account = 1;
+  if (!this->_internal_account().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_account());
+  }
+
+  // string password = 2;
+  if (!this->_internal_password().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_password());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData HttpVerifyRequest::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    HttpVerifyRequest::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*HttpVerifyRequest::GetClassData() const { return &_class_data_; }
+
+
+void HttpVerifyRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<HttpVerifyRequest*>(&to_msg);
+  auto& from = static_cast<const HttpVerifyRequest&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Proto.HttpVerifyRequest)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_account().empty()) {
+    _this->_internal_set_account(from._internal_account());
+  }
+  if (!from._internal_password().empty()) {
+    _this->_internal_set_password(from._internal_password());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void HttpVerifyRequest::CopyFrom(const HttpVerifyRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Proto.HttpVerifyRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool HttpVerifyRequest::IsInitialized() const {
+  return true;
+}
+
+void HttpVerifyRequest::InternalSwap(HttpVerifyRequest* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.account_, lhs_arena,
+      &other->_impl_.account_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.password_, lhs_arena,
+      &other->_impl_.password_, rhs_arena
+  );
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata HttpVerifyRequest::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
+      file_level_metadata_msg_2eproto[2]);
+}
+
+// ===================================================================
+
 class Efficiency::_Internal {
  public:
 };
@@ -2598,7 +2876,7 @@ void Efficiency::InternalSwap(Efficiency* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Efficiency::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[2]);
+      file_level_metadata_msg_2eproto[3]);
 }
 
 // ===================================================================
@@ -2809,7 +3087,7 @@ void AppRegister::InternalSwap(AppRegister* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AppRegister::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[3]);
+      file_level_metadata_msg_2eproto[4]);
 }
 
 // ===================================================================
@@ -3044,7 +3322,7 @@ void AppInfoSync::InternalSwap(AppInfoSync* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AppInfoSync::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[4]);
+      file_level_metadata_msg_2eproto[5]);
 }
 
 // ===================================================================
@@ -3229,7 +3507,7 @@ void AppInfoListSync::InternalSwap(AppInfoListSync* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AppInfoListSync::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[5]);
+      file_level_metadata_msg_2eproto[6]);
 }
 
 // ===================================================================
@@ -3440,7 +3718,7 @@ void NetworkDisconnect::InternalSwap(NetworkDisconnect* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata NetworkDisconnect::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[6]);
+      file_level_metadata_msg_2eproto[7]);
 }
 
 // ===================================================================
@@ -3670,7 +3948,7 @@ void TagValue::InternalSwap(TagValue* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata TagValue::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[7]);
+      file_level_metadata_msg_2eproto[8]);
 }
 
 // ===================================================================
@@ -3897,7 +4175,7 @@ void Tag::InternalSwap(Tag* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Tag::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[8]);
+      file_level_metadata_msg_2eproto[9]);
 }
 
 // ===================================================================
@@ -4201,7 +4479,7 @@ void NetworkConnect::InternalSwap(NetworkConnect* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata NetworkConnect::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[9]);
+      file_level_metadata_msg_2eproto[10]);
 }
 
 // ===================================================================
@@ -4431,7 +4709,7 @@ void Http::InternalSwap(Http* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Http::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[10]);
+      file_level_metadata_msg_2eproto[11]);
 }
 
 // ===================================================================
@@ -4721,7 +4999,7 @@ void CreateComponentParam::InternalSwap(CreateComponentParam* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreateComponentParam::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[11]);
+      file_level_metadata_msg_2eproto[12]);
 }
 
 // ===================================================================
@@ -5042,7 +5320,7 @@ void CreateComponent::InternalSwap(CreateComponent* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreateComponent::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[12]);
+      file_level_metadata_msg_2eproto[13]);
 }
 
 // ===================================================================
@@ -5220,7 +5498,7 @@ void RemoveComponent::InternalSwap(RemoveComponent* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RemoveComponent::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[13]);
+      file_level_metadata_msg_2eproto[14]);
 }
 
 // ===================================================================
@@ -5450,7 +5728,7 @@ void CreateSystem::InternalSwap(CreateSystem* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreateSystem::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[14]);
+      file_level_metadata_msg_2eproto[15]);
 }
 
 // ===================================================================
@@ -5703,7 +5981,7 @@ void AccountCheck::InternalSwap(AccountCheck* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountCheck::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[15]);
+      file_level_metadata_msg_2eproto[16]);
 }
 
 // ===================================================================
@@ -5884,7 +6162,7 @@ void AccountCheckRs::InternalSwap(AccountCheckRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountCheckRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[16]);
+      file_level_metadata_msg_2eproto[17]);
 }
 
 // ===================================================================
@@ -6114,7 +6392,7 @@ void RobotState::InternalSwap(RobotState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RobotState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[17]);
+      file_level_metadata_msg_2eproto[18]);
 }
 
 // ===================================================================
@@ -6299,7 +6577,7 @@ void RobotSyncState::InternalSwap(RobotSyncState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RobotSyncState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[18]);
+      file_level_metadata_msg_2eproto[19]);
 }
 
 // ===================================================================
@@ -6502,7 +6780,7 @@ void RobotCreate::InternalSwap(RobotCreate* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RobotCreate::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[19]);
+      file_level_metadata_msg_2eproto[20]);
 }
 
 // ===================================================================
@@ -6886,7 +7164,7 @@ void PlayerLittle::InternalSwap(PlayerLittle* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlayerLittle::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[20]);
+      file_level_metadata_msg_2eproto[21]);
 }
 
 // ===================================================================
@@ -7123,7 +7401,7 @@ void PlayerList::InternalSwap(PlayerList* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlayerList::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[21]);
+      file_level_metadata_msg_2eproto[22]);
 }
 
 // ===================================================================
@@ -7326,7 +7604,7 @@ void QueryPlayerList::InternalSwap(QueryPlayerList* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata QueryPlayerList::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[22]);
+      file_level_metadata_msg_2eproto[23]);
 }
 
 // ===================================================================
@@ -7504,7 +7782,7 @@ void QueryPlayer::InternalSwap(QueryPlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata QueryPlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[23]);
+      file_level_metadata_msg_2eproto[24]);
 }
 
 // ===================================================================
@@ -7755,7 +8033,7 @@ void QueryPlayerRs::InternalSwap(QueryPlayerRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata QueryPlayerRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[24]);
+      file_level_metadata_msg_2eproto[25]);
 }
 
 // ===================================================================
@@ -7988,7 +8266,7 @@ void CreatePlayer::InternalSwap(CreatePlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreatePlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[25]);
+      file_level_metadata_msg_2eproto[26]);
 }
 
 // ===================================================================
@@ -8169,7 +8447,7 @@ void CreatePlayerRs::InternalSwap(CreatePlayerRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreatePlayerRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[26]);
+      file_level_metadata_msg_2eproto[27]);
 }
 
 // ===================================================================
@@ -8420,7 +8698,7 @@ void CreatePlayerToDB::InternalSwap(CreatePlayerToDB* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreatePlayerToDB::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[27]);
+      file_level_metadata_msg_2eproto[28]);
 }
 
 // ===================================================================
@@ -8653,7 +8931,7 @@ void CreatePlayerToDBRs::InternalSwap(CreatePlayerToDBRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreatePlayerToDBRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[28]);
+      file_level_metadata_msg_2eproto[29]);
 }
 
 // ===================================================================
@@ -8831,7 +9109,7 @@ void SelectPlayer::InternalSwap(SelectPlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SelectPlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[29]);
+      file_level_metadata_msg_2eproto[30]);
 }
 
 // ===================================================================
@@ -9012,7 +9290,7 @@ void SelectPlayerRs::InternalSwap(SelectPlayerRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SelectPlayerRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[30]);
+      file_level_metadata_msg_2eproto[31]);
 }
 
 // ===================================================================
@@ -9242,7 +9520,7 @@ void SavePlayer::InternalSwap(SavePlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SavePlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[31]);
+      file_level_metadata_msg_2eproto[32]);
 }
 
 // ===================================================================
@@ -9477,7 +9755,7 @@ void WorldSyncToGather::InternalSwap(WorldSyncToGather* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata WorldSyncToGather::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[32]);
+      file_level_metadata_msg_2eproto[33]);
 }
 
 // ===================================================================
@@ -9736,7 +10014,7 @@ void WorldProxySyncToGather::InternalSwap(WorldProxySyncToGather* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata WorldProxySyncToGather::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[33]);
+      file_level_metadata_msg_2eproto[34]);
 }
 
 // ===================================================================
@@ -9971,7 +10249,7 @@ void CreateWorld::InternalSwap(CreateWorld* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CreateWorld::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[34]);
+      file_level_metadata_msg_2eproto[35]);
 }
 
 // ===================================================================
@@ -10206,7 +10484,7 @@ void BroadcastCreateWorld::InternalSwap(BroadcastCreateWorld* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata BroadcastCreateWorld::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[35]);
+      file_level_metadata_msg_2eproto[36]);
 }
 
 // ===================================================================
@@ -10417,7 +10695,7 @@ void QueryWorld::InternalSwap(QueryWorld* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata QueryWorld::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[36]);
+      file_level_metadata_msg_2eproto[37]);
 }
 
 // ===================================================================
@@ -10631,7 +10909,7 @@ void QueryWorldRs::InternalSwap(QueryWorldRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata QueryWorldRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[37]);
+      file_level_metadata_msg_2eproto[38]);
 }
 
 // ===================================================================
@@ -10861,7 +11139,7 @@ void EnterWorld::InternalSwap(EnterWorld* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata EnterWorld::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[38]);
+      file_level_metadata_msg_2eproto[39]);
 }
 
 // ===================================================================
@@ -11039,7 +11317,7 @@ void RequestWorld::InternalSwap(RequestWorld* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RequestWorld::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[39]);
+      file_level_metadata_msg_2eproto[40]);
 }
 
 // ===================================================================
@@ -11355,7 +11633,7 @@ void GameToken::InternalSwap(GameToken* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata GameToken::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[40]);
+      file_level_metadata_msg_2eproto[41]);
 }
 
 // ===================================================================
@@ -11608,7 +11886,7 @@ void LoginByToken::InternalSwap(LoginByToken* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata LoginByToken::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[41]);
+      file_level_metadata_msg_2eproto[42]);
 }
 
 // ===================================================================
@@ -11789,7 +12067,7 @@ void LoginByTokenRs::InternalSwap(LoginByTokenRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata LoginByTokenRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[42]);
+      file_level_metadata_msg_2eproto[43]);
 }
 
 // ===================================================================
@@ -12019,7 +12297,7 @@ void LoginTokenToRedis::InternalSwap(LoginTokenToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata LoginTokenToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[43]);
+      file_level_metadata_msg_2eproto[44]);
 }
 
 // ===================================================================
@@ -12272,7 +12550,7 @@ void LoginTokenToRedisRs::InternalSwap(LoginTokenToRedisRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata LoginTokenToRedisRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[44]);
+      file_level_metadata_msg_2eproto[45]);
 }
 
 // ===================================================================
@@ -12475,7 +12753,7 @@ void GameTokenToRedis::InternalSwap(GameTokenToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata GameTokenToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[45]);
+      file_level_metadata_msg_2eproto[46]);
 }
 
 // ===================================================================
@@ -12705,7 +12983,7 @@ void TokenInfo::InternalSwap(TokenInfo* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata TokenInfo::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[46]);
+      file_level_metadata_msg_2eproto[47]);
 }
 
 // ===================================================================
@@ -12950,7 +13228,7 @@ void GameTokenToRedisRs::InternalSwap(GameTokenToRedisRs* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata GameTokenToRedisRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[47]);
+      file_level_metadata_msg_2eproto[48]);
 }
 
 // ===================================================================
@@ -13153,7 +13431,7 @@ void AccountQueryOnlineToRedis::InternalSwap(AccountQueryOnlineToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountQueryOnlineToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[48]);
+      file_level_metadata_msg_2eproto[49]);
 }
 
 // ===================================================================
@@ -13386,7 +13664,7 @@ void AccountQueryOnlineToRedisRs::InternalSwap(AccountQueryOnlineToRedisRs* othe
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountQueryOnlineToRedisRs::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[49]);
+      file_level_metadata_msg_2eproto[50]);
 }
 
 // ===================================================================
@@ -13589,7 +13867,7 @@ void AccountSyncOnlineToRedis::InternalSwap(AccountSyncOnlineToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountSyncOnlineToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[50]);
+      file_level_metadata_msg_2eproto[51]);
 }
 
 // ===================================================================
@@ -13792,7 +14070,7 @@ void AccountDeleteOnlineToRedis::InternalSwap(AccountDeleteOnlineToRedis* other)
 ::PROTOBUF_NAMESPACE_ID::Metadata AccountDeleteOnlineToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[51]);
+      file_level_metadata_msg_2eproto[52]);
 }
 
 // ===================================================================
@@ -14022,7 +14300,7 @@ void PlayerSyncOnlineToRedis::InternalSwap(PlayerSyncOnlineToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlayerSyncOnlineToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[52]);
+      file_level_metadata_msg_2eproto[53]);
 }
 
 // ===================================================================
@@ -14252,7 +14530,7 @@ void PlayerDeleteOnlineToRedis::InternalSwap(PlayerDeleteOnlineToRedis* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlayerDeleteOnlineToRedis::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[53]);
+      file_level_metadata_msg_2eproto[54]);
 }
 
 // ===================================================================
@@ -14534,7 +14812,7 @@ void SyncPlayer::InternalSwap(SyncPlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SyncPlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[54]);
+      file_level_metadata_msg_2eproto[55]);
 }
 
 // ===================================================================
@@ -14844,7 +15122,7 @@ void Teleport::InternalSwap(Teleport* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Teleport::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[55]);
+      file_level_metadata_msg_2eproto[56]);
 }
 
 // ===================================================================
@@ -15022,7 +15300,7 @@ void TeleportAfter::InternalSwap(TeleportAfter* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata TeleportAfter::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[56]);
+      file_level_metadata_msg_2eproto[57]);
 }
 
 // ===================================================================
@@ -15200,7 +15478,7 @@ void RemovePlayer::InternalSwap(RemovePlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RemovePlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[57]);
+      file_level_metadata_msg_2eproto[58]);
 }
 
 // ===================================================================
@@ -15378,7 +15656,7 @@ void RequestSyncPlayer::InternalSwap(RequestSyncPlayer* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RequestSyncPlayer::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[58]);
+      file_level_metadata_msg_2eproto[59]);
 }
 
 // ===================================================================
@@ -15691,7 +15969,7 @@ void Role::InternalSwap(Role* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Role::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[59]);
+      file_level_metadata_msg_2eproto[60]);
 }
 
 // ===================================================================
@@ -15876,7 +16154,7 @@ void RoleAppear::InternalSwap(RoleAppear* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RoleAppear::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[60]);
+      file_level_metadata_msg_2eproto[61]);
 }
 
 // ===================================================================
@@ -16054,7 +16332,7 @@ void RoleDisAppear::InternalSwap(RoleDisAppear* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RoleDisAppear::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[61]);
+      file_level_metadata_msg_2eproto[62]);
 }
 
 // ===================================================================
@@ -16269,7 +16547,7 @@ void Move::InternalSwap(Move* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Move::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[62]);
+      file_level_metadata_msg_2eproto[63]);
 }
 
 // ===================================================================
@@ -16480,7 +16758,7 @@ void BroadcastCreateWorldProxy::InternalSwap(BroadcastCreateWorldProxy* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata BroadcastCreateWorldProxy::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_msg_2eproto_getter, &descriptor_table_msg_2eproto_once,
-      file_level_metadata_msg_2eproto[63]);
+      file_level_metadata_msg_2eproto[64]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -16493,6 +16771,10 @@ Arena::CreateMaybeMessage< ::Proto::CmdThread >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::Proto::CmdApp*
 Arena::CreateMaybeMessage< ::Proto::CmdApp >(Arena* arena) {
   return Arena::CreateMessageInternal< ::Proto::CmdApp >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Proto::HttpVerifyRequest*
+Arena::CreateMaybeMessage< ::Proto::HttpVerifyRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Proto::HttpVerifyRequest >(arena);
 }
 template<> PROTOBUF_NOINLINE ::Proto::Efficiency*
 Arena::CreateMaybeMessage< ::Proto::Efficiency >(Arena* arena) {

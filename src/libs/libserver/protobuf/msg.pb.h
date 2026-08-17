@@ -128,6 +128,9 @@ extern GameTokenToRedisRsDefaultTypeInternal _GameTokenToRedisRs_default_instanc
 class Http;
 struct HttpDefaultTypeInternal;
 extern HttpDefaultTypeInternal _Http_default_instance_;
+class HttpVerifyRequest;
+struct HttpVerifyRequestDefaultTypeInternal;
+extern HttpVerifyRequestDefaultTypeInternal _HttpVerifyRequest_default_instance_;
 class LoginByToken;
 struct LoginByTokenDefaultTypeInternal;
 extern LoginByTokenDefaultTypeInternal _LoginByToken_default_instance_;
@@ -268,6 +271,7 @@ template<> ::Proto::GameToken* Arena::CreateMaybeMessage<::Proto::GameToken>(Are
 template<> ::Proto::GameTokenToRedis* Arena::CreateMaybeMessage<::Proto::GameTokenToRedis>(Arena*);
 template<> ::Proto::GameTokenToRedisRs* Arena::CreateMaybeMessage<::Proto::GameTokenToRedisRs>(Arena*);
 template<> ::Proto::Http* Arena::CreateMaybeMessage<::Proto::Http>(Arena*);
+template<> ::Proto::HttpVerifyRequest* Arena::CreateMaybeMessage<::Proto::HttpVerifyRequest>(Arena*);
 template<> ::Proto::LoginByToken* Arena::CreateMaybeMessage<::Proto::LoginByToken>(Arena*);
 template<> ::Proto::LoginByTokenRs* Arena::CreateMaybeMessage<::Proto::LoginByTokenRs>(Arena*);
 template<> ::Proto::LoginTokenToRedis* Arena::CreateMaybeMessage<::Proto::LoginTokenToRedis>(Arena*);
@@ -980,6 +984,175 @@ class CmdApp final :
 };
 // -------------------------------------------------------------------
 
+class HttpVerifyRequest final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Proto.HttpVerifyRequest) */ {
+ public:
+  inline HttpVerifyRequest() : HttpVerifyRequest(nullptr) {}
+  ~HttpVerifyRequest() override;
+  explicit PROTOBUF_CONSTEXPR HttpVerifyRequest(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  HttpVerifyRequest(const HttpVerifyRequest& from);
+  HttpVerifyRequest(HttpVerifyRequest&& from) noexcept
+    : HttpVerifyRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline HttpVerifyRequest& operator=(const HttpVerifyRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline HttpVerifyRequest& operator=(HttpVerifyRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const HttpVerifyRequest& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const HttpVerifyRequest* internal_default_instance() {
+    return reinterpret_cast<const HttpVerifyRequest*>(
+               &_HttpVerifyRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(HttpVerifyRequest& a, HttpVerifyRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(HttpVerifyRequest* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(HttpVerifyRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  HttpVerifyRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<HttpVerifyRequest>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const HttpVerifyRequest& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const HttpVerifyRequest& from) {
+    HttpVerifyRequest::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(HttpVerifyRequest* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Proto.HttpVerifyRequest";
+  }
+  protected:
+  explicit HttpVerifyRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kAccountFieldNumber = 1,
+    kPasswordFieldNumber = 2,
+  };
+  // string account = 1;
+  void clear_account();
+  const std::string& account() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_account(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_account();
+  PROTOBUF_NODISCARD std::string* release_account();
+  void set_allocated_account(std::string* account);
+  private:
+  const std::string& _internal_account() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_account(const std::string& value);
+  std::string* _internal_mutable_account();
+  public:
+
+  // string password = 2;
+  void clear_password();
+  const std::string& password() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_password(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_password();
+  PROTOBUF_NODISCARD std::string* release_password();
+  void set_allocated_password(std::string* password);
+  private:
+  const std::string& _internal_password() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_password(const std::string& value);
+  std::string* _internal_mutable_password();
+  public:
+
+  // @@protoc_insertion_point(class_scope:Proto.HttpVerifyRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr account_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr password_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_msg_2eproto;
+};
+// -------------------------------------------------------------------
+
 class Efficiency final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Proto.Efficiency) */ {
  public:
@@ -1028,7 +1201,7 @@ class Efficiency final :
                &_Efficiency_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   friend void swap(Efficiency& a, Efficiency& b) {
     a.Swap(&b);
@@ -1203,7 +1376,7 @@ class AppRegister final :
                &_AppRegister_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   friend void swap(AppRegister& a, AppRegister& b) {
     a.Swap(&b);
@@ -1362,7 +1535,7 @@ class AppInfoSync final :
                &_AppInfoSync_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(AppInfoSync& a, AppInfoSync& b) {
     a.Swap(&b);
@@ -1532,7 +1705,7 @@ class AppInfoListSync final :
                &_AppInfoListSync_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(AppInfoListSync& a, AppInfoListSync& b) {
     a.Swap(&b);
@@ -1689,7 +1862,7 @@ class NetworkDisconnect final :
                &_NetworkDisconnect_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(NetworkDisconnect& a, NetworkDisconnect& b) {
     a.Swap(&b);
@@ -1848,7 +2021,7 @@ class TagValue final :
                &_TagValue_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(TagValue& a, TagValue& b) {
     a.Swap(&b);
@@ -2012,7 +2185,7 @@ class Tag final :
                &_Tag_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(Tag& a, Tag& b) {
     a.Swap(&b);
@@ -2180,7 +2353,7 @@ class NetworkConnect final :
                &_NetworkConnect_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(NetworkConnect& a, NetworkConnect& b) {
     a.Swap(&b);
@@ -2375,7 +2548,7 @@ class Http final :
                &_Http_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(Http& a, Http& b) {
     a.Swap(&b);
@@ -2539,7 +2712,7 @@ class CreateComponentParam final :
                &_CreateComponentParam_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(CreateComponentParam& a, CreateComponentParam& b) {
     a.Swap(&b);
@@ -2757,7 +2930,7 @@ class CreateComponent final :
                &_CreateComponent_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(CreateComponent& a, CreateComponent& b) {
     a.Swap(&b);
@@ -2963,7 +3136,7 @@ class RemoveComponent final :
                &_RemoveComponent_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(RemoveComponent& a, RemoveComponent& b) {
     a.Swap(&b);
@@ -3111,7 +3284,7 @@ class CreateSystem final :
                &_CreateSystem_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(CreateSystem& a, CreateSystem& b) {
     a.Swap(&b);
@@ -3275,7 +3448,7 @@ class AccountCheck final :
                &_AccountCheck_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(AccountCheck& a, AccountCheck& b) {
     a.Swap(&b);
@@ -3444,7 +3617,7 @@ class AccountCheckRs final :
                &_AccountCheckRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(AccountCheckRs& a, AccountCheckRs& b) {
     a.Swap(&b);
@@ -3592,7 +3765,7 @@ class RobotState final :
                &_RobotState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(RobotState& a, RobotState& b) {
     a.Swap(&b);
@@ -3756,7 +3929,7 @@ class RobotSyncState final :
                &_RobotSyncState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(RobotSyncState& a, RobotSyncState& b) {
     a.Swap(&b);
@@ -3913,7 +4086,7 @@ class RobotCreate final :
                &_RobotCreate_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(RobotCreate& a, RobotCreate& b) {
     a.Swap(&b);
@@ -4066,7 +4239,7 @@ class PlayerLittle final :
                &_PlayerLittle_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(PlayerLittle& a, PlayerLittle& b) {
     a.Swap(&b);
@@ -4292,7 +4465,7 @@ class PlayerList final :
                &_PlayerList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(PlayerList& a, PlayerList& b) {
     a.Swap(&b);
@@ -4465,7 +4638,7 @@ class QueryPlayerList final :
                &_QueryPlayerList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(QueryPlayerList& a, QueryPlayerList& b) {
     a.Swap(&b);
@@ -4618,7 +4791,7 @@ class QueryPlayer final :
                &_QueryPlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(QueryPlayer& a, QueryPlayer& b) {
     a.Swap(&b);
@@ -4766,7 +4939,7 @@ class QueryPlayerRs final :
                &_QueryPlayerRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(QueryPlayerRs& a, QueryPlayerRs& b) {
     a.Swap(&b);
@@ -4939,7 +5112,7 @@ class CreatePlayer final :
                &_CreatePlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(CreatePlayer& a, CreatePlayer& b) {
     a.Swap(&b);
@@ -5103,7 +5276,7 @@ class CreatePlayerRs final :
                &_CreatePlayerRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(CreatePlayerRs& a, CreatePlayerRs& b) {
     a.Swap(&b);
@@ -5251,7 +5424,7 @@ class CreatePlayerToDB final :
                &_CreatePlayerToDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(CreatePlayerToDB& a, CreatePlayerToDB& b) {
     a.Swap(&b);
@@ -5424,7 +5597,7 @@ class CreatePlayerToDBRs final :
                &_CreatePlayerToDBRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(CreatePlayerToDBRs& a, CreatePlayerToDBRs& b) {
     a.Swap(&b);
@@ -5588,7 +5761,7 @@ class SelectPlayer final :
                &_SelectPlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(SelectPlayer& a, SelectPlayer& b) {
     a.Swap(&b);
@@ -5736,7 +5909,7 @@ class SelectPlayerRs final :
                &_SelectPlayerRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(SelectPlayerRs& a, SelectPlayerRs& b) {
     a.Swap(&b);
@@ -5914,7 +6087,7 @@ class SavePlayer final :
                &_SavePlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(SavePlayer& a, SavePlayer& b) {
     a.Swap(&b);
@@ -6082,7 +6255,7 @@ class WorldSyncToGather final :
                &_WorldSyncToGather_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(WorldSyncToGather& a, WorldSyncToGather& b) {
     a.Swap(&b);
@@ -6252,7 +6425,7 @@ class WorldProxySyncToGather final :
                &_WorldProxySyncToGather_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(WorldProxySyncToGather& a, WorldProxySyncToGather& b) {
     a.Swap(&b);
@@ -6433,7 +6606,7 @@ class CreateWorld final :
                &_CreateWorld_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(CreateWorld& a, CreateWorld& b) {
     a.Swap(&b);
@@ -6603,7 +6776,7 @@ class BroadcastCreateWorld final :
                &_BroadcastCreateWorld_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(BroadcastCreateWorld& a, BroadcastCreateWorld& b) {
     a.Swap(&b);
@@ -6773,7 +6946,7 @@ class QueryWorld final :
                &_QueryWorld_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(QueryWorld& a, QueryWorld& b) {
     a.Swap(&b);
@@ -6932,7 +7105,7 @@ class QueryWorldRs final :
                &_QueryWorldRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    38;
 
   friend void swap(QueryWorldRs& a, QueryWorldRs& b) {
     a.Swap(&b);
@@ -7121,7 +7294,7 @@ class EnterWorld final :
                &_EnterWorld_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    39;
 
   friend void swap(EnterWorld& a, EnterWorld& b) {
     a.Swap(&b);
@@ -7289,7 +7462,7 @@ class RequestWorld final :
                &_RequestWorld_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    40;
 
   friend void swap(RequestWorld& a, RequestWorld& b) {
     a.Swap(&b);
@@ -7437,7 +7610,7 @@ class GameToken final :
                &_GameToken_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    41;
 
   friend void swap(GameToken& a, GameToken& b) {
     a.Swap(&b);
@@ -7658,7 +7831,7 @@ class LoginByToken final :
                &_LoginByToken_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    42;
 
   friend void swap(LoginByToken& a, LoginByToken& b) {
     a.Swap(&b);
@@ -7827,7 +8000,7 @@ class LoginByTokenRs final :
                &_LoginByTokenRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    42;
+    43;
 
   friend void swap(LoginByTokenRs& a, LoginByTokenRs& b) {
     a.Swap(&b);
@@ -8009,7 +8182,7 @@ class LoginTokenToRedis final :
                &_LoginTokenToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    44;
 
   friend void swap(LoginTokenToRedis& a, LoginTokenToRedis& b) {
     a.Swap(&b);
@@ -8173,7 +8346,7 @@ class LoginTokenToRedisRs final :
                &_LoginTokenToRedisRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    44;
+    45;
 
   friend void swap(LoginTokenToRedisRs& a, LoginTokenToRedisRs& b) {
     a.Swap(&b);
@@ -8342,7 +8515,7 @@ class GameTokenToRedis final :
                &_GameTokenToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    45;
+    46;
 
   friend void swap(GameTokenToRedis& a, GameTokenToRedis& b) {
     a.Swap(&b);
@@ -8495,7 +8668,7 @@ class TokenInfo final :
                &_TokenInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    46;
+    47;
 
   friend void swap(TokenInfo& a, TokenInfo& b) {
     a.Swap(&b);
@@ -8659,7 +8832,7 @@ class GameTokenToRedisRs final :
                &_GameTokenToRedisRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    47;
+    48;
 
   friend void swap(GameTokenToRedisRs& a, GameTokenToRedisRs& b) {
     a.Swap(&b);
@@ -8832,7 +9005,7 @@ class AccountQueryOnlineToRedis final :
                &_AccountQueryOnlineToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    48;
+    49;
 
   friend void swap(AccountQueryOnlineToRedis& a, AccountQueryOnlineToRedis& b) {
     a.Swap(&b);
@@ -8985,7 +9158,7 @@ class AccountQueryOnlineToRedisRs final :
                &_AccountQueryOnlineToRedisRs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    49;
+    50;
 
   friend void swap(AccountQueryOnlineToRedisRs& a, AccountQueryOnlineToRedisRs& b) {
     a.Swap(&b);
@@ -9179,7 +9352,7 @@ class AccountSyncOnlineToRedis final :
                &_AccountSyncOnlineToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    50;
+    51;
 
   friend void swap(AccountSyncOnlineToRedis& a, AccountSyncOnlineToRedis& b) {
     a.Swap(&b);
@@ -9332,7 +9505,7 @@ class AccountDeleteOnlineToRedis final :
                &_AccountDeleteOnlineToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    51;
+    52;
 
   friend void swap(AccountDeleteOnlineToRedis& a, AccountDeleteOnlineToRedis& b) {
     a.Swap(&b);
@@ -9485,7 +9658,7 @@ class PlayerSyncOnlineToRedis final :
                &_PlayerSyncOnlineToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    52;
+    53;
 
   friend void swap(PlayerSyncOnlineToRedis& a, PlayerSyncOnlineToRedis& b) {
     a.Swap(&b);
@@ -9649,7 +9822,7 @@ class PlayerDeleteOnlineToRedis final :
                &_PlayerDeleteOnlineToRedis_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    53;
+    54;
 
   friend void swap(PlayerDeleteOnlineToRedis& a, PlayerDeleteOnlineToRedis& b) {
     a.Swap(&b);
@@ -9813,7 +9986,7 @@ class SyncPlayer final :
                &_SyncPlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    54;
+    55;
 
   friend void swap(SyncPlayer& a, SyncPlayer& b) {
     a.Swap(&b);
@@ -9997,7 +10170,7 @@ class Teleport final :
                &_Teleport_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    55;
+    56;
 
   friend void swap(Teleport& a, Teleport& b) {
     a.Swap(&b);
@@ -10192,7 +10365,7 @@ class TeleportAfter final :
                &_TeleportAfter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    56;
+    57;
 
   friend void swap(TeleportAfter& a, TeleportAfter& b) {
     a.Swap(&b);
@@ -10340,7 +10513,7 @@ class RemovePlayer final :
                &_RemovePlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    57;
+    58;
 
   friend void swap(RemovePlayer& a, RemovePlayer& b) {
     a.Swap(&b);
@@ -10488,7 +10661,7 @@ class RequestSyncPlayer final :
                &_RequestSyncPlayer_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    58;
+    59;
 
   friend void swap(RequestSyncPlayer& a, RequestSyncPlayer& b) {
     a.Swap(&b);
@@ -10636,7 +10809,7 @@ class Role final :
                &_Role_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    59;
+    60;
 
   friend void swap(Role& a, Role& b) {
     a.Swap(&b);
@@ -10831,7 +11004,7 @@ class RoleAppear final :
                &_RoleAppear_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    60;
+    61;
 
   friend void swap(RoleAppear& a, RoleAppear& b) {
     a.Swap(&b);
@@ -10988,7 +11161,7 @@ class RoleDisAppear final :
                &_RoleDisAppear_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    61;
+    62;
 
   friend void swap(RoleDisAppear& a, RoleDisAppear& b) {
     a.Swap(&b);
@@ -11136,7 +11309,7 @@ class Move final :
                &_Move_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    62;
+    63;
 
   friend void swap(Move& a, Move& b) {
     a.Swap(&b);
@@ -11304,7 +11477,7 @@ class BroadcastCreateWorldProxy final :
                &_BroadcastCreateWorldProxy_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    63;
+    64;
 
   friend void swap(BroadcastCreateWorldProxy& a, BroadcastCreateWorldProxy& b) {
     a.Swap(&b);
@@ -11466,6 +11639,110 @@ inline void CmdApp::_internal_set_cmd_type(::Proto::CmdApp_CmdType value) {
 inline void CmdApp::set_cmd_type(::Proto::CmdApp_CmdType value) {
   _internal_set_cmd_type(value);
   // @@protoc_insertion_point(field_set:Proto.CmdApp.cmd_type)
+}
+
+// -------------------------------------------------------------------
+
+// HttpVerifyRequest
+
+// string account = 1;
+inline void HttpVerifyRequest::clear_account() {
+  _impl_.account_.ClearToEmpty();
+}
+inline const std::string& HttpVerifyRequest::account() const {
+  // @@protoc_insertion_point(field_get:Proto.HttpVerifyRequest.account)
+  return _internal_account();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void HttpVerifyRequest::set_account(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.account_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:Proto.HttpVerifyRequest.account)
+}
+inline std::string* HttpVerifyRequest::mutable_account() {
+  std::string* _s = _internal_mutable_account();
+  // @@protoc_insertion_point(field_mutable:Proto.HttpVerifyRequest.account)
+  return _s;
+}
+inline const std::string& HttpVerifyRequest::_internal_account() const {
+  return _impl_.account_.Get();
+}
+inline void HttpVerifyRequest::_internal_set_account(const std::string& value) {
+  
+  _impl_.account_.Set(value, GetArenaForAllocation());
+}
+inline std::string* HttpVerifyRequest::_internal_mutable_account() {
+  
+  return _impl_.account_.Mutable(GetArenaForAllocation());
+}
+inline std::string* HttpVerifyRequest::release_account() {
+  // @@protoc_insertion_point(field_release:Proto.HttpVerifyRequest.account)
+  return _impl_.account_.Release();
+}
+inline void HttpVerifyRequest::set_allocated_account(std::string* account) {
+  if (account != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.account_.SetAllocated(account, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.account_.IsDefault()) {
+    _impl_.account_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:Proto.HttpVerifyRequest.account)
+}
+
+// string password = 2;
+inline void HttpVerifyRequest::clear_password() {
+  _impl_.password_.ClearToEmpty();
+}
+inline const std::string& HttpVerifyRequest::password() const {
+  // @@protoc_insertion_point(field_get:Proto.HttpVerifyRequest.password)
+  return _internal_password();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void HttpVerifyRequest::set_password(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.password_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:Proto.HttpVerifyRequest.password)
+}
+inline std::string* HttpVerifyRequest::mutable_password() {
+  std::string* _s = _internal_mutable_password();
+  // @@protoc_insertion_point(field_mutable:Proto.HttpVerifyRequest.password)
+  return _s;
+}
+inline const std::string& HttpVerifyRequest::_internal_password() const {
+  return _impl_.password_.Get();
+}
+inline void HttpVerifyRequest::_internal_set_password(const std::string& value) {
+  
+  _impl_.password_.Set(value, GetArenaForAllocation());
+}
+inline std::string* HttpVerifyRequest::_internal_mutable_password() {
+  
+  return _impl_.password_.Mutable(GetArenaForAllocation());
+}
+inline std::string* HttpVerifyRequest::release_password() {
+  // @@protoc_insertion_point(field_release:Proto.HttpVerifyRequest.password)
+  return _impl_.password_.Release();
+}
+inline void HttpVerifyRequest::set_allocated_password(std::string* password) {
+  if (password != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.password_.SetAllocated(password, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.password_.IsDefault()) {
+    _impl_.password_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:Proto.HttpVerifyRequest.password)
 }
 
 // -------------------------------------------------------------------
@@ -16301,6 +16578,8 @@ inline void BroadcastCreateWorldProxy::set_world_sn(uint64_t value) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

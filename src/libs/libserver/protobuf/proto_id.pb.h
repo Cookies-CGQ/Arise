@@ -120,6 +120,7 @@ enum MsgId : int {
   MI_HttpEnd = 10499,
   MI_HttpOuterRequest = 10500,
   MI_HttpOuterResponse = 10501,
+  MI_HttpVerifyRequest = 10502,
   MI_CmdThread = 20001,
   MI_CmdApp = 20002,
   MI_CmdWorldProxy = 20003,

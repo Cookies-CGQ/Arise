@@ -24,6 +24,12 @@ message CmdApp {
     CmdType cmd_type = 1;
 }
 
+// 第三方账号验证请求（登录服 -> 验证连接池）
+message HttpVerifyRequest {
+    string account = 1;   // 账号
+    string password = 2;  // 密码
+}
+
 // 效率监控数据，记录线程类型、线程ID和耗时
 message Efficiency {
 	int32 thread_type = 1;

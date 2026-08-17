@@ -15,8 +15,9 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // 统一响应出口：必须带 Content-Length（服务端解析依赖这个头）
-function respond($code) {
-    $body = json_encode(array('returncode' => $code));
+// 响应体回显 account：连接池模式下响应不再携带连接标签，login 按 body 中的账号路由
+function respond($code, $account = '') {
+    $body = json_encode(array('returncode' => $code, 'account' => $account));
     header('Content-Length: ' . strlen($body));
     echo $body;
     exit;
@@ -27,7 +28,7 @@ $password = isset($_GET['password']) ? $_GET['password']       : '';
 
 // 参数缺失，视为账号不存在
 if ($account === '' || $password === '') {
-    respond(2);
+    respond(2, $account);
 }
 
 // ============================================================
@@ -37,9 +38,9 @@ if ($account === '' || $password === '') {
 // 注意：robots 工具发的密码是 123456 的 MD5，所以两种都接受
 // ============================================================
 if (in_array($password, array('123456', md5('123456')), true)) {
-    respond(0);
+    respond(0, $account);
 }
-respond(3);     // 密码错误
+respond(3, $account);     // 密码错误
 
 // ============================================================
 // 方式二：对接自有账号库（MySQL，PDO 扩展）

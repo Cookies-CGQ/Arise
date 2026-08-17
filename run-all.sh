@@ -49,12 +49,20 @@ start() {
 }
 
 # 1. 第三方账号验证 HTTP 服务 (web/member_login_t.php)
-# PHP_CLI_SERVER_WORKERS: 内置服务器多进程并行，批量压测时避免验证请求排队
-if ! pgrep -f "php -S 127.0.0.1:8080 -t $ROOT/web" > /dev/null; then
-    nohup env PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t "$ROOT/web" > logs/php_login.log 2>&1 &
-    echo "[start] php 账号验证服务 127.0.0.1:8080 (pid=$!)"
+# nginx + php-fpm：支持 HTTP keep-alive 长连接，配合登录服验证连接池
+# 注意：用 socket/配置文件精确判断本项目的实例，避免与系统自带的 nginx/fpm 混淆
+if [ ! -S "$ROOT/deploy/php-fpm.sock" ]; then
+    nohup php-fpm8.4 -y "$ROOT/deploy/php-fpm.conf" > logs/php-fpm.log 2>&1 &
+    echo "[start] php-fpm (pid=$!)"
 else
-    echo "[skip] php 账号验证服务已在运行"
+    echo "[skip] php-fpm 已在运行"
+fi
+sleep 1
+if ! pgrep -f "$ROOT/deploy/nginx.conf" > /dev/null; then
+    nginx -c "$ROOT/deploy/nginx.conf"
+    echo "[start] nginx 127.0.0.1:8080 (php-fpm 代理)"
+else
+    echo "[skip] nginx 已在运行"
 fi
 
 # 2. 服务进程（按依赖顺序启动，连接器会自动重连所以顺序不严格）
