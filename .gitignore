@@ -14,5 +14,9 @@ Makefile
 /deploy/*.sock
 /deploy/*.log
 
+# robots 工具的日志（项目根目录运行产生）
+/log4_robot.log
+/log4_robot_error.log
+
 # Editor
 *.swp
