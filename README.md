@@ -78,6 +78,30 @@ bash stop-all.sh                 # 停止所有服务（Debug/Release 一起停�
 ss -tln | grep -E ':(5500|5800|5401|5601|5701|7071|8080)'
 ```
 
+## 服务端控制台
+
+每个服务内置交互式控制台（stdin 命令）。**后台运行（run-all.sh 启动）时**通过命名管道发命令：
+
+```bash
+bash console.sh <服务名> '<命令>'        # 输出在 bin/logs/<服务名>.log
+bash console.sh space  'world -all'      # 查看世界列表
+bash console.sh login  'thread -pool'    # 查看对象池使用情况
+bash console.sh appmgr 'create -all'     # 查看已创建的世界
+```
+
+前台调试时直接运行二进制即可交互输入（先 stop-all 避免端口冲突）。
+
+**命令清单**（所有服务通用）：
+
+| 命令 | 作用 |
+|---|---|
+| `help` | 列出本服务所有命令 |
+| `thread -entity` / `thread -pool` / `thread -connect` | 线程内的实体 / 对象池 / 连接信息 |
+| `efficiency` | 各线程效率统计 |
+| `-exit` | 优雅停止该服务 |
+
+**服务专属命令**：appmgr `create -all`、`app -info`；space `world -all`；game `app -info`；robots 见测试章节。
+
 ## 配置（res/engine.yaml）
 
 | 配置项 | 说明 |
@@ -147,6 +171,7 @@ mysql -u<用户> -p -e "DELETE FROM e_gamedata.player WHERE account LIKE 'robot%
 ├── run-all.sh               # 一键启动分布式服务 [release]
 ├── run-allinone.sh          # 一键启动一体化进程 [release]
 ├── stop-all.sh              # 停止所有服务
+├── console.sh               # 向运行中的服务发送控制台命令
 ├── bin/                     # 可执行文件与日志
 ├── deploy/                  # nginx / php-fpm 配置（账号验证服务）
 ├── web/                     # 第三方账号验证 PHP 脚本
