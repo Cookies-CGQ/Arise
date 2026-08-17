@@ -27,6 +27,9 @@ rm -f "$ROOT/deploy/php-fpm.sock"
 
 sleep 15
 
+# 清理 stdin 占位进程（各服务控制台 fifo 的 tail）
+pkill -f 'tail -f /dev/null.*stdin.fifo' 2>/dev/null
+
 # 清理残留进程
 for sfx in d ""; do
     for base in game space login dbmgr appmgr robots allinone; do

@@ -43,8 +43,12 @@ start() {
         echo "[skip] $name 已在运行"
         return
     fi
+    # 控制台命令走命名管道：echo 'world -all' > logs/$name.stdin.fifo
     # tail 保持 stdin 不 EOF（服务器控制台线程读 stdin，EOF 会空转）
-    ( tail -f /dev/null 2>/dev/null | ./$name "$@" > logs/$name.log 2>&1 & echo $! > logs/$name.pid )
+    rm -f logs/$name.stdin.fifo
+    mkfifo logs/$name.stdin.fifo
+    ( tail -f /dev/null 2>/dev/null > logs/$name.stdin.fifo & )
+    ( stdbuf -oL -eL ./$name "$@" < logs/$name.stdin.fifo > logs/$name.log 2>&1 & echo $! > logs/$name.pid )
     echo "[start] $name $*  (pid=$(cat logs/$name.pid), log: bin/logs/$name.log)"
 }
 
