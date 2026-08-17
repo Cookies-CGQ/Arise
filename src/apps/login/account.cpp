@@ -215,7 +215,7 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket)
 
     // 验证账号，发起一个Http请求
     TagValue tagValue{ pPlayer->GetAccount(), 0 };
-    _httpChecks[pPlayer->GetAccount()] = 10; // 10秒超时保护（批量压测时第三方服务可能排队）
+    _httpChecks[pPlayer->GetAccount()] = 5; // 5秒超时保护（PHP 4进程并行，验证请求处理 < 3 秒，5 秒足够）
     MessageSystemHelp::CreateConnect(NetworkType::HttpConnector, TagType::Account, tagValue, _httpIp.c_str(), _httpPort);
 }
 
