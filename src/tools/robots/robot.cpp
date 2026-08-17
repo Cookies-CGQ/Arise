@@ -25,7 +25,13 @@ void Robot::Awake(std::string account)
 void Robot::BackToPool()
 {
     _account = "";
+    _loginRetryTime = 0;
     Player::BackToPool();
+}
+
+void Robot::SetLoginRetryDelay(uint64 delayMs)
+{
+    _loginRetryTime = Global::GetInstance()->TimeTick + delayMs;
 }
 
 void Robot::Update()

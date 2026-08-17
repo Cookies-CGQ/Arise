@@ -14,9 +14,14 @@ public:
     void NetworkDisconnect();
     void EnterWorld(int worldId);
 
+    // 登录失败退避：延迟到指定毫秒时间点后才允许重连，避免重连风暴
+    void SetLoginRetryDelay(uint64 delayMs);
+    uint64 GetLoginRetryTime() const { return _loginRetryTime; }
+
 protected:
     void RegisterState() override;
 
 private:
     int _worldId{ 0 };
+    uint64 _loginRetryTime{ 0 }; // 允许下次重连的时间点（TimeTick 毫秒）
 };

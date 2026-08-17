@@ -14,6 +14,9 @@ RobotStateType RobotState::Update()
         const auto socketKey = _pParentObj->GetSocketKey();
         if (socketKey->Socket == INVALID_SOCKET)
         {
+            // 登录连接断开：延迟重试，避免"同账号/在线拒绝"导致的重连风暴
+            // （拒绝响应可能因连接已关闭而丢失，退避必须放在断线翻转处才能确保生效）
+            _pParentObj->SetLoginRetryDelay(3000);
             return RobotStateType::Login_Connecting;
         }
     }

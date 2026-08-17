@@ -140,6 +140,9 @@ void RobotCollection::HandleAccountCheckRs(Robot* pRobot, Packet* pPacket)
         const google::protobuf::EnumDescriptor* descriptor = Proto::AccountCheckReturnCode_descriptor();
         const auto name = descriptor->FindValueByNumber(proto.return_code())->name();
         LOG_WARN("account check failed. account:" << pRobot->GetAccount().c_str() << " code:" << name.c_str());
+
+        // 登录失败退避：3 秒后再重试，避免同账号/在线拒绝导致的重连风暴
+        pRobot->SetLoginRetryDelay(3000);
     }
 }
 

@@ -364,7 +364,7 @@ void Account::HandleHttpOuterResponse(Packet* pPacket)
     auto pTagValue = pPacket->GetTagKey()->GetTagValue(TagType::Account);
     if (pTagValue == nullptr)
     {
-        LOG_ERROR("HandleHttpOuterResponse. can't find player.");
+        // 连接池的原始响应（无标签）由 HttpVerifyPool 处理并转发带标签副本，这里静默忽略
         return;
     }
 

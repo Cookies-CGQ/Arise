@@ -1,0 +1,75 @@
+2026-08-17 19:37:45 -> [DEBUG] -  Log4::Initialize is Ok.
+2026-08-17 19:37:45 -> [DEBUG] -  Yaml awake is Ok.
+2026-08-17 19:37:45 -> [DEBUG] -  Initialize thread:LogicThread thread num:10
+2026-08-17 19:37:45 -> [DEBUG] -  Initialize thread:ConnectThread thread num:2
+2026-08-17 19:37:45 -> [DEBUG] -  load file. /home/ayanami/myfile/learn/Arise/Arise/res/resource/world.csv
+2026-08-17 19:37:45 -> [DEBUG] -  [0;93mall resource loaded.[0m
+2026-08-17 19:40:09 -> [ERROR] -  [0;91minput error. can't find cmd:--help[0m
+2026-08-17 19:40:14 -> [ERROR] -  [0;91minput error. cmd:help\[0m
+2026-08-17 19:42:19 -> [ERROR] -  [0;91minput error. can't find cmd:-clean[0m
+2026-08-17 19:42:34 -> [ERROR] -  [0;91minput error. can't find cmd:-clean[0m
+2026-08-17 19:47:32 -> [DEBUG] -  Log4::Initialize is Ok.
+2026-08-17 19:47:32 -> [DEBUG] -  Yaml awake is Ok.
+2026-08-17 19:47:32 -> [DEBUG] -  Initialize thread:LogicThread thread num:10
+2026-08-17 19:47:32 -> [DEBUG] -  Initialize thread:ConnectThread thread num:2
+2026-08-17 19:47:32 -> [DEBUG] -  load file. /home/ayanami/myfile/learn/Arise/Arise/res/resource/world.csv
+2026-08-17 19:47:32 -> [DEBUG] -  [0;93mall resource loaded.[0m
+2026-08-17 19:49:08 -> [DEBUG] -  account:test1 enter world. id:2
+2026-08-17 19:49:08 -> [DEBUG] -  account:test1 enter world. id:3
+2026-08-17 19:50:21 -> [ERROR] -  [0;91mAdd same component. type:19RobotComponentLogin[0m
+2026-08-17 19:50:23 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:23 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:23 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:23 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:27 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:27 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:27 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:27 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:28 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:28 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:28 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:28 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:33 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:33 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:33 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:33 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:36 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:36 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:36 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:36 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:39 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:39 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:39 -> [DEBUG] -  account check result account:test1 code:6
+2026-08-17 19:50:39 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_ONLINE[0m
+2026-08-17 19:50:39 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:39 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:39 -> [DEBUG] -  account check result account:test1 code:6
+2026-08-17 19:50:39 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_ONLINE[0m
+2026-08-17 19:50:44 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:44 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:44 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:44 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:46 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:46 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:46 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:46 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:56 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:56 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:56 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:56 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:56 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:56 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:50:56 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:50:56 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:00 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:00 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:00 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:00 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:01 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:01 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:01 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:01 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:06 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:06 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m
+2026-08-17 19:51:06 -> [DEBUG] -  account check result account:test1 code:4
+2026-08-17 19:51:06 -> [WARN] -  [0;92maccount check failed. account:test1 code:ARC_LOGGING[0m

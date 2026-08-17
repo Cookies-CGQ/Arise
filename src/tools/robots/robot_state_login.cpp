@@ -2,19 +2,30 @@
 #include "robot.h"
 #include "libserver/message_system_help.h"
 #include "libserver/component_help.h"
+#include "libserver/global.h"
 #include "robot_component_login.h"
 
 void RobotStateLoginConnecting::OnEnterState()
 {
     _pParentObj->NetworkDisconnect();
-
-    TagValue tagValue{ _pParentObj->GetAccount(), 0L };
-    const auto loginObj = _pParentObj->GetComponent<RobotComponentLogin>();
-    MessageSystemHelp::CreateConnect(NetworkType::TcpConnector, TagType::Account, tagValue, loginObj->GetLoginIp(), loginObj->GetLoginPort());
+    _isConnect = false;
 }
 
 RobotStateType RobotStateLoginConnecting::OnUpdate()
 {
+    // 登录失败退避：等待重试时间到达后再发起连接，避免重连风暴
+    if (_pParentObj->GetLoginRetryTime() > Global::GetInstance()->TimeTick)
+        return GetState();
+
+    if (!_isConnect)
+    {
+        _isConnect = true;
+
+        TagValue tagValue{ _pParentObj->GetAccount(), 0L };
+        const auto loginObj = _pParentObj->GetComponent<RobotComponentLogin>();
+        MessageSystemHelp::CreateConnect(NetworkType::TcpConnector, TagType::Account, tagValue, loginObj->GetLoginIp(), loginObj->GetLoginPort());
+    }
+
     const auto socketKey = _pParentObj->GetSocketKey();
     if (socketKey->Socket != INVALID_SOCKET && socketKey->NetType == NetworkType::TcpConnector)
     {

@@ -9,6 +9,9 @@ public:
 
     void OnEnterState() override;
     RobotStateType OnUpdate() override;
+
+private:
+    bool _isConnect{ false }; // 本状态周期内是否已发起连接
 };
 
 class RobotStateLoginConnected : public RobotState {
