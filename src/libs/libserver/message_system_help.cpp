@@ -70,9 +70,11 @@ void MessageSystemHelp::SendPacket(Packet* pPacket, APP_TYPE appType, int appId)
         return;
     }
 
-    const auto appSocketKey = netIdentify.GetSocketKey();
-    pPacket->GetSocketKey()->Socket = appSocketKey->Socket;
-    pPacket->GetSocketKey()->NetType = appSocketKey->NetType;
+    // 重定向到目标 app 的连接时，Socket/NetType/Epoch 必须一起拷贝。
+    // 否则转发包（如 C2S_Move，由 WorldProxy::CopyPacketToWorld 转给 space）的
+    // Epoch 仍是 0，会被 Network::SendPacket 的代次校验误判为
+    // "connection gone or epoch changed" 直接丢弃，连接其实一直是好的。
+    pPacket->GetSocketKey()->CopyFrom(netIdentify.GetSocketKey());
     SendPacket(pPacket);
 }
 

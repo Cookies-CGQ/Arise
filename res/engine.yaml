@@ -6,7 +6,7 @@ allinone:
   thread_mysql: 2 # mysql线程数
   thread_listen: 2 # 网络监听线程数
   thread_connector: 1 # 网络连接线程数
-  ip: 127.0.0.1
+  ip: 192.168.125.132
   port: 5401          # tcp
   http_port: 7071     # http
 
@@ -15,7 +15,7 @@ appmgr:
   thread_logic: 2 # 逻辑线程数
   thread_listen: 2
   thread_connector: 2
-  ip: 127.0.0.1
+  ip: 192.168.125.132
   port: 5500
   http_port: 7071
 
@@ -35,10 +35,10 @@ login:
   url_method: "get" # HTTP 请求方法
   apps:
     - id: 101
-      ip: 127.0.0.1
+      ip: 192.168.125.132
       port: 5401
     - id: 102
-      ip: 127.0.0.1
+      ip: 192.168.125.132
       port: 5402
 
 # game服务进程配置
@@ -48,10 +48,10 @@ game:
   thread_connector: 1
   apps:
     - id: 201
-      ip: 127.0.0.1
+      ip: 192.168.125.132
       port: 5601
     - id: 202
-      ip: 127.0.0.1
+      ip: 192.168.125.132
       port: 5602
 
 # space服务进程配置
@@ -61,7 +61,7 @@ space:
   thread_connector: 1
   apps:
     - id: 301
-      ip: 127.0.0.1
+      ip: 192.168.125.132
       port: 5701
 
 # 数据库服务进程配置
@@ -69,7 +69,7 @@ dbmgr:
   thread_logic: 1
   thread_mysql: 3
   thread_listen: 1
-  ip: 127.0.0.1
+  ip: 192.168.125.132
   port: 5800
   dbs:
     # redis配置
